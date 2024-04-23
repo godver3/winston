@@ -40,7 +40,6 @@ class FeedItemsManager<S> {
     private var lastNoSearchDisplayMode: DisplayMode = .loading
     private var lastSort: SubListingSortOption?
 
-      
     init(sorting: S?, fetchFn: @escaping ItemsFetchFn) {
         self.sorting = sorting
         self.fetchFn = fetchFn
