@@ -1152,9 +1152,6 @@
         }
       }
     },
-    "Download" : {
-
-    },
     "Drag Left" : {
       "localizations" : {
         "de" : {
@@ -1225,6 +1222,9 @@
 
     },
     "Edit credential" : {
+
+    },
+    "Edit filter" : {
 
     },
     "Enabling the extension" : {
@@ -2428,6 +2428,9 @@
     "New credential" : {
 
     },
+    "New filter" : {
+
+    },
     "New post" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -2717,6 +2720,9 @@
       }
     },
     "Pause background audio on fullscreen" : {
+
+    },
+    "Pinned" : {
 
     },
     "Placeholder image" : {
@@ -3744,9 +3750,6 @@
         }
       }
     },
-    "Theme Store" : {
-
-    },
     "Theme Store Tint" : {
       "localizations" : {
         "de" : {
@@ -3815,9 +3818,6 @@
 
     },
     "There was an error" : {
-
-    },
-    "There was an error importing this theme" : {
 
     },
     "They say the stars hide a secret..." : {

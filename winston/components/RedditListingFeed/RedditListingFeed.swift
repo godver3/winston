@@ -51,7 +51,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
     @Default(.PostLinkDefSettings) private var postLinkDefSettings
     @Default(.SubredditFeedDefSettings) private var feedDefSettings
     
-    func refetch() async {
+    func refetch(_ force: Bool = false) async {
         //    if let subreddit, !feedsAndSuch.contains(subreddit.id) {
         //      Task {
         //        withAnimation { itemsManager.loadingPinned = true }
@@ -62,11 +62,16 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
         //      }
         //    }
         
-        await itemsManager.fetchCaller(loadingMore: false)
+        await itemsManager.fetchCaller(loadingMore: false, force: force)
         if let subreddit, !fetchedFilters {
             await subreddit.fetchAndCacheFlairs()
             fetchedFilters = true
         }
+    }
+  
+    func sortUpdated(opt: S) {
+      itemsManager.sorting = opt
+      feedDefSettings.subredditSorts[self.subreddit?.id ?? ""] = opt as? SubListingSortOption
     }
     
     @ViewBuilder
@@ -243,7 +248,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                                             ForEach(children, id: \.self.meta.apiValue) { child in
                                                 if let val = child.valueWithParent as? S {
                                                     Button(child.meta.label, systemImage: child.meta.icon) {
-                                                        itemsManager.sorting = val
+                                                        sortUpdated(opt: val)
                                                     }
                                                 }
                                             }
@@ -252,7 +257,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                                         }
                                     } else {
                                         Button(opt.meta.label, systemImage: opt.meta.icon) {
-                                            itemsManager.sorting = opt
+                                            sortUpdated(opt: opt)
                                         }
                                     }
                                 }
@@ -276,7 +281,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             }
             .floatingMenu(subId: subreddit?.id, filters: shallowCachedFilters, selectedFilter: $itemsManager.selectedFilter)
             //    .onChange(of: itemsManager.selectedFilter) { searchEnabled = $1?.type != .custom }
-            .refreshable { await refetch() }
+            .refreshable { await refetch(true) }
             .onChange(of: generalDefSettings.redditCredentialSelectedID) { _, _ in
                 withAnimation {
                     itemsManager.entities = []

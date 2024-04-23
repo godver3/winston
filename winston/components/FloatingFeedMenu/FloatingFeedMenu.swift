@@ -37,6 +37,22 @@ struct FloatingFeedMenu: View, Equatable {
   init(subId: String, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>) {
     self.subId = subId
     self.filters = filters
+    
+    if subId == "t5_2qo4s" {
+      self.filters = [
+        CachedFilter.getShallow(bgColor: "007A33", subID: "t5_2qo4s", text: "Celtics"),
+        CachedFilter.getShallow(bgColor: "7ADFA5", subID: "t5_2qo4s", text: "Tatum")
+      ]
+    } else if subId == "t5_2qmg3" {
+      self.filters = [
+        CachedFilter.getShallow(bgColor: "CC1111", subID: "t5_2qmg3", text: "Patriots")
+      ]
+    } else if subId == "t5_2qh6p" {
+      self.filters = [
+        CachedFilter.getShallow(bgColor: "FFFFFF", subID: "t5_2qh6p", text: "Trump")
+      ]
+    }
+    
     self._selectedFilter = selectedFilter
     
     _compact = State(initialValue: Defaults[.SubredditFeedDefSettings].compactPerSubreddit[subId] ?? Defaults[.PostLinkDefSettings].compactMode.enabled)
@@ -68,6 +84,7 @@ struct FloatingFeedMenu: View, Equatable {
       FloatingBGBlur(active: menuOpen, dismiss: dismiss).equatable()
       
       HStack(alignment: .bottom, spacing: 0) {
+        Spacer()
         ZStack(alignment: .bottomTrailing) {
           if !showingFilters, let selectedFilter {
             FilterButton(filter: selectedFilter, isSelected: true, selectFilter: selectFilter)
@@ -79,49 +96,30 @@ struct FloatingFeedMenu: View, Equatable {
               .transition(.offset(x: 0.01))
           }
           
-          let sortedFlairs = filters.filter({ $0.type == .flair })
           let customFilters = filters.filter({ $0.type == .custom })
           if menuOpen {
-            ScrollView(.horizontal, showsIndicators: false) {
-              HStack(spacing: 8) {
+            Spacer()
+            HStack(spacing: 8) {
+              ForEach(Array(customFilters.enumerated()).reversed(), id: \.element) { i, el in
+                let isSelected = selectedFilter?.id == el.id
+                let placeholder = isSelected && !showingFilters
+                let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
                 
-                ForEach(Array(sortedFlairs.enumerated()).reversed(), id: \.element) { i, el in
-                  let isSelected = selectedFilter?.id == el.id
-                  let placeholder = isSelected && !showingFilters
-                  let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
-                  FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter)
+                FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter)
 //                    .equatable()
-                    .matchedGeometryEffect(id: elId, in: ns, properties: .position)
-                    .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .trailing)
-                    .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
-                    .animation(.bouncy.delay(Double(showingFilters && !isSelected ? i + customFilters.count : 0) * 0.125), value: showingFilters)
-                    .transition(.offset(x: 0.01))
-                    .id(elId)
-                }
-                
-                ForEach(Array(customFilters.enumerated()).reversed(), id: \.element) { i, el in
-                  let isSelected = selectedFilter?.id == el.id
-                  let placeholder = isSelected && !showingFilters
-                  let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
-                  
-                  FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter)
-//                    .equatable()
-                    .matchedGeometryEffect(id: "floating-\(el.id)", in: ns)
-                    .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .trailing)
-                    .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
-                    .animation(.bouncy.delay(Double(showingFilters && !isSelected ? i : 0) * 0.125), value: showingFilters)
-                    .transition(.offset(x: 0.01))
-                    .id(elId)
-                }
+                  .matchedGeometryEffect(id: "floating-\(el.id)", in: ns)
+                  .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .trailing)
+                  .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
+                  .animation(.bouncy.delay(Double(showingFilters && !isSelected ? i : 0) * 0.125), value: showingFilters)
+                  .transition(.offset(x: 0.01))
+                  .id(elId)
               }
-              .padding(.trailing, itemsSpacingDownscaled)
-              .padding(.leading, 12)
-              .frame(height: mainTriggerSize, alignment: .trailing)
-              .padding(.top, 16)
-              .background(Color.hitbox)
-              .contentShape(Rectangle())
             }
-            .defaultScrollAnchor(.trailing)
+            .padding(.trailing, itemsSpacingDownscaled)
+            .padding(.leading, 12)
+            .frame(height: mainTriggerSize, alignment: .trailing)
+            .padding(.top, 16)
+            .contentShape(Rectangle())
             .scrollClipDisabled()
             .padding(.bottom, screenEdgeMargin)
             .fadeOnEdges(.horizontal, disableSide: .leading)

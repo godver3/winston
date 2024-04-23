@@ -39,6 +39,11 @@ extension CachedFilter {
     self.update(flair, subID: subID)
   }
   
+  
+  static func getShallow(bgColor: String?, subID: String, text: String) -> ShallowCachedFilter {
+    ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, textColor: "FFFFFF", rawType: "custom")
+  }
+  
   func getShallow() -> ShallowCachedFilter {
     ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, textColor: textColor, rawType: rawType)
   }
