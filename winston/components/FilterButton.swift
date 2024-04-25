@@ -11,10 +11,11 @@ struct FilterButton: View, Equatable {
   static func == (lhs: FilterButton, rhs: FilterButton) -> Bool {
     lhs.filter == rhs.filter && lhs.isSelected == rhs.isSelected
   }
-  
+    
   var filter: ShallowCachedFilter
   var isSelected: Bool
   var selectFilter: (ShallowCachedFilter) -> ()
+  @Binding var customFilter: ShallowCachedFilter?
   
   private let colorDotSize: Double = 8
   private let hPadding: Double = 14
@@ -67,17 +68,17 @@ struct FilterButton: View, Equatable {
       Hap.shared.play(intensity: 0.5, sharpness: 0.5)
       selectFilter(filter)
     }
-//    .onLongPressGesture(minimumDuration: .infinity, maximumDistance: 10, perform: {}, onPressingChanged: { val in
-//      pressingDown = val
-//      
-//      if val && filter.type != "flair" {
-//        editTimer = Timer.scheduledTimer(withTimeInterval: longPressDuration, repeats: false) { _ in
-//          Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-//          customFilterCallback(filter)
-//        }
-//      } else {
-//        editTimer?.invalidate()
-//      }
-//    })
+    .onLongPressGesture(minimumDuration: .infinity, maximumDistance: 10, perform: {}, onPressingChanged: { val in
+      pressingDown = val
+      
+      if val {
+        editTimer = Timer.scheduledTimer(withTimeInterval: longPressDuration, repeats: false) { _ in
+          Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+          customFilter = filter
+        }
+      } else {
+        editTimer?.invalidate()
+      }
+    })
   }
 }

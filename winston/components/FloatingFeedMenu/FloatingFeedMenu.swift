@@ -14,9 +14,12 @@ struct FloatingFeedMenu: View, Equatable {
     lhs.subId == rhs.subId && lhs.filters == rhs.filters && lhs.selectedFilter == rhs.selectedFilter
   }
   
+  @Default(.subredditFilters) var subredditFilters
+  
   var subId: String
   var filters: [ShallowCachedFilter]
   @Binding var selectedFilter: ShallowCachedFilter?
+  @Binding var customFilter: ShallowCachedFilter?
   
   @State private var menuOpen = false
   @State private var showingFilters = false
@@ -34,26 +37,12 @@ struct FloatingFeedMenu: View, Equatable {
   @Default(.SubredditFeedDefSettings) var subredditFeedDefSettings
   @Default(.PostLinkDefSettings) var postLinkDefSettings
   
-  init(subId: String, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>) {
+  init(subId: String, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) {
     self.subId = subId
     self.filters = filters
     
-    if subId == "t5_2qo4s" {
-      self.filters = [
-        CachedFilter.getShallow(bgColor: "007A33", subID: "t5_2qo4s", text: "Celtics"),
-        CachedFilter.getShallow(bgColor: "7ADFA5", subID: "t5_2qo4s", text: "Tatum")
-      ]
-    } else if subId == "t5_2qmg3" {
-      self.filters = [
-        CachedFilter.getShallow(bgColor: "CC1111", subID: "t5_2qmg3", text: "Patriots")
-      ]
-    } else if subId == "t5_2qh6p" {
-      self.filters = [
-        CachedFilter.getShallow(bgColor: "FFFFFF", subID: "t5_2qh6p", text: "Trump")
-      ]
-    }
-    
     self._selectedFilter = selectedFilter
+    self._customFilter = customFilter
     
     _compact = State(initialValue: Defaults[.SubredditFeedDefSettings].compactPerSubreddit[subId] ?? Defaults[.PostLinkDefSettings].compactMode.enabled)
   }
@@ -80,6 +69,8 @@ struct FloatingFeedMenu: View, Equatable {
   }
   
   var body: some View {
+    let customFilters = CachedFilter.filtersFromDefaultsString(subredditFilters[subId])
+
     ZStack(alignment: .bottomTrailing) {
       FloatingBGBlur(active: menuOpen, dismiss: dismiss).equatable()
       
@@ -87,7 +78,7 @@ struct FloatingFeedMenu: View, Equatable {
         Spacer()
         ZStack(alignment: .bottomTrailing) {
           if !showingFilters, let selectedFilter {
-            FilterButton(filter: selectedFilter, isSelected: true, selectFilter: selectFilter)
+            FilterButton(filter: selectedFilter, isSelected: true, selectFilter: selectFilter, customFilter: $customFilter)
 //              .equatable()
               .matchedGeometryEffect(id: "floating-\(selectedFilter.id)", in: ns, properties: .position)
               .padding(.trailing, itemsSpacingDownscaled)
@@ -96,17 +87,15 @@ struct FloatingFeedMenu: View, Equatable {
               .transition(.offset(x: 0.01))
           }
           
-          let customFilters = filters.filter({ $0.type == .custom })
           if menuOpen {
-            Spacer()
             HStack(spacing: 8) {
               ForEach(Array(customFilters.enumerated()).reversed(), id: \.element) { i, el in
                 let isSelected = selectedFilter?.id == el.id
                 let placeholder = isSelected && !showingFilters
                 let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
                 
-                FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter)
-//                    .equatable()
+                FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter, customFilter: $customFilter)
+                //                    .equatable()
                   .matchedGeometryEffect(id: "floating-\(el.id)", in: ns)
                   .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .trailing)
                   .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
@@ -115,14 +104,12 @@ struct FloatingFeedMenu: View, Equatable {
                   .id(elId)
               }
             }
-            .padding(.trailing, itemsSpacingDownscaled)
-            .padding(.leading, 12)
+            .padding(.trailing, 12)
             .frame(height: mainTriggerSize, alignment: .trailing)
             .padding(.top, 16)
             .contentShape(Rectangle())
             .scrollClipDisabled()
             .padding(.bottom, screenEdgeMargin)
-            .fadeOnEdges(.horizontal, disableSide: .leading)
             .transition(.offset(x: 0.01))
           }
         }
@@ -161,7 +148,7 @@ struct FloatingFeedMenu: View, Equatable {
                 .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: menuOpen)
                 .highPriorityGesture(TapGesture().onEnded({
                   Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-//                  customFilterCallback(FilterData())
+                  customFilter = CachedFilter.getNewShallow(subredditId: subId)
                 }))
             }
           }
@@ -177,11 +164,10 @@ struct FloatingFeedMenu: View, Equatable {
 
 
 extension View {
-  func floatingMenu(subId: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>) -> some View {
-    self
-      .overlay(alignment: .bottomTrailing) {
+  func floatingMenu(subId: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) -> some View {
+    self.overlay(alignment: .bottomTrailing) {
         if let subId {
-          FloatingFeedMenu(subId: subId, filters: filters, selectedFilter: selectedFilter)
+          FloatingFeedMenu(subId: subId, filters: filters, selectedFilter: selectedFilter, customFilter: customFilter)
         }
       }
   }

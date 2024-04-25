@@ -16,9 +16,22 @@ struct ShallowCachedFilter: Equatable, Identifiable, Hashable {
   private(set) var subID: String
   private(set) var text: String
   private(set) var textColor: String?
+  private(set) var new: Bool = false
   fileprivate var rawType: String
   var type: CachedFilter.FilterType {
     get { CachedFilter.FilterType(rawValue: self.rawType) ?? .flair }
+  }
+  
+  func updateText(_ newText: String) -> ShallowCachedFilter {
+    return CachedFilter.getShallow(bgColor: bgColor, subID: subID, text: newText)
+  }
+  
+  func updateBG(_ newBG: String) -> ShallowCachedFilter {
+    return CachedFilter.getShallow(bgColor: newBG, subID: subID, text: text)
+  }
+  
+  func toString() -> String {
+    return "\(bgColor ?? "FFFFFF"),\(subID),\(text)"
   }
 }
 
@@ -39,9 +52,30 @@ extension CachedFilter {
     self.update(flair, subID: subID)
   }
   
+  static func fromString(_ str: String) -> ShallowCachedFilter {
+    let components = str.components(separatedBy: ",")
+    let bg = components.count > 0 ? components[0] : "FFFFFF"
+    let sub = components.count > 1 ? components[1] : ""
+    let txt = components.count > 2 ? components[2] : ""
+    
+    return ShallowCachedFilter(bgColor: bg, subID: sub, text: txt, textColor: "FFFFFF", rawType: "custom")
+  }
   
   static func getShallow(bgColor: String?, subID: String, text: String) -> ShallowCachedFilter {
     ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, textColor: "FFFFFF", rawType: "custom")
+  }
+  
+  static func getNewShallow(subredditId: String) -> ShallowCachedFilter {
+    ShallowCachedFilter(bgColor: "FFFFFF", subID: subredditId, text: "", textColor: "FFFFFF", new: true, rawType: "custom")
+  }
+  
+  static func getDefaultsString(_ filters: [ShallowCachedFilter]) -> String {
+    return filters.map { $0.toString() }.joined(separator: "|")
+  }
+  
+  static func filtersFromDefaultsString(_ filtersStr: String?) -> [ShallowCachedFilter] {
+    return filtersStr == nil || filtersStr == "" ? [] :
+      filtersStr!.components(separatedBy: "|").map{ CachedFilter.fromString($0) }
   }
   
   func getShallow() -> ShallowCachedFilter {

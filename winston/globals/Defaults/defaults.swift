@@ -60,6 +60,8 @@ extension Defaults.Keys {
   static let filteredSubreddits = Key<[String]>("filteredSubreddits", default: [])
   static let postsInBox = Key<[PostInBox]>("postsInBox-v2", default: [])
   static let likedButNotSubbed = Key<[Subreddit]>("likedButNotSubbed", default: [])
+  static let subredditFilters = Key<Dictionary<String, String>>("subredditFilters", default: [:])
+
   /* </Heavy Defaults are kept separated, these should be in CoreData or something> */
   
   static let wereOldDefaultsMigrated = Key<Bool>("wereOldDefaultsMigrated", default: false)

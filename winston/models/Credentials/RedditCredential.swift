@@ -119,6 +119,7 @@ struct RedditCredential: Identifiable, Equatable, Hashable, Codable {
         return await fetchNewToken()
         
         func fetchNewToken(count: Int = 0) async -> AccessToken? {
+          print("FETCHING NEW TOKEN")
             let payload = RedditAPI.RefreshAccessTokenPayload(refresh_token: refreshToken)
             let result = await RedditAPI.shared._doRequest(authenticated: false) { headers in
                 let result = await AF.request(
@@ -137,6 +138,8 @@ struct RedditCredential: Identifiable, Equatable, Hashable, Codable {
             switch result {
             case .success(let data):
                 let newAccessToken = RedditCredential.AccessToken(token: data.access_token, expiration: data.expires_in, lastRefresh: Date())
+              
+              print("SUCCESS")
                 if saveToken {
                     var newSelf = self
                     newSelf.accessToken = newAccessToken
@@ -147,6 +150,7 @@ struct RedditCredential: Identifiable, Equatable, Hashable, Codable {
                 print("pipo", error, payload)
                 switch error.responseCode {
                 case 401:
+                    print("RETRYING")
                     var selfCopy = self
                     selfCopy.refreshToken = nil
                     selfCopy.accessToken = nil

@@ -22,6 +22,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
     var forceRefresh: Binding<Bool>?
     @Default(.SubredditFeedDefSettings) private var subredditFeedDefSettings
     @Default(.GeneralDefSettings) private var generalDefSettings
+    @State private var customFilter: ShallowCachedFilter?
     
     init(feedId: String, showSubInPosts: Bool = false, title: String, theme: ThemeBG, fetch: @escaping FeedItemsManager<S>.ItemsFetchFn, @ViewBuilder header: @escaping () -> Header = { EmptyView() }, @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }, initialSorting: S? = nil, disableSearch: Bool = true, subreddit: Subreddit? = nil, forceRefresh: Binding<Bool>? = nil) where S == SubListingSortOption {
         self.showSubInPosts = showSubInPosts
@@ -279,7 +280,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                     }
                 }
             }
-            .floatingMenu(subId: subreddit?.id, filters: shallowCachedFilters, selectedFilter: $itemsManager.selectedFilter)
+            .floatingMenu(subId: subreddit?.id, filters: shallowCachedFilters, selectedFilter: $itemsManager.selectedFilter, customFilter: $customFilter)
             //    .onChange(of: itemsManager.selectedFilter) { searchEnabled = $1?.type != .custom }
             .refreshable { await refetch(true) }
             .onChange(of: generalDefSettings.redditCredentialSelectedID) { _, _ in
@@ -299,6 +300,9 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                         forceRefresh?.wrappedValue = false // Reset
                     }
                 }
+            }
+            .sheet(item: $customFilter) { custom in
+              CustomFilterView(filter: custom, subId: subreddit?.id ?? "")
             }
             .task(id: [itemsManager.searchQuery.debounced, itemsManager.selectedFilter?.text, itemsManager.sorting?.meta.apiValue]) {
                 if itemsManager.displayMode != .loading { return }
