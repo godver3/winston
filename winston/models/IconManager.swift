@@ -59,7 +59,7 @@ enum WinstonAppIcon: String, CaseIterable, Identifiable, Hashable, Equatable {
     }
   }
   
-  var preview: UIImage { UIImage(named: self.name ?? "iconStandard")! }
+    var preview: UIImage { UIImage(named: self.name ?? "iconStandard") ?? UIImage.emptyCredential }
 }
 
 @Observable

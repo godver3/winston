@@ -306,7 +306,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             }
             .task(id: [itemsManager.searchQuery.debounced, itemsManager.selectedFilter?.text, itemsManager.sorting?.meta.apiValue]) {
                 if itemsManager.displayMode != .loading { return }
-                await refetch()
+                Task { await refetch() } 
             }
         }
     }
