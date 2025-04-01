@@ -106,7 +106,7 @@ class GenericRedditEntity<T: GenericRedditEntityDataType, B: Hashable>: Identifi
     self.typePrefix = typePrefix
   }
   
-  init(data: T, typePrefix: String?, kind: String? = nil) {
+  init(data: T, typePrefix: String?, kind: String? = nil) {    
     self.data = data
     self.kind = kind
     self._id = data.id

@@ -20,6 +20,8 @@ struct CommentSkipper: ViewModifier {
   var refresh: () -> Void
     
   @State private var refreshRotationDegrees = 0.0
+    
+  private let buttonSize: CGFloat = 48
   
   func body(content: Content) -> some View {
     content.overlay {
@@ -36,28 +38,26 @@ struct CommentSkipper: ViewModifier {
               
               HStack(spacing: 14) {
                   Image(systemName: "chevron.left")
-                    .fontSize(18, .semibold)
+                    .fontSize(22, .semibold)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
-                    .frame(width: 40, height: 40)
+                    .frame(width: buttonSize, height: buttonSize)
                     .clipShape(Circle())
                     .drawingGroup()
                     .floating()
-                    .scaleEffect(1)
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         Nav.shared.activeRouter.goBack()
                     }
                   
                   Image(systemName: "arrow.clockwise")
-                    .fontSize(18, .semibold)
+                    .fontSize(22, .semibold)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
-                    .frame(width: 40, height: 40)
+                    .frame(width: buttonSize, height: buttonSize)
                     .clipShape(Circle())
                     .drawingGroup()
                     .floating()
-                    .scaleEffect(1)
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         refresh()
@@ -69,14 +69,13 @@ struct CommentSkipper: ViewModifier {
                     .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
                   
                   Image(systemName: "chevron.down")
-                    .fontSize(18, .semibold)
+                    .fontSize(22, .semibold)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
-                    .frame(width: 40, height: 40)
+                    .frame(width: buttonSize, height: buttonSize)
                     .clipShape(Circle())
                     .drawingGroup()
                     .floating()
-                    .scaleEffect(1)
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         withAnimation {

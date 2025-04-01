@@ -15,9 +15,28 @@ struct CommentLinkMore: View {
   var postFullname: String?
   var parentElement: CommentParentElement?
   var indentLines: Int?
+  var isLast: Bool = false
   @State var loadMoreLoading = false
   
   @Environment(\.useTheme) private var selectedTheme
+    
+  func handleTap () {
+    if let postFullname = postFullname, let parentElement = parentElement {
+      withAnimation(spring) {
+        loadMoreLoading = true
+      }
+      Task(priority: .background) {
+        await comment.loadChildren(parent: parentElement, postFullname: postFullname, avatarSize: selectedTheme.comments.theme.badge.avatar.size, post: post)
+        await MainActor.run {
+          doThisAfter(0.5) {
+            withAnimation(spring) {
+              loadMoreLoading = false
+            }
+          }
+        }
+      }
+    }
+  }
   
   var body: some View {
     let theme = selectedTheme.comments
@@ -72,24 +91,15 @@ struct CommentLinkMore: View {
       .background(selectedTheme.comments.theme.bg())
       .contentShape(Rectangle())
       .onTapGesture {
-        if let postFullname = postFullname {
-          withAnimation(spring) {
-            loadMoreLoading = true
-          }
-          Task(priority: .background) {
-            await comment.loadChildren(parent: parentElement, postFullname: postFullname, avatarSize: selectedTheme.comments.theme.badge.avatar.size, post: post)
-            await MainActor.run {
-              doThisAfter(0.5) {
-                withAnimation(spring) {
-                  loadMoreLoading = false
-                }
-              }
-            }
-          }
-        }
+          handleTap()
       }
       .allowsHitTesting(!loadMoreLoading)
       .id("\(comment.id)-more")
+      .onAppear {
+        if isLast {
+          handleTap()
+        }
+      }
     }
   }
 }

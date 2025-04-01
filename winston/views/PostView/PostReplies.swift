@@ -19,6 +19,7 @@ struct PostReplies: View {
   var geometryReader: GeometryProxy
   @Environment(\.useTheme) private var selectedTheme
   
+  
   // MARK: Properties related to comment skipper
   @Binding var topVisibleCommentId: String?
   @Binding var previousScrollTarget: String?
@@ -79,7 +80,7 @@ struct PostReplies: View {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, isLast: i == comments.count - 1)
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
                     key: CommentUtils.AnchorsKey.self,

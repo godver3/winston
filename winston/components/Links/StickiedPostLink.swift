@@ -19,7 +19,7 @@ struct StickiedPostLink: View {
         HStack {
           Image(systemName: "pin.fill").foregroundStyle(.green)
           
-          Text(data.title)
+          Text(data.formattedTitle())
             .lineLimit(2)
             .fontSize(16, .semibold)
             .fixedSize(horizontal: false, vertical: true)

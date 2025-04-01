@@ -112,18 +112,18 @@ struct FloatingFeedMenu: View, Equatable {
             .transition(.offset(x: 0.01))
           }
         
+          let showBackButton = (!menuOpen || customFilters.count == 0) && selectedFilter == nil
           HStack(spacing: 14) {
                 Image(systemName: "chevron.left")
-                  .fontSize(18, .semibold)
+                  .fontSize(showBackButton ? 22 : 0, .semibold)
                   .foregroundStyle(Color.accentColor)
                   .padding(.horizontal, 14)
-                  .frame(width: !menuOpen && selectedFilter == nil ? 48 : 0, height: !menuOpen && selectedFilter == nil ? 48 : 0)
+                  .frame(width: showBackButton ? actionsSize : 0, height: showBackButton ? actionsSize : 0)
                   .clipShape(Circle())
                   .drawingGroup()
                   .floating()
-                  .scaleEffect(1)
-                  .animation(.bouncy.delay(0), value: !menuOpen)
-                  .transition(.offset(x: 0.01))
+                  .animation(.bouncy.delay(0), value: showBackButton)
+                  .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: !showBackButton)
                   .onTapGesture {
                       Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                       Nav.shared.activeRouter.goBack()
@@ -135,7 +135,6 @@ struct FloatingFeedMenu: View, Equatable {
             .contentShape(Rectangle())
             .scrollClipDisabled()
             .padding(.bottom, screenEdgeMargin)
-            .transition(.offset(x: 0.01))
         }
         
         // -

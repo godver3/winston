@@ -72,7 +72,7 @@ func getPostDimensions(post: Post, winstonData: PostWinstonData? = nil, columnWi
     let compactImgSize = scaledCompactModeThumbSize()
     let theme = selectedTheme.postLinks.theme
     let postGeneralSpacing = theme.verticalElementsSpacing + theme.linespacing
-    let title = data.title
+    let title = data.formattedTitle()
     let body = data.selftext ?? ""
     
     var ACC_titleHeight: Double = 0

@@ -82,7 +82,7 @@ struct PostLinkNormal: View, Equatable, Identifiable {
   func mediaComponentCall() -> some View {
     if let data = post.data {
       if let extractedMedia = winstonData.extractedMedia {
-        MediaPresenter(winstonData: winstonData, controller: controller, postTitle: data.title, badgeKit: data.badgeKit, avatarImageRequest: winstonData.avatarImageRequest, markAsSeen: !defSettings.lightboxReadsPost ? nil : markAsRead, cornerRadius: theme.theme.mediaCornerRadius, blurPostLinkNSFW: defSettings.blurNSFW, media: extractedMedia, over18: over18, compact: false, contentWidth: winstonData.postDimensions.mediaSize?.width ?? 0, maxMediaHeightScreenPercentage: defSettings.maxMediaHeightScreenPercentage, resetVideo: resetVideo)
+        MediaPresenter(winstonData: winstonData, controller: controller, postTitle: data.formattedTitle(), badgeKit: data.badgeKit, avatarImageRequest: winstonData.avatarImageRequest, markAsSeen: !defSettings.lightboxReadsPost ? nil : markAsRead, cornerRadius: theme.theme.mediaCornerRadius, blurPostLinkNSFW: defSettings.blurNSFW, media: extractedMedia, over18: over18, compact: false, contentWidth: winstonData.postDimensions.mediaSize?.width ?? 0, maxMediaHeightScreenPercentage: defSettings.maxMediaHeightScreenPercentage, resetVideo: resetVideo)
           .allowsHitTesting(defSettings.isMediaTappable)
         
         if case .repost(let repost) = extractedMedia {
@@ -118,7 +118,7 @@ struct PostLinkNormal: View, Equatable, Identifiable {
         if defSettings.titlePosition == .bottom { mediaComponentCall() }
         
         VStack(alignment: .leading, spacing: theme.theme.verticalElementsSpacing / 2.5) {
-          PostLinkTitle(attrString: winstonData.titleAttr, label: data.title, theme: theme.theme.titleText, size: winstonData.postDimensions.titleSize)
+          PostLinkTitle(attrString: winstonData.titleAttr, label: data.formattedTitle(), theme: theme.theme.titleText, size: winstonData.postDimensions.titleSize)
           
           if !(data.selftext?.isEmpty ?? true) && defSettings.showSelfText, let selftext = data.selftext {
             PostLinkNormalSelftext(selftext: selftext, theme: theme.theme.bodyText)

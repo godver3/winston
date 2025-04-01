@@ -106,6 +106,10 @@ struct PostData: GenericRedditEntityDataType {
   var preview: Preview? = nil
   var winstonSeen: Bool? = nil
   var winstonHidden: Bool? = nil
+    
+  func formattedTitle () -> String {
+    return title.replacingOccurrences(of: "&amp;", with: "&")
+  }
   
   var badgeKit: BadgeKit {
     BadgeKit(

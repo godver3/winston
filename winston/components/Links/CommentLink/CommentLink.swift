@@ -86,6 +86,10 @@ struct CommentLink: View, Equatable {
   var comment: Comment
   var commentWinstonData: CommentWinstonData
   var children: [Comment]
+  
+  var isLast: Bool = false
+  
+  var commentLinkMore: CommentLinkMore? = nil
 
   var body: some View {
     if let data = comment.data {
@@ -98,7 +102,7 @@ struct CommentLink: View, Equatable {
                 CommentLinkFull(post: post, arrowKinds: arrowKinds, comment: comment, indentLines: indentLines)
               }
             } else {
-              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines)
+              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast)
             }
           } else {
             CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL)
