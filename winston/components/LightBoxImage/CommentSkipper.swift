@@ -19,7 +19,7 @@ struct CommentSkipper: ViewModifier {
   var reader: ScrollViewProxy
   var refresh: () -> Void
     
-  @Binding var commentsLoading: Bool
+  @State private var refreshRotationDegrees = 0.0
   
   func body(content: Content) -> some View {
     content.overlay {
@@ -61,8 +61,12 @@ struct CommentSkipper: ViewModifier {
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         refresh()
+                        
+                        withAnimation {
+                            refreshRotationDegrees += 360
+                        }
                     }
-                    .rotationEffect(Angle(degrees: commentsLoading ? -360 : 0), anchor: .center)
+                    .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
                   
                   Image(systemName: "chevron.down")
                     .fontSize(18, .semibold)
@@ -124,8 +128,7 @@ extension View {
     previousScrollTarget: Binding<String?>,
     comments: [Comment],
     reader: ScrollViewProxy,
-    refresh: @escaping () -> Void,
-    commentsLoading: Binding<Bool>
+    refresh: @escaping () -> Void
   ) -> some View {
     modifier(
       CommentSkipper(
@@ -134,8 +137,7 @@ extension View {
         previousScrollTarget: previousScrollTarget,
         comments: comments,
         reader: reader,
-        refresh: refresh,
-        commentsLoading: commentsLoading
+        refresh: refresh
       )
     )
   }

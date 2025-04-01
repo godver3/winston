@@ -94,7 +94,7 @@ struct PostContent: View, Equatable {
           }
         }
         .id("post-content")
-        .listRowInsets(EdgeInsets(top: postsTheme.spacing / 2, leading: postsTheme.padding.horizontal, bottom: postsTheme.spacing / 2, trailing: postsTheme.spacing / 2))
+        .listRowInsets(EdgeInsets(top: postsTheme.spacing / 2, leading: postsTheme.padding.horizontal, bottom: postsTheme.spacing / 2, trailing: postsTheme.padding.horizontal))
       }
       .contentShape(Rectangle())
       .onTapGesture { withAnimation(.smooth) { collapsed.toggle() }}

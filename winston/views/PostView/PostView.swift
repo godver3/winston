@@ -31,7 +31,6 @@ struct PostView: View, Equatable {
   @SilentState private var topVisibleCommentId: String? = nil
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
-  @State private var commentsLoading = true
   
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -42,7 +41,10 @@ struct PostView: View, Equatable {
     let defSettings = Defaults[.PostPageDefSettings]
     let commentsDefSettings = Defaults[.CommentsSectionDefSettings]
     
-    _sort = State(initialValue: defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? commentsDefSettings.preferredSort) : commentsDefSettings.preferredSort);
+    let title = post.data?.title.lowercased() ?? ""
+    let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
+      CommentSortOption.live : commentsDefSettings.preferredSort
+    _sort = State(initialValue: defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? defaultSort) : defaultSort);
   }
   
   func asyncFetch(_ full: Bool = true) async {
@@ -99,7 +101,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-                PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, commentsLoading: $commentsLoading)
+                PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -181,8 +183,7 @@ struct PostView: View, Equatable {
           previousScrollTarget: $previousScrollTarget,
           comments: comments,
           reader: proxy,
-          refresh: refreshComments,
-          commentsLoading: $commentsLoading
+          refresh: refreshComments
         )
       }
     }

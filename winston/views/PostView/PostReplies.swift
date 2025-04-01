@@ -19,48 +19,43 @@ struct PostReplies: View {
   var geometryReader: GeometryProxy
   @Environment(\.useTheme) private var selectedTheme
   
-  
   // MARK: Properties related to comment skipper
   @Binding var topVisibleCommentId: String?
   @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
-  @Binding var commentsLoading: Bool
   
   @State private var seenComments: String?
   @State private var loading = true
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
   
   func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
-    commentsLoading = true
-    if let result = await post.refreshPost(commentID: (altIgnoreSpecificComment ?? ignoreSpecificComment) ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
-      Task(priority: .background) {
-        _ = await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
-      }
-      newComments.forEach { $0.parentWinston = comments }
-      await MainActor.run {
-        withAnimation {
-          comments = newComments
-          loading = false
-          commentsLoading = false
-        }
+      if let result = await post.refreshPost(commentID: (altIgnoreSpecificComment ?? ignoreSpecificComment) ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
+          Task(priority: .background) {
+            _ = await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
+          }
+          newComments.forEach { $0.parentWinston = comments }
+          await MainActor.run {
+            withAnimation {
+              comments = newComments
+              loading = false
+            }
 
-        if var specificID = highlightID {
-          specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
-          doThisAfter(0.1) {
-            withAnimation(spring) {
-              proxy.scrollTo("\(specificID)-body", anchor: .center)
+            if var specificID = highlightID {
+              specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
+              doThisAfter(0.1) {
+                withAnimation(spring) {
+                  proxy.scrollTo("\(specificID)-body", anchor: .center)
+                }
+              }
             }
           }
-        }
+        } else {
+          await MainActor.run {
+            withAnimation {
+              loading = false
+            }
+          }
       }
-    } else {
-      await MainActor.run {
-        withAnimation {
-          loading = false
-          commentsLoading = false
-        }
-      }
-    }
   }
   
   var body: some View {

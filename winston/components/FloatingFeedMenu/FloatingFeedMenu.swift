@@ -110,32 +110,32 @@ struct FloatingFeedMenu: View, Equatable {
             .scrollClipDisabled()
             .padding(.bottom, screenEdgeMargin)
             .transition(.offset(x: 0.01))
-          } else if selectedFilter == nil {
-              HStack(spacing: 14) {
-                  Image(systemName: "chevron.left")
-                    .fontSize(18, .semibold)
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 14)
-                    .frame(width: 48, height: 48)
-                    .clipShape(Circle())
-                    .drawingGroup()
-                    .floating()
-                    .scaleEffect(1)
-                    .animation(.bouncy.delay(0), value: !menuOpen)
-                    .transition(.offset(x: 0.01))
-                    .onTapGesture {
-                        Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                        Nav.shared.activeRouter.goBack()
-                    }
-              }
-              .padding(.trailing, 12)
-              .frame(height: mainTriggerSize, alignment: .trailing)
-              .padding(.top, 16)
-              .contentShape(Rectangle())
-              .scrollClipDisabled()
-              .padding(.bottom, screenEdgeMargin)
-              .transition(.offset(x: 0.01))
           }
+        
+          HStack(spacing: 14) {
+                Image(systemName: "chevron.left")
+                  .fontSize(18, .semibold)
+                  .foregroundStyle(Color.accentColor)
+                  .padding(.horizontal, 14)
+                  .frame(width: !menuOpen && selectedFilter == nil ? 48 : 0, height: !menuOpen && selectedFilter == nil ? 48 : 0)
+                  .clipShape(Circle())
+                  .drawingGroup()
+                  .floating()
+                  .scaleEffect(1)
+                  .animation(.bouncy.delay(0), value: !menuOpen)
+                  .transition(.offset(x: 0.01))
+                  .onTapGesture {
+                      Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                      Nav.shared.activeRouter.goBack()
+                  }
+            }
+            .padding(.trailing, 12)
+            .frame(height: mainTriggerSize, alignment: .trailing)
+            .padding(.top, 16)
+            .contentShape(Rectangle())
+            .scrollClipDisabled()
+            .padding(.bottom, screenEdgeMargin)
+            .transition(.offset(x: 0.01))
         }
         
         // -
