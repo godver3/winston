@@ -59,12 +59,12 @@ struct Subreddits: View, Equatable {
         if searchText == "" {
           VStack(spacing: 12) {
             HStack(spacing: 12) {
-              ListBigBtn(icon: "house.circle.fill", iconColor: .blue, label: "Home") {
-                firstDestination = .reddit(.subFeed(Subreddit(id: "home")))
+              ListBigBtn(icon: "chart.line.uptrend.xyaxis.circle.fill", iconColor: .blue, label: "Popular") {
+                firstDestination = .reddit(.subFeed(Subreddit(id: "popular")))
               }
               
-              ListBigBtn(icon: "chart.line.uptrend.xyaxis.circle.fill", iconColor: .red, label: "Popular") {
-                firstDestination = .reddit(.subFeed(Subreddit(id: "popular")))
+              ListBigBtn(icon: "bookmark.circle.fill", iconColor: .green, label: "Saved") {
+                firstDestination = .reddit(.subFeed(Subreddit(id: savedKeyword)))
               }
             }
             HStack(spacing: 12) {
@@ -72,8 +72,8 @@ struct Subreddits: View, Equatable {
                 firstDestination = .reddit(.subFeed(Subreddit(id: "all")))
               }
               
-              ListBigBtn(icon: "bookmark.circle.fill", iconColor: .green, label: "Saved") {
-                firstDestination = .reddit(.subFeed(Subreddit(id: savedKeyword)))
+              ListBigBtn(icon: "house.circle.fill", iconColor: .red, label: "Home") {
+                firstDestination = .reddit(.subFeed(Subreddit(id: "home")))
               }
             }
           }
