@@ -24,12 +24,14 @@ struct PostReplies: View {
   @Binding var topVisibleCommentId: String?
   @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
+  @Binding var commentsLoading: Bool
   
   @State private var seenComments: String?
   @State private var loading = true
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
   
   func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
+    commentsLoading = true
     if let result = await post.refreshPost(commentID: (altIgnoreSpecificComment ?? ignoreSpecificComment) ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
       Task(priority: .background) {
         _ = await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
@@ -39,6 +41,7 @@ struct PostReplies: View {
         withAnimation {
           comments = newComments
           loading = false
+          commentsLoading = false
         }
 
         if var specificID = highlightID {
@@ -54,6 +57,7 @@ struct PostReplies: View {
       await MainActor.run {
         withAnimation {
           loading = false
+          commentsLoading = false
         }
       }
     }
@@ -84,7 +88,7 @@ struct PostReplies: View {
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
                     key: CommentUtils.AnchorsKey.self,
-                    value: .center
+                    value: .top
                   ) { [comment.id: $0] }
                 }
             }

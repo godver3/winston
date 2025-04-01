@@ -31,6 +31,7 @@ struct PostView: View, Equatable {
   @SilentState private var topVisibleCommentId: String? = nil
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
+  @State private var commentsLoading = true
   
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -62,9 +63,14 @@ struct PostView: View, Equatable {
   }
   
   func updatePost() {
-    Task(priority: .background) { await asyncFetch(true) }
+      Task(priority: .background) { await asyncFetch(true) }
   }
-  
+
+
+  func refreshComments() {
+      Task { await asyncFetch() }
+  }
+
   var body: some View {
     let navtitle: String = post.data?.title ?? "no title"
     let subnavtitle: String = "r/\(post.data?.subreddit ?? "no sub") \u{2022} " + String(localized:"\(post.data?.num_comments ?? 0) comments")
@@ -93,7 +99,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments)
+                PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, commentsLoading: $commentsLoading)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -128,8 +134,7 @@ struct PostView: View, Equatable {
         .environment(\.defaultMinListRowHeight, 1)
         .listStyle(.plain)
         .refreshable {
-          withAnimation { update.toggle() }
-          await asyncFetch(true)
+          refreshComments()
         }
         .overlay(alignment: .bottomTrailing) {
           if !selectedTheme.posts.inlineFloatingPill {
@@ -175,7 +180,9 @@ struct PostView: View, Equatable {
           topVisibleCommentId: $topVisibleCommentId,
           previousScrollTarget: $previousScrollTarget,
           comments: comments,
-          reader: proxy
+          reader: proxy,
+          refresh: refreshComments,
+          commentsLoading: $commentsLoading
         )
       }
     }

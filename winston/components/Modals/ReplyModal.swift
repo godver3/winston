@@ -160,7 +160,7 @@ struct ReplyModal<Content: View>: View {
           
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 68)
+        .padding(.bottom, 16)
       }
       .overlay(
         MasterButton(icon: "paperplane.fill", label: submitBtnLabel, height: 48, fullWidth: true, cornerRadius: 16) {

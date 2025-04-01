@@ -17,6 +17,9 @@ struct CommentSkipper: ViewModifier {
 
   var comments: [Comment]
   var reader: ScrollViewProxy
+  var refresh: () -> Void
+    
+  @Binding var commentsLoading: Bool
   
   func body(content: Content) -> some View {
     content.overlay {
@@ -30,20 +33,53 @@ struct CommentSkipper: ViewModifier {
           
           VStack {
             Spacer()
-            Button {
-              Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-              withAnimation {
-                jumpToNextComment()
+              
+              HStack(spacing: 14) {
+                  Image(systemName: "chevron.left")
+                    .fontSize(18, .semibold)
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 14)
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .drawingGroup()
+                    .floating()
+                    .scaleEffect(1)
+                    .onTapGesture {
+                        Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                        Nav.shared.activeRouter.goBack()
+                    }
+                  
+                  Image(systemName: "arrow.clockwise")
+                    .fontSize(18, .semibold)
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 14)
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .drawingGroup()
+                    .floating()
+                    .scaleEffect(1)
+                    .onTapGesture {
+                        Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                        refresh()
+                    }
+                    .rotationEffect(Angle(degrees: commentsLoading ? -360 : 0), anchor: .center)
+                  
+                  Image(systemName: "chevron.down")
+                    .fontSize(18, .semibold)
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.horizontal, 14)
+                    .frame(width: 40, height: 40)
+                    .clipShape(Circle())
+                    .drawingGroup()
+                    .floating()
+                    .scaleEffect(1)
+                    .onTapGesture {
+                        Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                        withAnimation {
+                          jumpToNextComment()
+                        }
+                    }
               }
-            } label: {
-              Label("Jump to Next Comment", systemImage: "chevron.down")
-                .labelStyle(.iconOnly)
-                .padding()
-                .background(
-                  Circle()
-                    .foregroundStyle(.thinMaterial)
-                )
-            }
           }
           .padding()
           
@@ -87,8 +123,9 @@ extension View {
     topVisibleCommentId: Binding<String?>,
     previousScrollTarget: Binding<String?>,
     comments: [Comment],
-
-    reader: ScrollViewProxy
+    reader: ScrollViewProxy,
+    refresh: @escaping () -> Void,
+    commentsLoading: Binding<Bool>
   ) -> some View {
     modifier(
       CommentSkipper(
@@ -96,7 +133,9 @@ extension View {
         topVisibleCommentId: topVisibleCommentId,
         previousScrollTarget: previousScrollTarget,
         comments: comments,
-        reader: reader
+        reader: reader,
+        refresh: refresh,
+        commentsLoading: commentsLoading
       )
     )
   }

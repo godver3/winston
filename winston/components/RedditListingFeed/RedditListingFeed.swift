@@ -69,7 +69,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             fetchedFilters = true
         }
     }
-  
+    
     func sortUpdated(opt: S) {
       itemsManager.sorting = opt
       feedDefSettings.subredditSorts[self.subreddit?.id ?? ""] = opt as? SubListingSortOption

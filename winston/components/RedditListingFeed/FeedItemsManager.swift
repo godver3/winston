@@ -104,14 +104,19 @@ class FeedItemsManager<S> {
             }
             
             DispatchQueue.main.async { [newEntities, newLoadedEntitiesIds] in
-                self.entities = newEntities
-                self.lastElementId = after
-                self.loadedEntitiesIds = newLoadedEntitiesIds
-                self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-                
-//                withAnimation {
-//                  self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-//                }
+                if loadingMore {
+                    self.entities = newEntities
+                    self.lastElementId = after
+                    self.loadedEntitiesIds = newLoadedEntitiesIds
+                    self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+                } else {
+                    withAnimation {
+                        self.entities = newEntities
+                        self.lastElementId = after
+                        self.loadedEntitiesIds = newLoadedEntitiesIds
+                        self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+                    }
+                }
             }
             
         } else {
@@ -121,7 +126,7 @@ class FeedItemsManager<S> {
     }
     
     func elementAppeared(entity: RedditEntityType, index: Int) async {
-        if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 10, currentTask == nil {
+        if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 7, currentTask == nil {
             self.currentTask = Task { await fetchCaller(loadingMore: true) }
         }
         

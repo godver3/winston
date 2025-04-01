@@ -36,8 +36,8 @@ struct SwipeUI<T: GenericRedditEntityDataType, B: Hashable>: ViewModifier {
   var disabled: Bool = false
   var skipAnimation: Bool
   
-  private let firstActionThreshold: CGFloat = 75
-  private let secondActionThreshold: CGFloat = 150
+  private let firstActionThreshold: CGFloat = 50
+  private let secondActionThreshold: CGFloat = 100
   
   func infoRight() -> (SwipeActionItem, SwipeActionItem, SwipeActionItem, Bool)? {
     let rightFirstNil = actionsSet.rightFirst.id == "none"
