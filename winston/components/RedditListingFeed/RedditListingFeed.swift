@@ -64,10 +64,10 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
         //    }
         
         await itemsManager.fetchCaller(loadingMore: false, force: force)
-        if let subreddit, !fetchedFilters {
-            await subreddit.fetchAndCacheFlairs()
-            fetchedFilters = true
-        }
+//        if let subreddit, !fetchedFilters {
+//            Task { await subreddit.fetchAndCacheFlairs() }
+//            fetchedFilters = true
+//        }
     }
     
     func sortUpdated(opt: S) {

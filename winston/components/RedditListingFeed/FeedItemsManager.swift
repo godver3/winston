@@ -102,21 +102,20 @@ class FeedItemsManager<S> {
                 newLoadedEntitiesIds.insert(ent.fullname)
                 newEntities.append(ent)
             }
-            
-            DispatchQueue.main.async { [newEntities, newLoadedEntitiesIds] in
-                if loadingMore {
-                    self.entities = newEntities
-                    self.lastElementId = after
-                    self.loadedEntitiesIds = newLoadedEntitiesIds
-                    self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-                } else {
-                    withAnimation {
-                        self.entities = newEntities
-                        self.lastElementId = after
-                        self.loadedEntitiesIds = newLoadedEntitiesIds
-                        self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-                    }
+//            
+            self.loadedEntitiesIds = newLoadedEntitiesIds
+            self.lastElementId = after
+//
+            await MainActor.run { [newEntities ] in
+              if loadingMore {
+                self.entities = newEntities
+                self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+              } else {
+                withAnimation {
+                  self.entities = newEntities
+                  self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
                 }
+              }
             }
             
         } else {
