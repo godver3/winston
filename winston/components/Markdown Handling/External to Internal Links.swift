@@ -13,7 +13,7 @@ class MarkdownUtil {
         text.contains(">!") && text.contains("!<")
     }
     
-    static func formatForMarkdown(_ text: String, showSpoiler: Bool = false) -> String {
+    static func formatForMarkdown(_ text: String, showSpoiler: Bool = false, searchQuery: String? = nil) -> String {
         var processedText = text
         
         // Replace http:// or https:// in existing markdown links
@@ -92,6 +92,10 @@ class MarkdownUtil {
                 )
             }
             
+        }
+        
+        if let searchQuery = searchQuery?.trimmingCharacters(in: .whitespacesAndNewlines), searchQuery.count > 0 {
+            processedText = processedText.replacingOccurrences(of: "(\(searchQuery))", with: "`$1`", options: [.regularExpression, .caseInsensitive]).replacingOccurrences(of: "``", with: "")
         }
         
         return processedText

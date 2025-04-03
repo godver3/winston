@@ -40,4 +40,20 @@ class CommentUtils {
     }
     return answer
   }
+    
+  func flattenComments(_ comments: [Comment]) -> [Comment] {
+    var flattened: [Comment] = []
+    
+    comments.forEach { comment in
+      if comment.kind != "more" {
+        flattened.append(comment)
+      }
+      
+      if comment.childrenWinston.count > 0 {
+        flattened.append(contentsOf: flattenComments(comment.childrenWinston))
+      }
+    }
+    
+    return flattened
+  }
 }

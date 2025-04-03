@@ -15,6 +15,9 @@ extension Theme {
             .text {
                 FontSize(fontSize)
             }
+            .code {
+                BackgroundColor(.accentColor)
+            }
             .paragraph { configuration in
                 configuration.label
                     .lineSpacing(lineSpacing)

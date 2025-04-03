@@ -171,7 +171,7 @@ extension Comment {
       //        actualID.removeLast(5)
       //      }
       
-      let childrensLimit = 25
+      let childrensLimit = 50
       
       if let children = await RedditAPI.shared.fetchMoreReplies(comments: count > 0 ? Array(childrenIDS.prefix(childrensLimit)) : [String(parent_id.dropFirst(3))], moreID: actualID, postFullname: postFullname, dropFirst: count == 0) {
         
@@ -199,7 +199,7 @@ extension Comment {
           case .comment(let comment):
             if let index = comment.childrenWinston.firstIndex(where: { $0.id == id }) {
               withAnimation {
-                if (self.data?.children?.count ?? 0) <= 25 {
+                  if (self.data?.children?.count ?? 0) <= childrensLimit {
                   comment.childrenWinston.remove(at: index)
                 } else {
                   self.data?.children?.removeFirst(childrensLimit)
@@ -213,7 +213,7 @@ extension Comment {
           case .post(let postArr):
             if let index = postArr.wrappedValue.firstIndex(where: { $0.id == id }) {
               withAnimation {
-                if (self.data?.children?.count ?? 0) <= 25 {
+                if (self.data?.children?.count ?? 0) <= childrensLimit {
                   postArr.wrappedValue.remove(at: index)
                 } else {
                   self.data?.children?.removeFirst(childrensLimit)

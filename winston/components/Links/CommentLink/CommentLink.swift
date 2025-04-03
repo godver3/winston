@@ -66,6 +66,7 @@ struct CommentLink: View, Equatable {
     lhs.subreddit == rhs.subreddit &&
     lhs.indentLines == rhs.indentLines &&
     lhs.highlightID == rhs.highlightID &&
+    lhs.searchQuery == rhs.searchQuery &&
     lhs.comment == rhs.comment &&
     lhs.children.count == rhs.children.count &&
     (lhs.children.count > 0 ? lhs.children[0] == rhs.children[0] : true)
@@ -87,10 +88,12 @@ struct CommentLink: View, Equatable {
   var commentWinstonData: CommentWinstonData
   var children: [Comment]
   
-  var isLast: Bool = false
+  var searchQuery: String? = nil
+  var updateSearchMatches: (() -> Void)?
   
+  var isLast: Bool = false
   var commentLinkMore: CommentLinkMore? = nil
-
+  
   var body: some View {
     if let data = comment.data {
       let collapsed = data.collapsed ?? false
@@ -102,10 +105,10 @@ struct CommentLink: View, Equatable {
                 CommentLinkFull(post: post, arrowKinds: arrowKinds, comment: comment, indentLines: indentLines)
               }
             } else {
-              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast)
+              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, updateSearchMatches: updateSearchMatches)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery)
           }
         }
         
@@ -113,7 +116,8 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery)
+                .id("\(commentChild.id)-comment-link")
               //                .equatable()
             }
           }

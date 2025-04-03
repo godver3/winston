@@ -12,7 +12,7 @@ import AlertToast
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
-    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count
+    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.searchMatches == rhs.searchMatches
   }
   
   var post: Post
@@ -31,6 +31,11 @@ struct PostView: View, Equatable {
   @SilentState private var topVisibleCommentId: String? = nil
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
+    
+  @State private var searchQuery = Debouncer("", delay: 0.25)
+  @State private var searchOpen = false
+  @State private var searchMatches = "0/0"
+  @FocusState private var searchFocused: Bool
   
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -52,6 +57,7 @@ struct PostView: View, Equatable {
       update.toggle()
     }
     if let result = await post.refreshPost(commentID: ignoreSpecificComment ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
+            
       Task(priority: .background) {
         await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
       }
@@ -71,6 +77,32 @@ struct PostView: View, Equatable {
 
   func refreshComments() {
       Task { await asyncFetch() }
+  }
+  
+  func updateSearchMatchesWithQuery() {
+    updateSearchMatches(searchQuery.debounced)
+  }
+  
+  func updateSearchMatches(_ query: String) {
+    let flattened = CommentUtils.shared.flattenComments(comments)
+    
+    if query.isEmpty {
+      DispatchQueue.main.async {
+        withAnimation {
+          searchMatches = "0/\(flattened.count)"
+        }
+      }
+      
+      return
+    }
+    
+    let matches = flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))}).count
+    
+    DispatchQueue.main.async {
+      withAnimation {
+        searchMatches = "\(matches)/\(flattened.count)"
+      }
+    }
   }
 
   var body: some View {
@@ -92,16 +124,42 @@ struct PostView: View, Equatable {
                   .padding(-10)
               }
               
-              Text("Comments")
-                .fontSize(20, .bold)
-                .frame(maxWidth: .infinity, alignment: .leading)
+              HStack (spacing: 6){
+                Text("Comments")
+                  .fontSize(20, .bold)
+                
+                Spacer()
+                
+                Image(systemName: "magnifyingglass")
+                  .fontSize(16, .semibold)
+                  .foregroundStyle(Color.white)
+                  .padding([.trailing], 4)
+                  .opacity(0.8)
+                  .onTapGesture {
+                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    if !searchOpen {
+                      DispatchQueue.main.async {
+                        withAnimation {
+                          searchOpen = true
+                        }
+                      }
+                      
+                      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        withAnimation {
+                          searchFocused = true
+                        }
+                      }
+                    }
+                  }
+              }.frame(maxWidth: .infinity, alignment: .leading)
                 .id("comments-header")
                 .listRowInsets(EdgeInsets(top: selectedTheme.posts.commentsDistance / 2, leading:commentsHPad, bottom: 8, trailing: commentsHPad))
+              
             }
             .listRowBackground(Color.clear)
             
             if !hideElements {
-                PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, updateSearchMatches: updateSearchMatchesWithQuery)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -143,9 +201,115 @@ struct PostView: View, Equatable {
             PostFloatingPill(post: post, subreddit: subreddit, showUpVoteRatio: defSettings.showUpVoteRatio)
           }
         }
+        .overlay(alignment: .bottom) {
+          VStack(spacing: 8) {
+            HStack {
+              TextField("Search comments...", text: $searchQuery.value)
+                .fontSize(17)
+                .focused($searchFocused)
+                .foregroundColor(Color.hex("7D7E80"))
+                .onChange(of: searchQuery.debounced) { _, val in
+                  updateSearchMatches(val)
+                }
+              
+              Spacer()
+            }
+            
+            HStack(spacing: 10) {
+              Text(searchMatches)
+                .fontSize(16, .semibold)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                .lineLimit(1)
+              
+              HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                  .fontSize(16, .semibold)
+                  .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                  .padding(.horizontal, 10)
+                  .padding(.vertical, 6)
+                  .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                  .onTapGesture {
+                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  }
+                
+                Image(systemName: "chevron.right")
+                  .fontSize(16, .semibold)
+                  .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                  .padding(.horizontal, 10)
+                  .padding(.vertical, 6)
+                  .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                  .onTapGesture {
+                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  }
+              }
+              
+              Spacer()
+              
+              Image(systemName: "chevron.down")
+                .opacity(searchFocused ? 1 : 0)
+                .fontSize(16, .semibold)
+                .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                .padding([.trailing], 4)
+                .onTapGesture {
+                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  DispatchQueue.main.async {
+                    withAnimation {
+                      searchFocused = false
+                    }
+                  }
+                }
+              
+              Image(systemName: "xmark")
+                .fontSize(16, .semibold)
+                .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                .padding([.trailing], 4)
+                .onTapGesture {
+                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  
+                  if searchFocused {
+                    DispatchQueue.main.async {
+                      withAnimation {
+                        searchFocused = false
+                      }
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                      withAnimation {
+                        searchOpen = false
+                        searchQuery.value = ""
+                      }
+                    }
+                  } else {
+                    DispatchQueue.main.async {
+                      withAnimation {
+                        searchQuery.value = ""
+                        searchOpen = false
+                      }
+                    }
+                  }
+                }
+              
+            }
+          }
+          .padding(.horizontal, 12)
+          .padding(.vertical, 15)
+          .frame(maxWidth: searchOpen ? .infinity : 0)
+          .animation(.bouncy(duration: 0.5), value: searchOpen)
+          .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
+          .shadow(color: Color.hex("212326"), radius: 10)
+          .opacity(searchOpen ? 1 : 0)
+          .animation(.bouncy(duration: 0.5), value: searchOpen)
+          .padding(.horizontal, 8)
+          .padding([.bottom], 8)
+          .ignoresSafeArea(.keyboard)
+          
+        }
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
         .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, sort: $sort) }
-        .onChange(of: sort) { val in
+        .onChange(of: sort) { _, val in
           updatePost()
         }
         .onAppear {
@@ -183,7 +347,8 @@ struct PostView: View, Equatable {
           previousScrollTarget: $previousScrollTarget,
           comments: comments,
           reader: proxy,
-          refresh: refreshComments
+          refresh: refreshComments,
+          searchOpen: $searchOpen
         )
       }
     }

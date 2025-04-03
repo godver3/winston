@@ -25,8 +25,12 @@ struct PostReplies: View {
   @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
   
+  var searchQuery: String? = nil
+  var updateSearchMatches: () -> Void
+  
   @State private var seenComments: String?
   @State private var loading = true
+      
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
   
   func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
@@ -40,6 +44,8 @@ struct PostReplies: View {
               comments = newComments
               loading = false
             }
+            
+            updateSearchMatches()
 
             if var specificID = highlightID {
               specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
@@ -80,7 +86,8 @@ struct PostReplies: View {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, updateSearchMatches: updateSearchMatches, isLast: i == comments.count - 1)
+                .id("\(comment.id)-comment-link")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
                     key: CommentUtils.AnchorsKey.self,

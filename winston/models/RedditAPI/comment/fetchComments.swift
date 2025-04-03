@@ -10,7 +10,7 @@ import Alamofire
 
 extension RedditAPI {
   func fetchPost(subreddit: String, postID: String, commentID: String? = nil, sort: CommentSortOption = .confidence) async -> FetchPostCommentsResponse? {
-    let params = FetchPostCommentsPayload(sort: sort.rawVal.value, limit: 35, depth: 15)
+    let params = FetchPostCommentsPayload(sort: sort.rawVal.value, limit: 100, depth: 50)
     var specificComment = ""
     if let commentID = commentID {
       specificComment = "/comment/\(commentID.hasPrefix("t1_") ? String(commentID.dropFirst(3)) : commentID)"

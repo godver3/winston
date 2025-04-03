@@ -16,6 +16,8 @@ struct CommentLinkMore: View {
   var parentElement: CommentParentElement?
   var indentLines: Int?
   var isLast: Bool = false
+  var updateSearchMatches: (() -> Void)?
+  
   @State var loadMoreLoading = false
   
   @Environment(\.useTheme) private var selectedTheme
@@ -32,6 +34,8 @@ struct CommentLinkMore: View {
             withAnimation(spring) {
               loadMoreLoading = false
             }
+            
+            updateSearchMatches?()
           }
         }
       }

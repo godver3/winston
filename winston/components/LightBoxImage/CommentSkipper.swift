@@ -18,6 +18,7 @@ struct CommentSkipper: ViewModifier {
   var comments: [Comment]
   var reader: ScrollViewProxy
   var refresh: () -> Void
+  @Binding var searchOpen: Bool
     
   @State private var refreshRotationDegrees = 0.0
     
@@ -85,6 +86,8 @@ struct CommentSkipper: ViewModifier {
               }
           }
           .padding()
+          .opacity(searchOpen ? 0 : 1)
+          .animation(.linear(duration: 0.1), value: searchOpen)
           
           if !selectedTheme.posts.inlineFloatingPill || defSettings.jumpNextCommentButtonLeft {
             Spacer()
@@ -127,7 +130,8 @@ extension View {
     previousScrollTarget: Binding<String?>,
     comments: [Comment],
     reader: ScrollViewProxy,
-    refresh: @escaping () -> Void
+    refresh: @escaping () -> Void,
+    searchOpen: Binding<Bool>
   ) -> some View {
     modifier(
       CommentSkipper(
@@ -136,7 +140,8 @@ extension View {
         previousScrollTarget: previousScrollTarget,
         comments: comments,
         reader: reader,
-        refresh: refresh
+        refresh: refresh,
+        searchOpen: searchOpen
       )
     )
   }

@@ -659,7 +659,7 @@
 		BB978B442B4FA4A500BE90D1 /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageView.swift; path = winston/components/Media/ImageView.swift; sourceTree = SOURCE_ROOT; };
 		BBD6E9D62B50F37200901C1C /* QuirkyMsgUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = QuirkyMsgUtil.swift; path = winston/components/QuirkyMsgUtil.swift; sourceTree = SOURCE_ROOT; };
 		BBD6E9D82B50F53000901C1C /* CommentSkipper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CommentSkipper.swift; sourceTree = "<group>"; };
-		BBD6E9DA2B50F5D300901C1C /* Comment util.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Comment util.swift"; path = "winston/utils/Comment util.swift"; sourceTree = SOURCE_ROOT; };
+		BBD6E9DA2B50F5D300901C1C /* Comment util.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; name = "Comment util.swift"; path = "winston/utils/Comment util.swift"; sourceTree = SOURCE_ROOT; tabWidth = 2; };
 		BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Winston MD.swift"; path = "winston/components/Markdown Handling/Winston MD.swift"; sourceTree = SOURCE_ROOT; };
 		CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditFilters.swift; sourceTree = "<group>"; };
 		EC051C2A2ACAEFC500E9D9ED /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
@@ -668,7 +668,7 @@
 		EC082F262A66132600BA2727 /* CommentLinkMore.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentLinkMore.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC082F282A66134C00BA2727 /* CommentLinkFull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentLinkFull.swift; sourceTree = "<group>"; };
 		EC08540D2A4BD26600E88389 /* ObservedScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservedScrollView.swift; sourceTree = "<group>"; };
-		EC0854122A4BE13000E88389 /* PostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostView.swift; sourceTree = "<group>"; };
+		EC0854122A4BE13000E88389 /* PostView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostView.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC0854142A4BE1D800E88389 /* PostLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLink.swift; sourceTree = "<group>"; };
 		EC0854162A4BF45C00E88389 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
 		EC0854182A4BFC4600E88389 /* CommentLink.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentLink.swift; sourceTree = "<group>"; tabWidth = 2; };
@@ -686,7 +686,7 @@
 		EC0854472A4D6E8C00E88389 /* getInitialSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getInitialSize.swift; sourceTree = "<group>"; };
 		EC0854492A4D6EAE00E88389 /* blurTransitions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = blurTransitions.swift; sourceTree = "<group>"; };
 		EC12D7172A59C7A800C300B3 /* Arrows.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Arrows.swift; sourceTree = "<group>"; };
-		EC12D7192A59C81A00C300B3 /* CommentLinkContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentLinkContent.swift; sourceTree = "<group>"; };
+		EC12D7192A59C81A00C300B3 /* CommentLinkContent.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentLinkContent.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC1312A42AB50C6700C95D3A /* PostTextsTheming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTextsTheming.swift; sourceTree = "<group>"; };
 		EC1312A82AB5127500C95D3A /* PostPageTheming.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPageTheming.swift; sourceTree = "<group>"; };
 		EC1312AA2AB5234000C95D3A /* ThemeForegroundEdit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeForegroundEdit.swift; sourceTree = "<group>"; };
@@ -737,7 +737,7 @@
 		EC1E7B672A815BE100DB459A /* LightboxButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightboxButton.swift; sourceTree = "<group>"; };
 		EC1E7B692A815BF300DB459A /* LightBoxOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LightBoxOverlay.swift; sourceTree = "<group>"; };
 		EC1E7B6B2A81650700DB459A /* loader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = loader.swift; sourceTree = "<group>"; };
-		EC200C852A7795B500E69543 /* PostReplies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostReplies.swift; sourceTree = "<group>"; };
+		EC200C852A7795B500E69543 /* PostReplies.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostReplies.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC200C872A7795BA00E69543 /* PostContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostContent.swift; sourceTree = "<group>"; };
 		EC2218F92AD380AC001A3261 /* Prepend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prepend.swift; sourceTree = "<group>"; };
 		EC22A3132A5B4B9C0062A112 /* ChangeAuthAPIKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChangeAuthAPIKey.swift; sourceTree = "<group>"; };
