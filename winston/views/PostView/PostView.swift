@@ -130,27 +130,29 @@ struct PostView: View, Equatable {
                 
                 Spacer()
                 
-                Image(systemName: "magnifyingglass")
-                  .fontSize(16, .semibold)
-                  .foregroundStyle(Color.white)
-                  .padding([.trailing], 4)
-                  .opacity(0.8)
-                  .onTapGesture {
-                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                    if !searchOpen {
-                      DispatchQueue.main.async {
-                        withAnimation {
-                          searchOpen = true
-                        }
-                      }
-                      
-                      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        withAnimation {
-                          searchFocused = true
+                Menu {
+                  if !hideElements {
+                    ForEach(CommentSortOption.allCases) { opt in
+                      Button {
+                        sort = opt
+                        Defaults[.PostPageDefSettings].postSorts[post.id] = opt
+                      } label: {
+                        HStack {
+                          Text(opt.rawVal.value.capitalized)
+                          Spacer()
+                          Image(systemName: opt.rawVal.icon)
+                            .foregroundColor(Color.accentColor)
+                            .fontSize(17, .bold)
                         }
                       }
                     }
                   }
+                } label: {
+                  Image(systemName: sort.rawVal.icon)
+                    .foregroundColor(Color.accentColor)
+                    .fontSize(17, .bold)
+                }
+                
               }.frame(maxWidth: .infinity, alignment: .leading)
                 .id("comments-header")
                 .listRowInsets(EdgeInsets(top: selectedTheme.posts.commentsDistance / 2, leading:commentsHPad, bottom: 8, trailing: commentsHPad))
@@ -308,7 +310,7 @@ struct PostView: View, Equatable {
           
         }
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
-        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, sort: $sort) }
+        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
           updatePost()
         }
@@ -361,7 +363,8 @@ private struct Toolbar: ToolbarContent {
   var hideElements: Bool
   var subreddit: Subreddit
   var post: Post
-  @Binding var sort: CommentSortOption
+  @Binding var searchOpen: Bool
+  @FocusState var searchFocused: Bool
   
   var body: some ToolbarContent {
     if !IPAD {
@@ -375,37 +378,35 @@ private struct Toolbar: ToolbarContent {
       }
     }
     
-    ToolbarItem(id: "postview-sortandsub", placement: .navigationBarTrailing) {
+    ToolbarItem(id: "postview-search-and-sub", placement: .navigationBarTrailing) {
       HStack {
-        Menu {
-          if !hideElements {
-            ForEach(CommentSortOption.allCases) { opt in
-              Button {
-                sort = opt
-                Defaults[.PostPageDefSettings].postSorts[post.id] = opt
-              } label: {
-                HStack {
-                  Text(opt.rawVal.value.capitalized)
-                  Spacer()
-                  Image(systemName: opt.rawVal.icon)
-                    .foregroundColor(Color.accentColor)
-                    .fontSize(17, .bold)
+        Image(systemName: "magnifyingglass")
+          .fontSize(16, .semibold)
+          .foregroundStyle(Color.white)
+          .padding([.trailing], 4)
+          .opacity(searchOpen ? 0 : 0.8)
+          .onTapGesture {
+            Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+            if !searchOpen {
+              DispatchQueue.main.async {
+                withAnimation {
+                  searchOpen = true
+                }
+              }
+              
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                withAnimation {
+                  searchFocused = true
                 }
               }
             }
           }
-        } label: {
-          Image(systemName: sort.rawVal.icon)
-            .foregroundColor(Color.accentColor)
-            .fontSize(17, .bold)
-        }
         
         if let data = subreddit.data, !feedsAndSuch.contains(subreddit.id) {
           SubredditIcon(subredditIconKit: data.subredditIconKit)
             .onTapGesture { Nav.to(.reddit(.subInfo(subreddit))) }
         }
       }
-      .animation(nil, value: sort)
     }
   }
 }
