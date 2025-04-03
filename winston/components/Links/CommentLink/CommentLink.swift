@@ -67,6 +67,7 @@ struct CommentLink: View, Equatable {
     lhs.indentLines == rhs.indentLines &&
     lhs.highlightID == rhs.highlightID &&
     lhs.searchQuery == rhs.searchQuery &&
+    lhs.isMatch == rhs.isMatch &&
     lhs.currentMatchId == rhs.currentMatchId &&
     lhs.fadeSeenComments == rhs.fadeSeenComments &&
     lhs.comment == rhs.comment &&
@@ -92,12 +93,29 @@ struct CommentLink: View, Equatable {
   var children: [Comment]
   
   var searchQuery: String? = nil
+  var matchDict: [String: Bool] = [:]
+  var isMatch: Bool = false
+  
   var currentMatchId: String? = nil
   var newCommentsLoaded: (() -> Void)?
   var updateVisibleComments: ((String, Bool) -> Void)?
   
   var isLast: Bool = false
   var commentLinkMore: CommentLinkMore? = nil
+  
+  func childrenContainsMatch (_ comment: Comment)  -> Bool {
+    if matchDict[comment.id] ?? false {
+      return true
+    }
+    
+    for child in comment.childrenWinston {
+      if childrenContainsMatch(child) {
+        return true
+      }
+    }
+    
+    return false
+  }
   
   var body: some View {
     if let data = comment.data {
@@ -113,7 +131,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, newCommentsLoaded: newCommentsLoaded)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isCurrentMatch: comment.id == currentMatchId)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, selfOrChildIsMatch: isMatch || childrenContainsMatch(comment), isCurrentMatch: comment.id == currentMatchId)
           }
         }
           .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.6 : 1)
@@ -127,7 +145,7 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchDict: matchDict, isMatch: matchDict[commentChild.id] ?? false, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
                 .id("\(commentChild.id)-comment-link")
               //                .equatable()
             }

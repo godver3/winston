@@ -1062,7 +1062,7 @@
 		ECDBA8C62A4A83DB00FB42DB /* OldSubredditPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OldSubredditPosts.swift; sourceTree = "<group>"; };
 		ECDD514B2A72561500FD9498 /* getFlairs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getFlairs.swift; sourceTree = "<group>"; };
 		ECDD514D2A726E5900FD9498 /* modifyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = modifyColor.swift; sourceTree = "<group>"; };
-		ECDD514F2A726F2600FD9498 /* DebouncedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebouncedText.swift; sourceTree = "<group>"; };
+		ECDD514F2A726F2600FD9498 /* DebouncedText.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = DebouncedText.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECDD51532A73889A00FD9498 /* rootURL.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = rootURL.swift; sourceTree = "<group>"; };
 		ECDD515B2A73A90700FD9498 /* PreviewLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewLink.swift; sourceTree = "<group>"; };
 		ECDD51652A74E4DD00FD9498 /* SubredditPostsContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditPostsContainer.swift; sourceTree = "<group>"; };

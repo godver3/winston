@@ -24,6 +24,7 @@ struct PostReplies: View {
   @Binding var topVisibleCommentId: String?
   @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
+  @Binding var matchDict: [String: Bool]
   @Binding var seenComments: String?
   @Binding var fadeSeenComments: Bool
   
@@ -89,7 +90,7 @@ struct PostReplies: View {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchDict: matchDict, isMatch: matchDict[comment.id] ?? false, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
                 .id("\(comment.id)-comment-link")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(

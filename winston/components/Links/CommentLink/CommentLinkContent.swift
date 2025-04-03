@@ -50,6 +50,8 @@ struct CommentLinkContent: View {
   var winstonData: CommentWinstonData
   var avatarsURL: [String:String]?
   var searchQuery: String?
+  var isMatch: Bool = false
+  var selfOrChildIsMatch: Bool = false
   var isCurrentMatch: Bool = false
 
   @SilentState private var size: CGSize = .zero
@@ -80,7 +82,7 @@ struct CommentLinkContent: View {
     
     
     if let data = comment.data {
-      let collapsed = data.collapsed ?? false
+      let collapsed = !selfOrChildIsMatch && (data.collapsed ?? false)
       Group {
         HStack(spacing: CommentLinkContent.indentLineContentSpacing) {
           if data.depth != 0 && indentLines != 0 {
@@ -223,7 +225,7 @@ struct CommentLinkContent: View {
                       .lineLimit(lineLimit)
                   } else {
                     HStack {
-                      Markdown(MarkdownUtil.formatForMarkdown(body, showSpoiler: showSpoiler, searchQuery: searchQuery))
+                      Markdown(MarkdownUtil.formatForMarkdown(body, showSpoiler: showSpoiler, isMatch: isMatch, searchQuery: searchQuery))
                         .markdownTheme(.winstonMarkdown(fontSize: theme.theme.bodyText.size, lineSpacing: theme.theme.linespacing, textSelection: selectable, isCurrentMatch: isCurrentMatch))
                         .fixedSize(horizontal: false, vertical: true)
                       
