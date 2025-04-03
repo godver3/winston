@@ -19,16 +19,18 @@ struct CommentSkipper: ViewModifier {
   var reader: ScrollViewProxy
   var refresh: () -> Void
   @Binding var searchOpen: Bool
+  @Binding var unseenSkipperOpen: Bool
     
   @State private var refreshRotationDegrees = 0.0
-    
+  @State private var pressingDown: Bool = false
+      
   private let buttonSize: CGFloat = 48
+  private let longPressDuration: Double = 0.275
   
   func body(content: Content) -> some View {
     content.overlay {
       if showJumpToNextCommentButton {
         HStack {
-          
           
           if selectedTheme.posts.inlineFloatingPill && !defSettings.jumpNextCommentButtonLeft{
             Spacer()
@@ -83,11 +85,27 @@ struct CommentSkipper: ViewModifier {
                           jumpToNextComment()
                         }
                     }
+                    .onLongPressGesture(minimumDuration: .infinity, maximumDistance: 10, perform: {}, onPressingChanged: { val in
+                      pressingDown = val
+                      
+                      if val {
+                        longPressTimer = Timer.scheduledTimer(withTimeInterval: longPressDuration, repeats: false) { _ in
+                          Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                          
+                          if seenComments != nil || skipUnseenOnly {
+                            skipUnseenOnly = !skipUnseenOnly
+                            fadeSeenComments = skipUnseenOnly
+                          }
+                        }
+                      } else {
+                        longPressTimer?.invalidate()
+                      }
+                    })
               }
           }
           .padding()
-          .opacity(searchOpen ? 0 : 1)
-          .animation(.linear(duration: 0.1), value: searchOpen)
+          .opacity(searchOpen || unseenSkipperOpen ? 0 : 1)
+          .animation(.linear(duration: 0.1), value: searchOpen || unseenSkipperOpen)
           
           if !selectedTheme.posts.inlineFloatingPill || defSettings.jumpNextCommentButtonLeft {
             Spacer()
@@ -131,7 +149,8 @@ extension View {
     comments: [Comment],
     reader: ScrollViewProxy,
     refresh: @escaping () -> Void,
-    searchOpen: Binding<Bool>
+    searchOpen: Binding<Bool>,
+    unseenSkipperOpen: Binding<Bool>
   ) -> some View {
     modifier(
       CommentSkipper(
@@ -141,7 +160,8 @@ extension View {
         comments: comments,
         reader: reader,
         refresh: refresh,
-        searchOpen: searchOpen
+        searchOpen: searchOpen,
+        unseenSkipperOpen: unseenSkipperOpen
       )
     )
   }

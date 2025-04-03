@@ -34,6 +34,7 @@ struct PostView: View, Equatable {
     
   @State private var searchQuery = Debouncer("", delay: 0.25)
   @State private var searchOpen = false
+  @State private var unseenSkipperOpen = false
   @State private var searchMatches = 0
   @State private var currentMatchIndex = 0
   @State private var currentMatchId = ""
@@ -253,7 +254,7 @@ struct PostView: View, Equatable {
               Spacer()
             }
             
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
               Text("\(currentMatchIndex)/\(searchMatches)")
                 .fontSize(16, .semibold)
                 .padding(.horizontal, 10)
@@ -262,7 +263,7 @@ struct PostView: View, Equatable {
                 .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                 .lineLimit(1)
               
-              HStack(spacing: 6) {
+              HStack(spacing: 4) {
                 Image(systemName: "chevron.left")
                   .fontSize(16, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
@@ -388,7 +389,8 @@ struct PostView: View, Equatable {
           comments: comments,
           reader: proxy,
           refresh: refreshComments,
-          searchOpen: $searchOpen
+          searchOpen: $searchOpen,
+          unseenSkipperOpen: $unseenSkipperOpen
         )
       }
     }
