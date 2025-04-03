@@ -31,14 +31,22 @@ struct PostView: View, Equatable {
   @SilentState private var topVisibleCommentId: String? = nil
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
+  @State private var flattened: [Comment] = []
+  @State private var matches: [Comment] = []
+  @State private var seenComments: String? = nil
     
   @State private var searchQuery = Debouncer("", delay: 0.25)
   @State private var searchOpen = false
   @State private var unseenSkipperOpen = false
   @State private var searchMatches = 0
   @State private var currentMatchIndex = 0
+  @State private var indexOfFirstMatch = 99999
   @State private var currentMatchId = ""
+  @State private var visibleComments = Debouncer("", delay: 0.25)
+  @State private var scrolling: Bool = false
+  
   @FocusState private var searchFocused: Bool
+
   
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -74,23 +82,61 @@ struct PostView: View, Equatable {
   }
   
   func updatePost() {
-      Task(priority: .background) { await asyncFetch(true) }
+    Task(priority: .background) { await asyncFetch(true) }
+  }
+  
+  func openUnseenSkipper(_ reader: ScrollViewProxy) {
+    guard let seenComments else { return }
+    
+    if !seenComments.isEmpty {
+      unseenSkipperOpen = true
+      currentMatchId = ""
+      
+      updateMatches(reader)
+    }
   }
 
-
   func refreshComments() {
-      Task { await asyncFetch() }
+    Task { await asyncFetch() }
+  }
+  
+  func updateVisibleComments(_ id: String, _ visible: Bool) {
+    let key = "|\(id)|"
+    
+    if visible {
+      visibleComments.value += key
+    } else {
+      visibleComments.value = visibleComments.value.replacingOccurrences(of: key, with: "")
+    }
+  }
+  
+  func updateMatchIndex(_ visible: String) {
+    if let lastMatchIndex = matches.lastIndex(where: { comment in visible.contains("|\(comment.id)|") }) {
+      DispatchQueue.main.async {
+        withAnimation {
+          currentMatchIndex = lastMatchIndex + 1
+          currentMatchId = matches[lastMatchIndex].id
+        }
+      }
+    } else if visible.isEmpty || flattened.lastIndex(where: { comment in visible.contains("|\(comment.id)|") })! < indexOfFirstMatch {
+      DispatchQueue.main.async {
+        withAnimation {
+          currentMatchIndex = 0
+          currentMatchId = ""
+        }
+      }
+    }
   }
   
   func newCommentsLoaded() {
+    flattened = CommentUtils.shared.flattenComments(comments)
     updateMatches()
   }
   
   func updateMatches(_ reader: ScrollViewProxy? = nil) {
-    let flattened = CommentUtils.shared.flattenComments(comments)
     let query = searchQuery.debounced
     
-    if searchOpen && query.isEmpty {
+    if (searchOpen && query.isEmpty) || (unseenSkipperOpen && (seenComments == nil || seenComments!.isEmpty)) {
       DispatchQueue.main.async {
         withAnimation {
           currentMatchIndex = 0
@@ -101,43 +147,59 @@ struct PostView: View, Equatable {
       return
     }
     
-    let matches = getMatchingComments(flattened, query).count
+    matches = searchOpen ? getMatchingComments(query) : getUnseenComments()
+    indexOfFirstMatch = flattened.firstIndex(where: { flat in matches.contains(where: { match in match.id == flat.id })}) ?? 99999
     
     DispatchQueue.main.async {
       withAnimation {
-        searchMatches = matches
+        searchMatches = matches.count
       }
     }
     
-    goToNextSearchResult(true, reader)
+    scrollToNextMatch(true, reader)
   }
   
-  func getMatchingComments(_ flattened: [Comment], _ query: String) -> [Comment] {
+  func getMatchingComments(_ query: String) -> [Comment] {
     return flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))})
   }
   
-  func getUnseenComments(_ flattened: [Comment], _ seenComments: String) -> [Comment] {
-    return flattened.filter({ seenComments.contains($0.data?.id ?? "") })
+  func getUnseenComments() -> [Comment] {
+    guard let seenComments else { return [] }
+    return flattened.filter({ !seenComments.contains($0.data?.id ?? "") })
   }
   
-  func goToNextSearchResult (_ next: Bool = true, _ reader: ScrollViewProxy? = nil) {
-    if searchQuery.debounced.isEmpty { return }
+  func startScrolling (forward: Bool) {
+    scrolling = true
+    Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
+      scrolling = false
+      if forward { updateMatchIndex(visibleComments.value) }
+    }
+  }
+  
+  func scrollToNextMatch (_ forward: Bool = true, _ reader: ScrollViewProxy? = nil) {
+    if searchOpen && searchQuery.debounced.isEmpty { return }
+        
+    if matches.isEmpty {
+      DispatchQueue.main.async {
+        withAnimation {
+          currentMatchIndex = 0
+        }
+      }
+      
+      return
+    }
     
-    let flattened = CommentUtils.shared.flattenComments(comments)
-    let matches = getMatchingComments(flattened, searchQuery.debounced)
-    
-    if matches.isEmpty { return }
-    
+    var currIndex = 0
     var targetIndex = 0
 
     if !currentMatchId.isEmpty {
-      let currIndex = matches.firstIndex(where: { $0.id == currentMatchId }) ?? 0
-      targetIndex = next ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
+      currIndex = matches.firstIndex(where: { $0.id == currentMatchId }) ?? 0
+      targetIndex = forward ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
     }
     
     currentMatchId = matches[targetIndex].id
 
-    
+    startScrolling(forward: forward)
     DispatchQueue.main.async {
       withAnimation {
         currentMatchIndex = targetIndex + 1
@@ -202,7 +264,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -263,6 +325,11 @@ struct PostView: View, Equatable {
             }
             
             HStack(spacing: 12) {
+              
+              if unseenSkipperOpen {
+                PostLinkGlowDot(unseenType: .dot(selectedTheme.comments.theme.unseenDot), seen: false, badge: true).equatable()
+              }
+              
               Text("\(currentMatchIndex)/\(searchMatches)")
                 .fontSize(16, .semibold)
                 .padding(.horizontal, 10)
@@ -280,7 +347,7 @@ struct PostView: View, Equatable {
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                    goToNextSearchResult(false, proxy)
+                    scrollToNextMatch(false, proxy)
                   }
                 
                 Image(systemName: "chevron.right")
@@ -291,7 +358,7 @@ struct PostView: View, Equatable {
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                    goToNextSearchResult(true, proxy)
+                    scrollToNextMatch(true, proxy)
                   }
               }
               
@@ -362,11 +429,13 @@ struct PostView: View, Equatable {
         .onChange(of: sort) { _, val in
           updatePost()
         }
-        .onChange(of: unseenSkipperOpen) { _, val in
-          if val {
-            unseenSkipperOpen = false
-            updateMatches(proxy)
+        .onChange(of: comments) { _, val in
+          Task {
+            newCommentsLoaded()
           }
+        }
+        .onChange(of: visibleComments.debounced) { _, val in
+          updateMatchIndex(val)
         }
         .onAppear {
           doThisAfter(0.5) {
@@ -404,6 +473,7 @@ struct PostView: View, Equatable {
           comments: comments,
           reader: proxy,
           refresh: refreshComments,
+          openUnseenSkipper : openUnseenSkipper,
           searchOpen: $searchOpen,
           unseenSkipperOpen: $unseenSkipperOpen
         )

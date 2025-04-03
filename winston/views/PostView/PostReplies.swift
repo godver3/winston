@@ -24,12 +24,14 @@ struct PostReplies: View {
   @Binding var topVisibleCommentId: String?
   @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
+  @Binding var seenComments: String?
+  @Binding var fadeSeenComments: Bool
   
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
   var newCommentsLoaded: () -> Void
+  var updateVisibleComments: (String, Bool) -> Void
   
-  @State private var seenComments: String?
   @State private var loading = true
       
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
@@ -87,7 +89,7 @@ struct PostReplies: View {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
                 .id("\(comment.id)-comment-link")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
@@ -154,7 +156,14 @@ struct PostReplies: View {
                 await asyncFetch(post.data == nil)
               }
             }
-            withAnimation { seenComments = post.winstonData?.seenComments }
+            withAnimation {
+              seenComments = post.winstonData?.seenComments
+              
+              if let seen = seenComments, !seen.isEmpty {
+                // Open unseen skipper automatically
+                fadeSeenComments = true
+              }
+            }
           }
           .id("loading-comments")
       } else if comments.count == 0 {

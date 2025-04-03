@@ -68,6 +68,7 @@ struct CommentLink: View, Equatable {
     lhs.highlightID == rhs.highlightID &&
     lhs.searchQuery == rhs.searchQuery &&
     lhs.currentMatchId == rhs.currentMatchId &&
+    lhs.fadeSeenComments == rhs.fadeSeenComments &&
     lhs.comment == rhs.comment &&
     lhs.children.count == rhs.children.count &&
     (lhs.children.count > 0 ? lhs.children[0] == rhs.children[0] : true)
@@ -83,6 +84,7 @@ struct CommentLink: View, Equatable {
   var postFullname: String?
   var showReplies = true
   var seenComments: String?
+  var fadeSeenComments: Bool = false
   var parentElement: CommentParentElement? = nil
   
   var comment: Comment
@@ -92,6 +94,7 @@ struct CommentLink: View, Equatable {
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
   var newCommentsLoaded: (() -> Void)?
+  var updateVisibleComments: ((String, Bool) -> Void)?
   
   var isLast: Bool = false
   var commentLinkMore: CommentLinkMore? = nil
@@ -113,12 +116,18 @@ struct CommentLink: View, Equatable {
             CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isCurrentMatch: comment.id == currentMatchId)
           }
         }
+          .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.6 : 1)
+          .onAppear {
+            updateVisibleComments?(comment.id, true)
+          }.onDisappear {
+            updateVisibleComments?(comment.id, false)
+          }
         
         if !collapsed && showReplies {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
                 .id("\(commentChild.id)-comment-link")
               //                .equatable()
             }

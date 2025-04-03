@@ -18,6 +18,7 @@ struct CommentSkipper: ViewModifier {
   var comments: [Comment]
   var reader: ScrollViewProxy
   var refresh: () -> Void
+  var openUnseenSkipper: (ScrollViewProxy) -> Void
   @Binding var searchOpen: Bool
   @Binding var unseenSkipperOpen: Bool
     
@@ -104,7 +105,7 @@ struct CommentSkipper: ViewModifier {
                           
                           DispatchQueue.main.async {
                             withAnimation {
-                              unseenSkipperOpen = true
+                              openUnseenSkipper(reader)
                             }
                           }
                         }
@@ -160,6 +161,7 @@ extension View {
     comments: [Comment],
     reader: ScrollViewProxy,
     refresh: @escaping () -> Void,
+    openUnseenSkipper: @escaping (ScrollViewProxy) -> Void,
     searchOpen: Binding<Bool>,
     unseenSkipperOpen: Binding<Bool>
   ) -> some View {
@@ -171,6 +173,7 @@ extension View {
         comments: comments,
         reader: reader,
         refresh: refresh,
+        openUnseenSkipper : openUnseenSkipper,
         searchOpen: searchOpen,
         unseenSkipperOpen: unseenSkipperOpen
       )
