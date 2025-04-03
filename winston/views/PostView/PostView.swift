@@ -12,7 +12,7 @@ import AlertToast
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
-    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.searchMatches == rhs.searchMatches
+    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.unseenSkipperOpen == rhs.unseenSkipperOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.searchMatches == rhs.searchMatches
   }
   
   var post: Post
@@ -82,14 +82,15 @@ struct PostView: View, Equatable {
       Task { await asyncFetch() }
   }
   
-  func updateSearchMatchesWithQuery() {
-    updateSearchMatches(searchQuery.debounced)
+  func newCommentsLoaded() {
+    updateMatches()
   }
   
-  func updateSearchMatches(_ query: String, _ reader: ScrollViewProxy? = nil) {
+  func updateMatches(_ reader: ScrollViewProxy? = nil) {
     let flattened = CommentUtils.shared.flattenComments(comments)
+    let query = searchQuery.debounced
     
-    if query.isEmpty {
+    if searchOpen && query.isEmpty {
       DispatchQueue.main.async {
         withAnimation {
           currentMatchIndex = 0
@@ -113,6 +114,10 @@ struct PostView: View, Equatable {
   
   func getMatchingComments(_ flattened: [Comment], _ query: String) -> [Comment] {
     return flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))})
+  }
+  
+  func getUnseenComments(_ flattened: [Comment], _ seenComments: String) -> [Comment] {
+    return flattened.filter({ seenComments.contains($0.data?.id ?? "") })
   }
   
   func goToNextSearchResult (_ next: Bool = true, _ reader: ScrollViewProxy? = nil) {
@@ -197,7 +202,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateSearchMatches: updateSearchMatchesWithQuery)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -241,17 +246,20 @@ struct PostView: View, Equatable {
         }
         .overlay(alignment: .bottom) {
           VStack(spacing: 8) {
-            HStack {
-              TextField("Search comments...", text: $searchQuery.value)
-                .fontSize(17)
-                .focused($searchFocused)
-                .foregroundColor(Color.hex("7D7E80"))
-                .onChange(of: searchQuery.debounced) { _, val in
-                  currentMatchId = ""
-                  updateSearchMatches(val, proxy)
-                }
-              
-              Spacer()
+            
+            if searchOpen {
+              HStack {
+                TextField("Search comments...", text: $searchQuery.value)
+                  .fontSize(17)
+                  .focused($searchFocused)
+                  .foregroundColor(Color.hex("7D7E80"))
+                  .onChange(of: searchQuery.debounced) { _, val in
+                    currentMatchId = ""
+                    updateMatches(proxy)
+                  }
+                
+                Spacer()
+              }
             }
             
             HStack(spacing: 12) {
@@ -328,6 +336,7 @@ struct PostView: View, Equatable {
                       withAnimation {
                         searchQuery.value = ""
                         searchOpen = false
+                        unseenSkipperOpen = false
                       }
                     }
                   }
@@ -337,21 +346,27 @@ struct PostView: View, Equatable {
           }
           .padding(.horizontal, 12)
           .padding(.vertical, 15)
-          .frame(maxWidth: searchOpen ? .infinity : 0)
-          .animation(.bouncy(duration: 0.5), value: searchOpen)
+          .frame(maxWidth: searchOpen || unseenSkipperOpen ? .infinity : 0)
+          .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
           .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
           .shadow(color: Color.hex("212326"), radius: 10)
-          .opacity(searchOpen ? 1 : 0)
-          .animation(.bouncy(duration: 0.5), value: searchOpen)
+          .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
+          .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
           .padding(.horizontal, 8)
           .padding([.bottom], 8)
           .ignoresSafeArea(.keyboard)
           
         }
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
-        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, searchFocused: _searchFocused) }
+        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
           updatePost()
+        }
+        .onChange(of: unseenSkipperOpen) { _, val in
+          if val {
+            unseenSkipperOpen = false
+            updateMatches(proxy)
+          }
         }
         .onAppear {
           doThisAfter(0.5) {
@@ -404,6 +419,7 @@ private struct Toolbar: ToolbarContent {
   var subreddit: Subreddit
   var post: Post
   @Binding var searchOpen: Bool
+  @Binding var unseenSkipperOpen: Bool
   @FocusState var searchFocused: Bool
   
   var body: some ToolbarContent {
@@ -431,6 +447,7 @@ private struct Toolbar: ToolbarContent {
               DispatchQueue.main.async {
                 withAnimation {
                   searchOpen = true
+                  unseenSkipperOpen = false
                 }
               }
               

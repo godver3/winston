@@ -16,7 +16,7 @@ struct CommentLinkMore: View {
   var parentElement: CommentParentElement?
   var indentLines: Int?
   var isLast: Bool = false
-  var updateSearchMatches: (() -> Void)?
+  var newCommentsLoaded: (() -> Void)?
   
   @State var loadMoreLoading = false
   
@@ -35,7 +35,7 @@ struct CommentLinkMore: View {
               loadMoreLoading = false
             }
             
-            updateSearchMatches?()
+            newCommentsLoaded?()
           }
         }
       }

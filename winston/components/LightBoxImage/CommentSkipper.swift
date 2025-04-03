@@ -23,10 +23,12 @@ struct CommentSkipper: ViewModifier {
     
   @State private var refreshRotationDegrees = 0.0
   @State private var pressingDown: Bool = false
+  @State private var longPressed: Bool = false
+  @State private var longPressTimer: Timer? = nil
       
   private let buttonSize: CGFloat = 48
   private let longPressDuration: Double = 0.275
-  
+    
   func body(content: Content) -> some View {
     content.overlay {
       if showJumpToNextCommentButton {
@@ -79,11 +81,18 @@ struct CommentSkipper: ViewModifier {
                     .clipShape(Circle())
                     .drawingGroup()
                     .floating()
+                    .scaleEffect(pressingDown ? 0.95 : 1)
+                    .animation(.bouncy(duration: 0.3, extraBounce: 0.225), value: pressingDown)
                     .onTapGesture {
-                        Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                        withAnimation {
-                          jumpToNextComment()
-                        }
+                      if longPressed {
+                        longPressed = false
+                        return
+                      }
+                     
+                      Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                      withAnimation {
+                        jumpToNextComment()
+                      }
                     }
                     .onLongPressGesture(minimumDuration: .infinity, maximumDistance: 10, perform: {}, onPressingChanged: { val in
                       pressingDown = val
@@ -91,10 +100,12 @@ struct CommentSkipper: ViewModifier {
                       if val {
                         longPressTimer = Timer.scheduledTimer(withTimeInterval: longPressDuration, repeats: false) { _ in
                           Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                          longPressed = true
                           
-                          if seenComments != nil || skipUnseenOnly {
-                            skipUnseenOnly = !skipUnseenOnly
-                            fadeSeenComments = skipUnseenOnly
+                          DispatchQueue.main.async {
+                            withAnimation {
+                              unseenSkipperOpen = true
+                            }
                           }
                         }
                       } else {
