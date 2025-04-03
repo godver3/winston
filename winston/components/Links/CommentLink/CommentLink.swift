@@ -67,6 +67,7 @@ struct CommentLink: View, Equatable {
     lhs.indentLines == rhs.indentLines &&
     lhs.highlightID == rhs.highlightID &&
     lhs.searchQuery == rhs.searchQuery &&
+    lhs.currentMatchId == rhs.currentMatchId &&
     lhs.comment == rhs.comment &&
     lhs.children.count == rhs.children.count &&
     (lhs.children.count > 0 ? lhs.children[0] == rhs.children[0] : true)
@@ -89,6 +90,7 @@ struct CommentLink: View, Equatable {
   var children: [Comment]
   
   var searchQuery: String? = nil
+  var currentMatchId: String? = nil
   var updateSearchMatches: (() -> Void)?
   
   var isLast: Bool = false
@@ -108,7 +110,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, updateSearchMatches: updateSearchMatches)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isCurrentMatch: comment.id == currentMatchId)
           }
         }
         
@@ -116,7 +118,7 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId)
                 .id("\(commentChild.id)-comment-link")
               //                .equatable()
             }

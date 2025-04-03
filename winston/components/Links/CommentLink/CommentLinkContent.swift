@@ -50,6 +50,7 @@ struct CommentLinkContent: View {
   var winstonData: CommentWinstonData
   var avatarsURL: [String:String]?
   var searchQuery: String?
+  var isCurrentMatch: Bool = false
 
   @SilentState private var size: CGSize = .zero
   @State private var offsetX: CGFloat = 0
@@ -222,8 +223,8 @@ struct CommentLinkContent: View {
                       .lineLimit(lineLimit)
                   } else {
                     HStack {
-                        Markdown(MarkdownUtil.formatForMarkdown(body, showSpoiler: showSpoiler, searchQuery: searchQuery))
-                        .markdownTheme(.winstonMarkdown(fontSize: theme.theme.bodyText.size, lineSpacing: theme.theme.linespacing, textSelection: selectable))
+                      Markdown(MarkdownUtil.formatForMarkdown(body, showSpoiler: showSpoiler, searchQuery: searchQuery))
+                        .markdownTheme(.winstonMarkdown(fontSize: theme.theme.bodyText.size, lineSpacing: theme.theme.linespacing, textSelection: selectable, isCurrentMatch: isCurrentMatch))
                         .fixedSize(horizontal: false, vertical: true)
                       
                       if MarkdownUtil.containsSpoiler(body) {

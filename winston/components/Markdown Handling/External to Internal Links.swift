@@ -95,7 +95,10 @@ class MarkdownUtil {
         }
         
         if let searchQuery = searchQuery?.trimmingCharacters(in: .whitespacesAndNewlines), searchQuery.count > 0 {
-            processedText = processedText.replacingOccurrences(of: "(\(searchQuery))", with: "`$1`", options: [.regularExpression, .caseInsensitive]).replacingOccurrences(of: "``", with: "")
+            processedText = processedText.replacingOccurrences(of: "(\(searchQuery))",
+                                                               with: "`$1`",
+                                                               options: [.regularExpression, .caseInsensitive])
+            .replacingOccurrences(of: "``", with: "")
         }
         
         return processedText

@@ -10,12 +10,14 @@ import MarkdownUI
 
 extension Theme {
     /// Winston Markdown theme.
-    public static func winstonMarkdown(fontSize: CGFloat, lineSpacing: CGFloat = 0.2, textSelection: Bool = false) -> Theme {
+    public static func winstonMarkdown(fontSize: CGFloat, lineSpacing: CGFloat = 0.2, textSelection: Bool = false, isCurrentMatch: Bool = false) -> Theme {
         let theme = Theme()
             .text {
                 FontSize(fontSize)
             }
             .code {
+                UnderlineStyle(.init(pattern: .solid, color: isCurrentMatch ? .white : .clear))
+                ForegroundColor(.white)
                 BackgroundColor(.accentColor)
             }
             .paragraph { configuration in

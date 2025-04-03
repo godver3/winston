@@ -12,7 +12,7 @@ import AlertToast
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
-    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.searchMatches == rhs.searchMatches
+    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.searchMatches == rhs.searchMatches
   }
   
   var post: Post
@@ -34,7 +34,9 @@ struct PostView: View, Equatable {
     
   @State private var searchQuery = Debouncer("", delay: 0.25)
   @State private var searchOpen = false
-  @State private var searchMatches = "0/0"
+  @State private var searchMatches = 0
+  @State private var currentMatchIndex = 0
+  @State private var currentMatchId = ""
   @FocusState private var searchFocused: Bool
   
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
@@ -83,24 +85,57 @@ struct PostView: View, Equatable {
     updateSearchMatches(searchQuery.debounced)
   }
   
-  func updateSearchMatches(_ query: String) {
+  func updateSearchMatches(_ query: String, _ reader: ScrollViewProxy? = nil) {
     let flattened = CommentUtils.shared.flattenComments(comments)
     
     if query.isEmpty {
       DispatchQueue.main.async {
         withAnimation {
-          searchMatches = "0/\(flattened.count)"
+          currentMatchIndex = 0
+          searchMatches = 0
         }
       }
       
       return
     }
     
-    let matches = flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))}).count
+    let matches = getMatchingComments(flattened, query).count
     
     DispatchQueue.main.async {
       withAnimation {
-        searchMatches = "\(matches)/\(flattened.count)"
+        searchMatches = matches
+      }
+    }
+    
+    goToNextSearchResult(true, reader)
+  }
+  
+  func getMatchingComments(_ flattened: [Comment], _ query: String) -> [Comment] {
+    return flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))})
+  }
+  
+  func goToNextSearchResult (_ next: Bool = true, _ reader: ScrollViewProxy? = nil) {
+    if searchQuery.debounced.isEmpty { return }
+    
+    let flattened = CommentUtils.shared.flattenComments(comments)
+    let matches = getMatchingComments(flattened, searchQuery.debounced)
+    
+    if matches.isEmpty { return }
+    
+    var targetIndex = 0
+
+    if !currentMatchId.isEmpty {
+      let currIndex = matches.firstIndex(where: { $0.id == currentMatchId }) ?? 0
+      targetIndex = next ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
+    }
+    
+    currentMatchId = matches[targetIndex].id
+
+    
+    DispatchQueue.main.async {
+      withAnimation {
+        currentMatchIndex = targetIndex + 1
+        reader?.scrollTo(currentMatchId, anchor: .top)
       }
     }
   }
@@ -161,7 +196,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, updateSearchMatches: updateSearchMatchesWithQuery)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateSearchMatches: updateSearchMatchesWithQuery)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -211,14 +246,15 @@ struct PostView: View, Equatable {
                 .focused($searchFocused)
                 .foregroundColor(Color.hex("7D7E80"))
                 .onChange(of: searchQuery.debounced) { _, val in
-                  updateSearchMatches(val)
+                  currentMatchId = ""
+                  updateSearchMatches(val, proxy)
                 }
               
               Spacer()
             }
             
             HStack(spacing: 10) {
-              Text(searchMatches)
+              Text("\(currentMatchIndex)/\(searchMatches)")
                 .fontSize(16, .semibold)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
@@ -235,6 +271,7 @@ struct PostView: View, Equatable {
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    goToNextSearchResult(false, proxy)
                   }
                 
                 Image(systemName: "chevron.right")
@@ -245,6 +282,7 @@ struct PostView: View, Equatable {
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    goToNextSearchResult(true, proxy)
                   }
               }
               

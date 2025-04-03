@@ -26,6 +26,7 @@ struct PostReplies: View {
   @Binding var comments: [Comment]
   
   var searchQuery: String? = nil
+  var currentMatchId: String? = nil
   var updateSearchMatches: () -> Void
   
   @State private var seenComments: String?
@@ -86,7 +87,7 @@ struct PostReplies: View {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, updateSearchMatches: updateSearchMatches, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, currentMatchId: currentMatchId, updateSearchMatches: updateSearchMatches, isLast: i == comments.count - 1)
                 .id("\(comment.id)-comment-link")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
