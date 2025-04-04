@@ -301,9 +301,16 @@ struct PostView: View, Equatable {
                     }
                   }
                 } label: {
-                  Image(systemName: sort.rawVal.icon)
-                    .foregroundColor(Color.accentColor)
-                    .fontSize(17, .bold)
+                  if sort == .live {
+                    Image(systemName: sort.rawVal.icon)
+                      .foregroundColor(Color.accentColor)
+                      .fontSize(17, .bold)
+                      .blinking()
+                  } else {
+                    Image(systemName: sort.rawVal.icon)
+                      .foregroundColor(Color.accentColor)
+                      .fontSize(17, .bold)
+                  }
                 }
                 
               }.frame(maxWidth: .infinity, alignment: .leading)
@@ -489,7 +496,7 @@ struct PostView: View, Equatable {
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
           .padding(.horizontal, 8)
-          .padding([.bottom], 8)
+          .padding([.bottom], 12)
           .ignoresSafeArea(.keyboard)
           
         }
@@ -627,4 +634,28 @@ private struct Toolbar: ToolbarContent {
       }
     }
   }
+}
+
+struct BlinkViewModifier: ViewModifier {
+    
+    let duration: Double
+    let min: Double
+    @State private var blinking: Bool = false
+    
+    func body(content: Content) -> some View {
+        content
+            .opacity(blinking ? min : 1)
+            .animation(.easeOut(duration: duration).repeatForever(), value: blinking)
+            .onAppear {
+                withAnimation {
+                    blinking = true
+                }
+            }
+    }
+}
+
+extension View {
+  func blinking(duration: Double = 1, min: Double = 0.5) -> some View {
+    modifier(BlinkViewModifier(duration: duration, min: min))
+    }
 }
