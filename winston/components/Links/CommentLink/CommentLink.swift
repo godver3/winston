@@ -93,7 +93,7 @@ struct CommentLink: View, Equatable {
   var children: [Comment]
   
   var searchQuery: String? = nil
-  var matchDict: [String: Bool] = [:]
+  var matchMap: [String: Bool] = [:]
   var isMatch: Bool = false
   
   var currentMatchId: String? = nil
@@ -104,7 +104,7 @@ struct CommentLink: View, Equatable {
   var commentLinkMore: CommentLinkMore? = nil
   
   func childrenContainsMatch (_ comment: Comment)  -> Bool {
-    if matchDict[comment.id] ?? false {
+    if matchMap[comment.id] ?? false {
       return true
     }
     
@@ -145,8 +145,8 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchDict: matchDict, isMatch: matchDict[commentChild.id] ?? false, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
-                .id("\(commentChild.id)-comment-link")
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] ?? false, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+                .id(commentChild.id)
               //                .equatable()
             }
           }

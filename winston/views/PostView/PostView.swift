@@ -33,7 +33,8 @@ struct PostView: View, Equatable {
   @State private var comments: [Comment] = []
   @State private var flattened: [Comment] = []
   @State private var matches: [String] = []
-  @State private var matchDict: [String: Bool] = [:]
+  @State private var matchMap: [String: Bool] = [:]
+  @State private var commentIndexMap: [String: Int] = [:]
   @State private var seenComments: String? = nil
     
   @State private var searchQuery = Debouncer("", delay: 0.25)
@@ -45,6 +46,8 @@ struct PostView: View, Equatable {
   @State private var currentMatchId = ""
   @State private var visibleComments = AtMostEveryNDebouncer("", delay: 1)
   @State private var autoScrolling: Bool = false
+  @State private var lastAppearedIdx: Int = -1
+  @State private var scrollDir: Bool = false // false = down, true = up
   
   @FocusState private var searchFocused: Bool
 
@@ -106,6 +109,11 @@ struct PostView: View, Equatable {
     
     if visible {
       visibleComments.value += key
+      
+      if let idx = commentIndexMap[id] {
+        scrollDir = idx < lastAppearedIdx
+        lastAppearedIdx = idx
+      }
     } else {
       visibleComments.value = visibleComments.value.replacingOccurrences(of: key, with: "")
     }
@@ -114,7 +122,11 @@ struct PostView: View, Equatable {
   func updateMatchIndex(_ visible: String) {
     if autoScrolling { return }
     
-    if let lastMatchIndex = matches.lastIndex(where: { id in visible.contains("|\(id)|") }) {
+    let lastMatchIndex = scrollDir ?
+      matches.lastIndex(where: { id in visible.contains("|\(id)|") }) :
+      matches.firstIndex(where: { id in visible.contains("|\(id)|") })
+    
+    if let lastMatchIndex {
       DispatchQueue.main.async {
         withAnimation {
           currentMatchIndex = lastMatchIndex + 1
@@ -133,6 +145,10 @@ struct PostView: View, Equatable {
   
   func newCommentsLoaded() {
     flattened = CommentUtils.shared.flattenComments(comments)
+    commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
+      partial[eo.element.id] = eo.offset
+    }
+    
     updateMatches()
   }
   
@@ -151,11 +167,11 @@ struct PostView: View, Equatable {
     }
     
     matches = searchOpen ? getMatchingComments(query) : getUnseenComments()
-    matchDict = matches.reduce(into: [:], { partial, id in
+    matchMap = matches.reduce(into: [:], { partial, id in
       partial[id] = true
     })
     
-    indexOfFirstMatch = flattened.firstIndex(where: { flat in matchDict[flat.id] ?? false }) ?? 99999
+    indexOfFirstMatch = commentIndexMap[matches.first ?? ""] ?? -1
     
     DispatchQueue.main.async {
       withAnimation {
@@ -267,7 +283,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchDict: $matchDict, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
