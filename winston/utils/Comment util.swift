@@ -46,7 +46,7 @@ class CommentUtils {
     
     comments.forEach { comment in
       if comment.kind != "more" {
-        flattened.append([ "id": comment.id, "body": comment.data?.body ?? "" ])
+        flattened.append([ "id": comment.id, "body": comment.data?.body?.lowercased() ?? "" ])
       }
       
       if comment.childrenWinston.count > 0 {

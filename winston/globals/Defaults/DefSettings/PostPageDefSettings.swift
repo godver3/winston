@@ -12,5 +12,6 @@ struct PostPageDefSettings: Equatable, Hashable, Codable, Defaults.Serializable 
   var preferredSearchSort: SubListingSortOption = .best
   var perPostSort: Bool = false
   var postSorts: Dictionary<String, CommentSortOption> = .init()
+  var collapsedPosts: Dictionary<String, Bool> = .init()
   var showUpVoteRatio: Bool = true
 }

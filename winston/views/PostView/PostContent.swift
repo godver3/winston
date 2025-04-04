@@ -35,7 +35,7 @@ struct PostContent: View, Equatable {
   
   var body: some View {
     let postsTheme = selectedTheme.posts
-    let isCollapsed = forceCollapse || collapsed
+    let isCollapsed = forceCollapse || collapsed || (defSettings.collapsedPosts[post.id] ?? false)
     let data = post.data ?? emptyPostData
     let over18 = data.over_18 ?? false
     Group {
@@ -97,7 +97,17 @@ struct PostContent: View, Equatable {
         .listRowInsets(EdgeInsets(top: postsTheme.spacing / 2, leading: postsTheme.padding.horizontal, bottom: postsTheme.spacing / 2, trailing: postsTheme.padding.horizontal))
       }
       .contentShape(Rectangle())
-      .onTapGesture { withAnimation(.smooth) { collapsed.toggle() }}
+      .onTapGesture { withAnimation(.smooth) {
+          collapsed.toggle()
+          
+          Task { [collapsed] in
+              if collapsed {
+                  defSettings.collapsedPosts[post.id] = true
+              } else {
+                  defSettings.collapsedPosts[post.id] = nil
+              }
+          }
+      }}
       
       BadgeOpt(avatarRequest: winstonData.avatarImageRequest, badgeKit: data.badgeKit, showVotes: false, theme: postsTheme.badge,
                openSub: openSubreddit, subName: data.subreddit)

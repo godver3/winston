@@ -52,7 +52,6 @@ struct PostView: View, Equatable {
   
   @FocusState private var searchFocused: Bool
 
-  
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
     self.subreddit = subreddit
@@ -88,6 +87,26 @@ struct PostView: View, Equatable {
   
   func updatePost() {
     Task(priority: .background) { await asyncFetch(true) }
+  }
+  
+  func updatePostAndInitSort() {
+    Task(priority: .background) {
+      await asyncFetch(true)
+
+      let defSettings = Defaults[.PostPageDefSettings]
+      let commentsDefSettings = Defaults[.CommentsSectionDefSettings]
+      
+      let title = post.data?.title.lowercased() ?? ""
+      let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
+        CommentSortOption.live : commentsDefSettings.preferredSort
+      sort = defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? defaultSort) : defaultSort
+      
+      if sort == .live {
+        liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+          updatePost()
+        }
+      }
+    }
   }
   
   func openUnseenSkipper(_ reader: ScrollViewProxy) {
@@ -134,7 +153,7 @@ struct PostView: View, Equatable {
             currentMatchIndex = matchIdx + 1
           }
         }
-      } else if visible.isEmpty || flattened.lastIndex(where: { comment in visible.contains("|\(comment["id"]!)|") })! < indexOfFirstMatch {
+      } else if visible.isEmpty || (flattened.lastIndex(where: { comment in visible.contains("|\(comment["id"]!)|") }) ?? -1) < indexOfFirstMatch {
         currentMatchId = ""
 
         DispatchQueue.main.async {
@@ -171,7 +190,7 @@ struct PostView: View, Equatable {
       return
     }
     
-    matches = searchOpen ? getMatchingComments(query) : getUnseenComments()
+    matches = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
     matchMap = matches.reduce(into: [:], { partial, id in
       partial[id] = true
     })
@@ -188,7 +207,7 @@ struct PostView: View, Equatable {
   }
   
   func getMatchingComments(_ query: String) -> [String] {
-    return flattened.filter({ ($0["body"] ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))}).map({ $0["id"]! })
+    return flattened.filter({ ($0["body"] ?? "").contains(query)}).map({ $0["id"]! })
   }
   
   func getUnseenComments() -> [String] {
@@ -230,9 +249,6 @@ struct PostView: View, Equatable {
     currentMatchId = matches[targetIndex]
     
     autoScrolling = true
-    Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { _ in
-      self.autoScrolling = false
-    }
 
     DispatchQueue.main.async {
       withAnimation {
@@ -360,18 +376,36 @@ struct PostView: View, Equatable {
             }
             
             HStack(spacing: 12) {
-              
-              if unseenSkipperOpen {
-                PostLinkGlowDot(unseenType: .dot(selectedTheme.comments.theme.unseenDot), seen: false, badge: true).equatable()
-              }
-              
-              Text("\(currentMatchIndex)/\(totalMatches)")
-                .fontSize(16, .semibold)
+              HStack(spacing: 8) {
+                HStack(spacing: 4)  {
+                  Image(systemName: unseenSkipperOpen ? "message.badge.fill" : "text.magnifyingglass")
+                    .fontSize(12, .semibold)
+                    .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                  
+                  Text("\(currentMatchIndex)/\(totalMatches)")
+                    .fontSize(16, .semibold)
+                    .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                    .lineLimit(1)
+                }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
-                .foregroundStyle(Color(UIColor(hex: "7D7E80")))
-                .lineLimit(1)
+              
+                HStack(spacing: 4)  {
+                  Image(systemName: "arrow.down.message.fill")
+                  .fontSize(12, .semibold)
+                  .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+              
+                  Text("\(flattened.count)/\(post.data?.num_comments ?? 0)")
+                    .fontSize(16, .semibold)
+                    .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                    .lineLimit(1)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                
+              }
               
               HStack(spacing: 4) {
                 Image(systemName: "chevron.left")
@@ -447,7 +481,7 @@ struct PostView: View, Equatable {
             }
           }
           .padding(.horizontal, 12)
-          .padding(.vertical, 15)
+          .padding(.vertical, 12)
           .frame(maxWidth: searchOpen || unseenSkipperOpen ? .infinity : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
           .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
@@ -464,7 +498,7 @@ struct PostView: View, Equatable {
         .onChange(of: sort) { _, val in
           updatePost()
           
-          if sort == .live {
+          if val == .live {
             liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
               updatePost()
             }
@@ -479,6 +513,11 @@ struct PostView: View, Equatable {
           }
         }
         .onChange(of: visibleComments.debounced) { _, val in
+          if autoScrolling {
+            autoScrolling = false
+            return
+          }
+          
           updateMatchIndex(val)
         }
         .onAppear {
@@ -488,10 +527,10 @@ struct PostView: View, Equatable {
               if highlightID != nil { withAnimation { proxy.scrollTo("loading-comments") } }
             }
           }
-          if post.data == nil {
-            updatePost()
-          }
           
+          if post.data == nil {
+            updatePostAndInitSort()
+          }
           
           Task(priority: .background) {
             if let numComments = post.data?.num_comments {
@@ -504,6 +543,10 @@ struct PostView: View, Equatable {
               await subreddit.refreshSubreddit()
             }
           }
+        }
+        .onDisappear {
+          liveRefreshTimer?.invalidate()
+          liveRefreshTimer = nil
         }
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {
