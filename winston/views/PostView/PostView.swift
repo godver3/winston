@@ -44,10 +44,11 @@ struct PostView: View, Equatable {
   @State private var currentMatchIndex = 0
   @SilentState private var indexOfFirstMatch = 99999
   @SilentState private var currentMatchId = ""
-  @SilentState private var visibleComments = AtMostEveryNDebouncer("", delay: 1)
+  @SilentState private var visibleComments = Debouncer("", delay: 0.25)
   @SilentState private var autoScrolling: Bool = false
   @SilentState private var lastAppearedIdx: Int = -1
-  @SilentState private var scrollDir: Bool = false // false = down, true = up
+  @SilentState private var scrollDir: Bool = false
+  @SilentState private var liveRefreshTimer: Timer? = nil
   
   @FocusState private var searchFocused: Bool
 
@@ -98,10 +99,6 @@ struct PostView: View, Equatable {
       
       updateMatches(reader)
     }
-  }
-
-  func refreshComments() {
-    Task { await asyncFetch() }
   }
   
   func updateVisibleComments(_ id: String, _ visible: Bool) {
@@ -336,7 +333,7 @@ struct PostView: View, Equatable {
         .environment(\.defaultMinListRowHeight, 1)
         .listStyle(.plain)
         .refreshable {
-          refreshComments()
+          updatePost()
         }
         .overlay(alignment: .bottomTrailing) {
           if !selectedTheme.posts.inlineFloatingPill {
@@ -466,6 +463,15 @@ struct PostView: View, Equatable {
         .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, currentMatchIndex: $currentMatchIndex, totalMatches: $totalMatches, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
           updatePost()
+          
+          if sort == .live {
+            liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
+              updatePost()
+            }
+          } else {
+            liveRefreshTimer?.invalidate()
+            liveRefreshTimer = nil
+          }
         }
         .onChange(of: comments) { _, val in
           Task {
@@ -510,7 +516,7 @@ struct PostView: View, Equatable {
           previousScrollTarget: $previousScrollTarget,
           comments: comments,
           reader: proxy,
-          refresh: refreshComments,
+          refresh: updatePost,
           openUnseenSkipper : openUnseenSkipper,
           searchOpen: $searchOpen,
           unseenSkipperOpen: $unseenSkipperOpen

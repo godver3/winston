@@ -51,7 +51,6 @@ struct CommentLinkContent: View {
   var avatarsURL: [String:String]?
   var searchQuery: String?
   var isMatch: Bool = false
-  var selfOrChildIsMatch: Bool = false
   var isCurrentMatch: Bool = false
 
   @SilentState private var size: CGSize = .zero
@@ -82,7 +81,7 @@ struct CommentLinkContent: View {
     
     
     if let data = comment.data {
-      let collapsed = !selfOrChildIsMatch && (data.collapsed ?? false)
+      let collapsed = data.collapsed ?? false
       Group {
         HStack(spacing: CommentLinkContent.indentLineContentSpacing) {
           if data.depth != 0 && indentLines != 0 {

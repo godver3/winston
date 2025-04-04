@@ -103,20 +103,6 @@ struct CommentLink: View, Equatable {
   var isLast: Bool = false
   var commentLinkMore: CommentLinkMore? = nil
   
-//  func childrenContainsMatch (_ comment: Comment)  -> Bool {
-//    if matchMap[comment.id] ?? false {
-//      return true
-//    }
-//    
-//    for child in comment.childrenWinston {
-//      if childrenContainsMatch(child) {
-//        return true
-//      }
-//    }
-//    
-//    return false
-//  }
-  
   var body: some View {
     if let data = comment.data {
       let collapsed = data.collapsed ?? false
@@ -131,10 +117,10 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, newCommentsLoaded: newCommentsLoaded)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, selfOrChildIsMatch: isMatch, isCurrentMatch: comment.id == currentMatchId)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId)
           }
         }
-        .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.6 : 1)
+        .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.45 : 1)
         .onAppear {
           updateVisibleComments?(comment.id, true)
         }.onDisappear {
