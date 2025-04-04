@@ -41,12 +41,12 @@ class CommentUtils {
     return answer
   }
     
-  func flattenComments(_ comments: [Comment]) -> [Comment] {
-    var flattened: [Comment] = []
+  func flattenComments(_ comments: [Comment]) -> [[String: String]] {
+    var flattened: [[String: String]] = []
     
     comments.forEach { comment in
       if comment.kind != "more" {
-        flattened.append(comment)
+        flattened.append([ "id": comment.id, "body": comment.data?.body ?? "" ])
       }
       
       if comment.childrenWinston.count > 0 {

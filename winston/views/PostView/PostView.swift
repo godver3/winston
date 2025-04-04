@@ -12,7 +12,7 @@ import AlertToast
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
-    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.unseenSkipperOpen == rhs.unseenSkipperOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.searchMatches == rhs.searchMatches
+    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.unseenSkipperOpen == rhs.unseenSkipperOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.totalMatches == rhs.totalMatches
   }
   
   var post: Post
@@ -31,23 +31,23 @@ struct PostView: View, Equatable {
   @SilentState private var topVisibleCommentId: String? = nil
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
-  @State private var flattened: [Comment] = []
-  @State private var matches: [String] = []
-  @State private var matchMap: [String: Bool] = [:]
-  @State private var commentIndexMap: [String: Int] = [:]
+  @SilentState private var flattened: [[String:String]] = []
+  @SilentState private var matches: [String] = []
+  @SilentState private var matchMap: [String: Bool] = [:]
+  @SilentState private var commentIndexMap: [String: Int] = [:]
   @State private var seenComments: String? = nil
     
   @State private var searchQuery = Debouncer("", delay: 0.25)
   @State private var searchOpen = false
   @State private var unseenSkipperOpen = false
-  @State private var searchMatches = 0
+  @State private var totalMatches = 0
   @State private var currentMatchIndex = 0
-  @State private var indexOfFirstMatch = 99999
-  @State private var currentMatchId = ""
-  @State private var visibleComments = AtMostEveryNDebouncer("", delay: 1)
-  @State private var autoScrolling: Bool = false
-  @State private var lastAppearedIdx: Int = -1
-  @State private var scrollDir: Bool = false // false = down, true = up
+  @SilentState private var indexOfFirstMatch = 99999
+  @SilentState private var currentMatchId = ""
+  @SilentState private var visibleComments = AtMostEveryNDebouncer("", delay: 1)
+  @SilentState private var autoScrolling: Bool = false
+  @SilentState private var lastAppearedIdx: Int = -1
+  @SilentState private var scrollDir: Bool = false // false = down, true = up
   
   @FocusState private var searchFocused: Bool
 
@@ -105,51 +105,59 @@ struct PostView: View, Equatable {
   }
   
   func updateVisibleComments(_ id: String, _ visible: Bool) {
-    let key = "|\(id)|"
-    
-    if visible {
-      visibleComments.value += key
+    Task {
+      let key = "|\(id)|"
       
-      if let idx = commentIndexMap[id] {
-        scrollDir = idx < lastAppearedIdx
-        lastAppearedIdx = idx
+      if visible {
+        visibleComments.value += key
+        
+        if let idx = commentIndexMap[id] {
+          scrollDir = idx < lastAppearedIdx
+          lastAppearedIdx = idx
+        }
+      } else {
+        visibleComments.value = visibleComments.value.replacingOccurrences(of: key, with: "")
       }
-    } else {
-      visibleComments.value = visibleComments.value.replacingOccurrences(of: key, with: "")
     }
   }
   
   func updateMatchIndex(_ visible: String) {
     if autoScrolling { return }
     
-    let lastMatchIndex = scrollDir ?
+    Task {
+      let matchIdx = scrollDir ?
       matches.lastIndex(where: { id in visible.contains("|\(id)|") }) :
       matches.firstIndex(where: { id in visible.contains("|\(id)|") })
-    
-    if let lastMatchIndex {
-      DispatchQueue.main.async {
-        withAnimation {
-          currentMatchIndex = lastMatchIndex + 1
-          currentMatchId = matches[lastMatchIndex]
+      
+      if let matchIdx {
+        currentMatchId = matches[matchIdx]
+
+        DispatchQueue.main.async {
+          withAnimation {
+            currentMatchIndex = matchIdx + 1
+          }
         }
-      }
-    } else if visible.isEmpty || flattened.lastIndex(where: { comment in visible.contains("|\(comment.id)|") })! < indexOfFirstMatch {
-      DispatchQueue.main.async {
-        withAnimation {
-          currentMatchIndex = 0
-          currentMatchId = ""
+      } else if visible.isEmpty || flattened.lastIndex(where: { comment in visible.contains("|\(comment["id"]!)|") })! < indexOfFirstMatch {
+        currentMatchId = ""
+
+        DispatchQueue.main.async {
+          withAnimation {
+            currentMatchIndex = 0
+          }
         }
       }
     }
   }
   
   func newCommentsLoaded() {
-    flattened = CommentUtils.shared.flattenComments(comments)
-    commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
-      partial[eo.element.id] = eo.offset
+    Task {
+      flattened = CommentUtils.shared.flattenComments(comments)
+      commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
+        partial[eo.element["id"]!] = eo.offset
+      }
+      
+      updateMatches()
     }
-    
-    updateMatches()
   }
   
   func updateMatches(_ reader: ScrollViewProxy? = nil) {
@@ -159,7 +167,7 @@ struct PostView: View, Equatable {
       DispatchQueue.main.async {
         withAnimation {
           currentMatchIndex = 0
-          searchMatches = 0
+          totalMatches = 0
         }
       }
       
@@ -175,7 +183,7 @@ struct PostView: View, Equatable {
     
     DispatchQueue.main.async {
       withAnimation {
-        searchMatches = matches.count
+        totalMatches = matches.count
       }
     }
     
@@ -183,17 +191,17 @@ struct PostView: View, Equatable {
   }
   
   func getMatchingComments(_ query: String) -> [String] {
-    return flattened.filter({ ($0.data?.body ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))}).map({ $0.id })
+    return flattened.filter({ ($0["body"] ?? "").lowercased().contains(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))}).map({ $0["id"]! })
   }
   
   func getUnseenComments() -> [String] {
     guard let seenComments else { return [] }
-    return flattened.filter({ !seenComments.contains($0.data?.id ?? "") }).map({ $0.id })
+    return flattened.filter({ !seenComments.contains($0["id"]?.dropLast(2) ?? "") }).map({ $0["id"]! })
   }
   
   func scrollToNextMatch (_ forward: Bool = true, _ reader: ScrollViewProxy? = nil) {
     if searchOpen && searchQuery.debounced.isEmpty { return }
-        
+    
     if matches.isEmpty {
       DispatchQueue.main.async {
         withAnimation {
@@ -204,14 +212,24 @@ struct PostView: View, Equatable {
       return
     }
     
-    var currIndex = 0
+    var currIndex = -1
     var targetIndex = 0
 
     if !currentMatchId.isEmpty {
       currIndex = matches.firstIndex(where: { $0 == currentMatchId }) ?? 0
-      targetIndex = forward ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
     }
     
+    if reader == nil {
+      DispatchQueue.main.async {
+        withAnimation {
+          currentMatchIndex = currIndex + 1
+        }
+      }
+      
+      return
+    }
+    
+    targetIndex = forward ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
     currentMatchId = matches[targetIndex]
     
     autoScrolling = true
@@ -350,7 +368,7 @@ struct PostView: View, Equatable {
                 PostLinkGlowDot(unseenType: .dot(selectedTheme.comments.theme.unseenDot), seen: false, badge: true).equatable()
               }
               
-              Text("\(currentMatchIndex)/\(searchMatches)")
+              Text("\(currentMatchIndex)/\(totalMatches)")
                 .fontSize(16, .semibold)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
@@ -445,7 +463,7 @@ struct PostView: View, Equatable {
           
         }
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
-        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, searchFocused: _searchFocused) }
+        .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, currentMatchIndex: $currentMatchIndex, totalMatches: $totalMatches, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
           updatePost()
         }
@@ -510,6 +528,8 @@ private struct Toolbar: ToolbarContent {
   var post: Post
   @Binding var searchOpen: Bool
   @Binding var unseenSkipperOpen: Bool
+  @Binding var currentMatchIndex: Int
+  @Binding var totalMatches: Int
   @FocusState var searchFocused: Bool
   
   var body: some ToolbarContent {
@@ -538,6 +558,8 @@ private struct Toolbar: ToolbarContent {
                 withAnimation {
                   searchOpen = true
                   unseenSkipperOpen = false
+                  currentMatchIndex = 0
+                  totalMatches = 0
                 }
               }
               
