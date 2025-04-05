@@ -1071,14 +1071,14 @@
 		ECDEBD252B31CA6700A8AC78 /* fadeOnEdges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fadeOnEdges.swift; sourceTree = "<group>"; };
 		ECE08B582AA9A3C300F84DC9 /* WinstonTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinstonTheme.swift; sourceTree = "<group>"; };
 		ECE08B5A2AA9C43B00F84DC9 /* saveAndLoadImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = saveAndLoadImages.swift; sourceTree = "<group>"; };
-		ECE08B5D2AA9C94800F84DC9 /* CommentsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsTheme.swift; sourceTree = "<group>"; };
+		ECE08B5D2AA9C94800F84DC9 /* CommentsTheme.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentsTheme.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECE08B5F2AA9C95F00F84DC9 /* PostLinkTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLinkTheme.swift; sourceTree = "<group>"; };
 		ECE08B612AA9C99D00F84DC9 /* ListsTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListsTheme.swift; sourceTree = "<group>"; };
 		ECE08B672AA9E62900F84DC9 /* AvatarTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarTheme.swift; sourceTree = "<group>"; };
 		ECE08B692AA9F03900F84DC9 /* LinesTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinesTheme.swift; sourceTree = "<group>"; };
 		ECE08B712AA9F66000F84DC9 /* PostLinkThemingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLinkThemingPanel.swift; sourceTree = "<group>"; };
 		ECE08B792AA9F68D00F84DC9 /* GeneralThemingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralThemingPanel.swift; sourceTree = "<group>"; };
-		ECE08B7B2AA9F69A00F84DC9 /* CommentsThemingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentsThemingPanel.swift; sourceTree = "<group>"; };
+		ECE08B7B2AA9F69A00F84DC9 /* CommentsThemingPanel.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentsThemingPanel.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECE08B7D2AA9F6A300F84DC9 /* PostThemingPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostThemingPanel.swift; sourceTree = "<group>"; };
 		ECE08B7F2AA9F9BA00F84DC9 /* defaultTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = defaultTheme.swift; sourceTree = "<group>"; };
 		ECE08B812AAA0D0100F84DC9 /* PostTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostTheme.swift; sourceTree = "<group>"; };

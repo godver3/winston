@@ -3855,9 +3855,6 @@
         }
       }
     },
-    "This theme changes a few settings (like the visuals of tab/nav bars) that requires an app restart to take effect." : {
-
-    },
     "This theme changes a few settings that requires an app restart to take effect." : {
       "extractionState" : "stale",
       "localizations" : {

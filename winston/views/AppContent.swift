@@ -49,13 +49,13 @@ struct AppContent: View {
         .onChange(of: InMemoryTheme.shared.currentTheme, initial: false) { old, new in
             restartAlert = old.general != new.general
         }
-        .alert("Restart required", isPresented: $restartAlert) {
-            Button("Gotcha!", role: .cancel) {
-                restartAlert = false
-            }
-        } message: {
-            Text("This theme changes a few settings (like the visuals of tab/nav bars) that requires an app restart to take effect.")
-        }
+//        .alert("Restart required", isPresented: $restartAlert) {
+//            Button("Gotcha!", role: .cancel) {
+//                restartAlert = false
+//            }
+//        } message: {
+//            Text("This theme changes a few settings (like the visuals of tab/nav bars) that requires an app restart to take effect.")
+//        }
         .onChange(of: scenePhase) { _, newPhase in
             // No auth on MacOS
             var runningOnMac = false

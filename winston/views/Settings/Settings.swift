@@ -36,6 +36,7 @@ struct Settings: View {
             WSNavigationLink(.setting(.general), "General", icon: "gear")
             WSNavigationLink(.setting(.behavior), "Behavior", icon: "arrow.triangle.turn.up.right.diamond.fill")
             WSNavigationLink(.setting(.appearance), "Appearance", icon: "theatermask.and.paintbrush.fill")
+              WSNavigationLink(.setting(.themes), "Themes", icon: "paintbrush.fill")
             WSNavigationLink(.setting(.credentials), "Credentials", icon: "key.horizontal.fill")
           }
           

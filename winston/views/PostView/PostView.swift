@@ -385,8 +385,8 @@ struct PostView: View, Equatable {
             HStack(spacing: 12) {
               HStack(spacing: 8) {
                 HStack(spacing: 4)  {
-                  Image(systemName: unseenSkipperOpen ? "message.badge.fill" : "text.magnifyingglass")
-                    .fontSize(12, .semibold)
+                  Image(systemName: searchOpen ? "text.page.badge.magnifyingglass" : "message.badge")
+                    .fontSize(13, .semibold)
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                   
                   Text("\(currentMatchIndex)/\(totalMatches)")
@@ -399,8 +399,8 @@ struct PostView: View, Equatable {
                 .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
               
                 HStack(spacing: 4)  {
-                  Image(systemName: "arrow.down.message.fill")
-                  .fontSize(12, .semibold)
+                  Image(systemName: "message")
+                  .fontSize(13, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
               
                   Text("\(flattened.count)/\(post.data?.num_comments ?? 0)")
