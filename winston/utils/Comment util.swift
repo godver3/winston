@@ -41,17 +41,22 @@ class CommentUtils {
     return answer
   }
     
-  func flattenComments(_ comments: [Comment]) -> [[String: String]] {
+  func flattenComments(_ comments: [Comment], parentId: String? = nil) -> [[String: String]] {
     var flattened: [[String: String]] = []
+    
+    var lastCommentId: String? = nil
     
     comments.forEach { comment in
       if comment.kind != "more" {
-        flattened.append([ "id": comment.id, "body": comment.data?.body?.lowercased() ?? "" ])
+        let targetId = lastCommentId != nil ? lastCommentId : parentId
+        flattened.append([ "id": comment.id, "body": comment.data?.body?.lowercased() ?? "", "target": targetId ?? comment.id ])
       }
       
       if comment.childrenWinston.count > 0 {
-        flattened.append(contentsOf: flattenComments(comment.childrenWinston))
+        flattened.append(contentsOf: flattenComments(comment.childrenWinston, parentId: comment.id))
       }
+      
+      lastCommentId = comment.id
     }
     
     return flattened

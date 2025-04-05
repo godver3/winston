@@ -33,7 +33,8 @@ struct PostView: View, Equatable {
   @State private var comments: [Comment] = []
   @SilentState private var flattened: [[String:String]] = []
   @SilentState private var matches: [String] = []
-  @SilentState private var matchMap: [String: Bool] = [:]
+  // Map of comment id to target id to scroll to
+  @SilentState private var matchMap: [String: String] = [:]
   @SilentState private var commentIndexMap: [String: Int] = [:]
   @State private var seenComments: String? = nil
     
@@ -190,9 +191,13 @@ struct PostView: View, Equatable {
       return
     }
     
-    matches = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
-    matchMap = matches.reduce(into: [:], { partial, id in
-      partial[id] = true
+    let matchingComments = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
+    matches = matchingComments.map({ $0["id"]! })
+
+    matchMap = matchingComments.reduce(into: [:], { partial, comment in
+      if let id = comment["id"] {
+        partial[id] = comment["target"] ?? id
+      }
     })
     
     indexOfFirstMatch = commentIndexMap[matches.first ?? ""] ?? -1
@@ -206,13 +211,13 @@ struct PostView: View, Equatable {
     scrollToNextMatch(true, reader)
   }
   
-  func getMatchingComments(_ query: String) -> [String] {
-    return flattened.filter({ ($0["body"] ?? "").contains(query)}).map({ $0["id"]! })
+  func getMatchingComments(_ query: String) -> [[String: String]] {
+    return flattened.filter({ ($0["body"] ?? "").contains(query)})
   }
   
-  func getUnseenComments() -> [String] {
+  func getUnseenComments() -> [[String: String]] {
     guard let seenComments else { return [] }
-    return flattened.filter({ !seenComments.contains($0["id"]?.dropLast(2) ?? "") }).map({ $0["id"]! })
+    return flattened.filter({ !seenComments.contains($0["id"]?.dropLast(2) ?? "") })
   }
   
   func scrollToNextMatch (_ forward: Bool = true, _ reader: ScrollViewProxy? = nil) {
@@ -253,7 +258,7 @@ struct PostView: View, Equatable {
     DispatchQueue.main.async {
       withAnimation {
         currentMatchIndex = targetIndex + 1
-        reader?.scrollTo(currentMatchId, anchor: .top)
+        reader?.scrollTo(matchMap[currentMatchId] ?? currentMatchId, anchor: .top)
       }
     }
   }
@@ -399,7 +404,10 @@ struct PostView: View, Equatable {
                 .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
               
                 HStack(spacing: 4)  {
-                  Image(systemName: "message")
+                  let numComments = post.data?.num_comments ?? 0
+                  let allLoaded = flattened.count >= numComments
+                  
+                  Image(systemName: allLoaded ? "arrow.down.circle" : "arrow.down.circle.dotted")
                   .fontSize(13, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
               
@@ -491,7 +499,9 @@ struct PostView: View, Equatable {
           .padding(.vertical, 12)
           .frame(maxWidth: searchOpen || unseenSkipperOpen ? .infinity : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
-          .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
+//          .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
+          .background(.thinMaterial)
+          .clipShape(RoundedRectangle(cornerRadius:20))
           .shadow(color: Color.hex("212326"), radius: 10)
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
