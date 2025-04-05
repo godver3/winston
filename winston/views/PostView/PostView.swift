@@ -111,14 +111,10 @@ struct PostView: View, Equatable {
   }
   
   func openUnseenSkipper(_ reader: ScrollViewProxy) {
-    guard let seenComments else { return }
+    unseenSkipperOpen = true
+    currentMatchId = ""
     
-    if !seenComments.isEmpty {
-      unseenSkipperOpen = true
-      currentMatchId = ""
-      
-      updateMatches(reader)
-    }
+    updateMatches(reader)
   }
   
   func updateVisibleComments(_ id: String, _ visible: Bool) {
@@ -168,7 +164,8 @@ struct PostView: View, Equatable {
   
   func newCommentsLoaded() {
     Task {
-      flattened = CommentUtils.shared.flattenComments(comments)
+      var savedMoreCalcs: [String: Int] = .init()
+      flattened = CommentUtils.shared.flattenComments(comments, savedMoreCalcs: &savedMoreCalcs)
       commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
         partial[eo.element["id"]!] = eo.offset
       }
@@ -193,7 +190,7 @@ struct PostView: View, Equatable {
     
     let matchingComments = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
     matches = matchingComments.map({ $0["id"]! })
-
+    
     matchMap = matchingComments.reduce(into: [:], { partial, comment in
       if let id = comment["id"] {
         partial[id] = comment["target"] ?? id
@@ -500,7 +497,7 @@ struct PostView: View, Equatable {
           .frame(maxWidth: searchOpen || unseenSkipperOpen ? .infinity : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
 //          .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
-          .background(.thinMaterial)
+          .background(.regularMaterial)
           .clipShape(RoundedRectangle(cornerRadius:20))
           .shadow(color: Color.hex("212326"), radius: 10)
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)

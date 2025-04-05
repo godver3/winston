@@ -68,6 +68,7 @@ struct CommentLink: View, Equatable {
     lhs.highlightID == rhs.highlightID &&
     lhs.searchQuery == rhs.searchQuery &&
     lhs.isMatch == rhs.isMatch &&
+    lhs.matchMap == rhs.matchMap &&
     lhs.currentMatchId == rhs.currentMatchId &&
     lhs.fadeSeenComments == rhs.fadeSeenComments &&
     lhs.comment == rhs.comment &&

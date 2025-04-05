@@ -18,7 +18,7 @@ extension Theme {
             .code {
                 UnderlineStyle(.init(pattern: .solid, color: isCurrentMatch ? .white : .clear))
                 ForegroundColor(.white)
-                BackgroundColor(.accentColor.opacity(0.75))
+                BackgroundColor(.accentColor.opacity(0.85))
             }
             .paragraph { configuration in
                 configuration.label
