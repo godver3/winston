@@ -669,7 +669,7 @@
 		EC082F282A66134C00BA2727 /* CommentLinkFull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommentLinkFull.swift; sourceTree = "<group>"; };
 		EC08540D2A4BD26600E88389 /* ObservedScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservedScrollView.swift; sourceTree = "<group>"; };
 		EC0854122A4BE13000E88389 /* PostView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostView.swift; sourceTree = "<group>"; tabWidth = 2; };
-		EC0854142A4BE1D800E88389 /* PostLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLink.swift; sourceTree = "<group>"; };
+		EC0854142A4BE1D800E88389 /* PostLink.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostLink.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC0854162A4BF45C00E88389 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
 		EC0854182A4BFC4600E88389 /* CommentLink.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentLink.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC08541A2A4BFEB300E88389 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
@@ -1090,7 +1090,7 @@
 		ECE2859A2A5010E2009CF9DD /* DataBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataBlock.swift; sourceTree = "<group>"; };
 		ECE2859C2A50130D009CF9DD /* fetchUserOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchUserOverview.swift; sourceTree = "<group>"; };
 		ECE2859E2A501CD4009CF9DD /* fetchMe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchMe.swift; sourceTree = "<group>"; };
-		ECE285A02A50EC9E009CF9DD /* Badge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; };
+		ECE285A02A50EC9E009CF9DD /* Badge.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECE285A72A513342009CF9DD /* ReplyModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyModal.swift; sourceTree = "<group>"; };
 		ECE449702A67610A00E2A3B7 /* VotesPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotesPopover.swift; sourceTree = "<group>"; };
 		ECE449762A68895500E2A3B7 /* SubredditInfoTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditInfoTab.swift; sourceTree = "<group>"; };

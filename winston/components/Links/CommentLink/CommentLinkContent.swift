@@ -52,6 +52,7 @@ struct CommentLinkContent: View {
   var searchQuery: String?
   var isMatch: Bool = false
   var isCurrentMatch: Bool = false
+  var highlightCurrentMatch: Bool = false
 
   @SilentState private var size: CGSize = .zero
   @State private var offsetX: CGFloat = 0
@@ -97,7 +98,7 @@ struct CommentLinkContent: View {
           }
           HStack(spacing: 8) {
             if let author = data.author {
-              BadgeView(avatarRequest: winstonData.avatarImageRequest, saved: data.badgeKit.saved, unseen: seenComments == nil ? false : !seenComments!.contains(data.id), usernameColor: (post?.data?.author ?? "") == author ? Color.green : nil, author: data.badgeKit.author,fullname: data.badgeKit.authorFullname, userFlair: data.badgeKit.userFlair, created: data.badgeKit.created, theme: theme.theme.badge, commentTheme: theme.theme)
+              BadgeView(avatarRequest: winstonData.avatarImageRequest, saved: data.badgeKit.saved, unseen: seenComments == nil ? false : !seenComments!.contains(data.id), usernameColor: (post?.data?.author ?? "") == author ? Color.green : nil, author: data.badgeKit.author, fullname: data.badgeKit.authorFullname, userFlair: data.badgeKit.userFlair, created: data.badgeKit.created, theme: theme.theme.badge, commentTheme: theme.theme)
             }
             
             Spacer()
@@ -272,7 +273,7 @@ struct CommentLinkContent: View {
         cell.layer.masksToBounds = false
       }
       .background(Color.accentColor.opacity(highlight ? 0.2 : 0))
-      .background(showReplies ? theme.theme.bg() : .clear)
+      .background(showReplies ? isCurrentMatch && highlightCurrentMatch ? Color.gray.opacity(0.17) : theme.theme.bg() : .clear)
       .onAppear {
         let newCommentSwipeActions = Defaults[.CommentLinkDefSettings].swipeActions
         if commentSwipeActions != newCommentSwipeActions {

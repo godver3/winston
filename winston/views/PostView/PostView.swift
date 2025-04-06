@@ -46,7 +46,7 @@ struct PostView: View, Equatable {
   @SilentState private var indexOfFirstMatch = 99999
   @SilentState private var currentMatchId = ""
   @SilentState private var visibleComments = Debouncer("", delay: 0.25)
-  @SilentState private var autoScrolling: Bool = false
+  @State private var autoScrolling: Bool = false
   @SilentState private var lastAppearedIdx: Int = -1
   @SilentState private var scrollDir: Bool = false
   @SilentState private var liveRefreshTimer: Timer? = nil
@@ -138,6 +138,8 @@ struct PostView: View, Equatable {
     if autoScrolling { return }
     
     Task {
+      flattenComments()
+      
       let matchIdx = scrollDir ?
       matches.lastIndex(where: { id in visible.contains("|\(id)|") }) :
       matches.firstIndex(where: { id in visible.contains("|\(id)|") })
@@ -164,13 +166,17 @@ struct PostView: View, Equatable {
   
   func newCommentsLoaded() {
     Task {
-      var savedMoreCalcs: [String: Int] = .init()
-      flattened = CommentUtils.shared.flattenComments(comments, savedMoreCalcs: &savedMoreCalcs)
-      commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
-        partial[eo.element["id"]!] = eo.offset
-      }
-      
+      flattenComments(true)
       updateMatches()
+    }
+  }
+  
+  func flattenComments(_ update: Bool = false)  {
+    if !update && (!flattened.isEmpty || comments.isEmpty) { return }
+    
+    flattened = CommentUtils.shared.flattenComments(comments)
+    commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
+      partial[eo.element["id"]!] = eo.offset
     }
   }
   
@@ -188,7 +194,13 @@ struct PostView: View, Equatable {
       return
     }
     
+    flattenComments()
+    
+    print("--> query: \(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))")
+    print("--> flattened: \(flattened)")
     let matchingComments = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
+    print("--> matching: \(matchingComments)")
+
     matches = matchingComments.map({ $0["id"]! })
     
     matchMap = matchingComments.reduce(into: [:], { partial, comment in
@@ -249,11 +261,10 @@ struct PostView: View, Equatable {
     
     targetIndex = forward ? (currIndex + 1 > matches.count - 1 ? 0 : currIndex + 1) : (currIndex - 1 < 0 ? matches.count - 1 : currIndex - 1)
     currentMatchId = matches[targetIndex]
-    
-    autoScrolling = true
 
     DispatchQueue.main.async {
       withAnimation {
+        autoScrolling = true
         currentMatchIndex = targetIndex + 1
         reader?.scrollTo(matchMap[currentMatchId] ?? currentMatchId, anchor: .top)
       }
@@ -323,7 +334,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, highlightCurrentMatch: autoScrolling, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -411,6 +422,7 @@ struct PostView: View, Equatable {
                   Text("\(flattened.count)/\(post.data?.num_comments ?? 0)")
                     .fontSize(16, .semibold)
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                    .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(1)
                 }
                 .padding(.horizontal, 10)
@@ -528,7 +540,12 @@ struct PostView: View, Equatable {
         }
         .onChange(of: visibleComments.debounced) { _, val in
           if autoScrolling {
-            autoScrolling = false
+            DispatchQueue.main.async {
+              withAnimation {
+                autoScrolling = false
+              }
+            }
+            
             return
           }
           

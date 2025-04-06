@@ -41,10 +41,16 @@ class CommentUtils {
     return answer
   }
     
-  func flattenComments(_ comments: [Comment], savedMoreCalcs: inout [String: Int],  parentId: String? = nil) -> [[String: String]] {
+  func flattenComments(_ comments: [Comment]) -> [[String: String]] {
+    var savedMoreCalcs: [String: Int] = .init()
+    return flattenCommentsIncludingMore(comments, savedMoreCalcs: &savedMoreCalcs)
+      .filter({ $0["target"] != nil}) // Filter out kind = "more" messages
+  }
+  
+  func flattenCommentsIncludingMore(_ comments: [Comment], savedMoreCalcs: inout [String: Int],  parentId: String? = nil) -> [[String: String]] {
     var flattened: [[String: String]] = []
     
-    let maxPrevLines = 4
+    let maxPrevLines = 14
     var lastCommentId: String? = nil
     var lastCommentLines = 0
     var lastChildId: String? = nil
@@ -52,30 +58,31 @@ class CommentUtils {
     
     comments.forEach { comment in
       if comment.kind != "more" {
-        let useLastChild = lastCommentLines > maxPrevLines && lastChildLines <= maxPrevLines && lastChildId != nil
+        let useLastChild = lastChildLines <= maxPrevLines && lastChildId != nil
         let targetId = useLastChild ? lastChildId : (lastCommentId != nil ? (lastCommentLines > maxPrevLines ? nil : lastCommentId) : parentId)
         flattened.append([ "id": comment.id, "body": comment.data?.body?.lowercased() ?? "", "target": targetId ?? comment.id ])
       } else {
-        return
+        flattened.append([ "id": comment.id, "body": "" ])
       }
       
       let approxLines = comment.data?.body?.approxLineCount() ?? 0
-      lastChildLines = 2 * getMoreCount(comment, saved: &savedMoreCalcs)
+      var allChildrenLines = 2 * getMoreCount(comment, saved: &savedMoreCalcs)
       lastChildId = nil
       
       if comment.childrenWinston.count > 0 {
-        let flattenedChildren = flattenComments(comment.childrenWinston, savedMoreCalcs: &savedMoreCalcs, parentId: approxLines <= maxPrevLines ? comment.id : nil)
+        let flattenedChildren = flattenCommentsIncludingMore(comment.childrenWinston, savedMoreCalcs: &savedMoreCalcs, parentId: approxLines <= maxPrevLines ? comment.id : nil)
         
-        if !flattenedChildren.isEmpty {
-          flattened.append(contentsOf: flattenedChildren)
-          
-          lastChildLines = flattenedChildren.reduce(into: 0) { $0 += $1["body"]!.approxLineCount() }
-          lastChildId = flattenedChildren.last!["id"]
-        }
+        flattened.append(contentsOf: flattenedChildren)
+        allChildrenLines = flattenedChildren.reduce(into: 0) { $0 += $1["body"]!.approxLineCount() }
+        
+        let lastChild = flattenedChildren.last!
+        
+        lastChildId = lastChild["id"]
+        lastChildLines = lastChild["body"]!.approxLineCount()
       }
       
       lastCommentId = comment.id
-      lastCommentLines = approxLines + lastChildLines
+      lastCommentLines = approxLines + allChildrenLines
     }
     
     return flattened
@@ -96,7 +103,7 @@ extension String {
     func approxLineCount() -> Int {
       let newLines = self.numberOfOccurrences(of: "\n")
       // Assuming approx 40 chars per line
-      return newLines + ((self.count - newLines * 2) / 40) + 1
+      return newLines + ((self.count - newLines * 2) / 40) + 2
     }
   
     func numberOfOccurrences(of: String) -> Int {

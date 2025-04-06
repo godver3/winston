@@ -30,6 +30,7 @@ struct PostReplies: View {
   
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
+  var highlightCurrentMatch: Bool = false
   var newCommentsLoaded: () -> Void
   var updateVisibleComments: (String, Bool) -> Void
   
@@ -78,19 +79,16 @@ struct PostReplies: View {
         ForEach(Array(comments.enumerated()), id: \.element.id) { i, comment in
           Section {
             
-            Spacer()
-              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
-              .id("\(comment.id)-top-spacer")
+//            Spacer()
+//              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
+//              .id("\(comment.id)-top-spacer")
             
-            Spacer()
-              .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius * 2, maxHeight: theme.theme.cornerRadius * 2, alignment: .top)
-              .background(CommentBG(cornerRadius: theme.theme.cornerRadius, pos: .top).fill(theme.theme.bg()))
-              .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius, maxHeight: theme.theme.cornerRadius, alignment: .top)
-              .clipped()
+            
+            CommentLinkDecoration(top: true, comment: comment, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, theme: theme)
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
                 .id(comment.id)
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
@@ -100,16 +98,12 @@ struct PostReplies: View {
                 }
             }
             
-            Spacer()
-              .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius * 2, maxHeight: theme.theme.cornerRadius * 2, alignment: .top)
-              .background(CommentBG(cornerRadius: theme.theme.cornerRadius, pos: .bottom).fill(theme.theme.bg()))
-              .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius, maxHeight: theme.theme.cornerRadius, alignment: .bottom)
-              .clipped()
+            CommentLinkDecoration(top: false, comment: comment, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, theme: theme)
               .id("\(comment.id)-bot-decoration")
             
-            Spacer()
-              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
-              .id("\(comment.id)-bot-spacer")
+//            Spacer()
+//              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
+//              .id("\(comment.id)-bot-spacer")
             
             if comments.count - 1 != i {
               NiceDivider(divider: theme.divider)

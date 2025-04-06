@@ -62,7 +62,7 @@ func flairWithoutEmojis(str: String?) -> [String]? {
 struct BadgeView: View, Equatable {
   static let authorStatsSpacing: Double = 2
   static func == (lhs: BadgeView, rhs: BadgeView) -> Bool {
-    return lhs.avatarURL == rhs.avatarURL && lhs.saved == rhs.saved && lhs.avatarRequest?.url == rhs.avatarRequest?.url && lhs.theme == rhs.theme && lhs.commentsCount == rhs.commentsCount && lhs.newCommentsCount == rhs.newCommentsCount && lhs.votesCount == rhs.votesCount && lhs.likes == rhs.likes
+      return lhs.avatarURL == rhs.avatarURL && lhs.saved == rhs.saved && lhs.avatarRequest?.url == rhs.avatarRequest?.url && lhs.theme == rhs.theme && lhs.commentsCount == rhs.commentsCount && lhs.newCommentsCount == rhs.newCommentsCount && lhs.votesCount == rhs.votesCount && lhs.likes == rhs.likes && lhs.usernameColor == rhs.usernameColor
   }
   
   var avatarRequest: ImageRequest?

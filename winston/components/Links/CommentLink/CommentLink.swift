@@ -60,6 +60,30 @@ class SubCommentsReferencesContainer: ObservableObject {
   @Published var data: [Comment] = []
 }
 
+struct CommentLinkDecoration: View, Equatable {
+  static func == (lhs: CommentLinkDecoration, rhs: CommentLinkDecoration) -> Bool {
+    lhs.top == rhs.top &&
+    lhs.comment == rhs.comment &&
+    lhs.currentMatchId == rhs.currentMatchId &&
+    lhs.highlightCurrentMatch == rhs.highlightCurrentMatch
+  }
+  
+  let top: Bool
+  let comment: Comment
+  let currentMatchId: String?
+  let highlightCurrentMatch: Bool
+  let theme: CommentsSectionTheme
+  
+  var body: some View {
+    let highlight = highlightCurrentMatch && ((top || comment.childrenWinston.count == 0) && currentMatchId == comment.id) || (!top && comment.childrenWinston.last?.id == currentMatchId)
+    Spacer()
+      .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius * 2, maxHeight: theme.theme.cornerRadius * 2, alignment: .top)
+      .background(highlight ? Color.gray.opacity(0.17) : theme.theme.bg())
+//      .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius, maxHeight: theme.theme.cornerRadius, alignment: .top)
+//      .clipped()
+  }
+}
+
 struct CommentLink: View, Equatable {
   static func == (lhs: CommentLink, rhs: CommentLink) -> Bool {
     lhs.post == rhs.post &&
@@ -70,6 +94,7 @@ struct CommentLink: View, Equatable {
     lhs.isMatch == rhs.isMatch &&
     lhs.matchMap == rhs.matchMap &&
     lhs.currentMatchId == rhs.currentMatchId &&
+    lhs.highlightCurrentMatch == rhs.highlightCurrentMatch &&
     lhs.fadeSeenComments == rhs.fadeSeenComments &&
     lhs.comment == rhs.comment &&
     lhs.children.count == rhs.children.count &&
@@ -98,6 +123,7 @@ struct CommentLink: View, Equatable {
   var isMatch: Bool = false
   
   var currentMatchId: String? = nil
+  var highlightCurrentMatch: Bool = false
   var newCommentsLoaded: (() -> Void)?
   var updateVisibleComments: ((String, Bool) -> Void)?
   
@@ -118,7 +144,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, newCommentsLoaded: newCommentsLoaded)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, highlightCurrentMatch: highlightCurrentMatch)
           }
         }
         .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.5 : 1)
@@ -132,7 +158,7 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
                 .id(commentChild.id)
             }
           }
