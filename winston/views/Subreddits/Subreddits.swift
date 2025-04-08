@@ -21,26 +21,25 @@ struct Subreddits: View, Equatable {
   @Binding var firstDestination: Router.NavDest?
   var loaded: Bool
   var currentCredentialID: UUID
+  
+  @Default(.localFavorites) private var localFavorites
+  @State private var localFavState: [String] = []
+  
   init(firstDestination: Binding<Router.NavDest?>, loaded: Bool, currentCredentialID: UUID) {
     self.currentCredentialID = currentCredentialID
     self._firstDestination = firstDestination
     self.loaded = loaded
     self._subreddits = FetchRequest<CachedSub>(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)], predicate: NSPredicate(format: "winstonCredentialID == %@", currentCredentialID as CVarArg), animation: .default)
     self._multis = FetchRequest<CachedMulti>(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)], predicate: NSPredicate(format: "winstonCredentialID == %@", currentCredentialID as CVarArg), animation: .default)
+    
+    _localFavState = State(initialValue: localFavorites)
   }
   
   @FetchRequest private var subreddits: FetchedResults<CachedSub>
   @FetchRequest private var multis: FetchedResults<CachedMulti>
   
-//    @FetchRequest(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)])
-//    private var subreddits: FetchedResults<CachedSub>
-//  
-//    @FetchRequest(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)])
-//    private var multis: FetchedResults<CachedMulti>
-  
   @State private var searchText: String = ""
   
-  //  @Default(.likedButNotSubbed) private var likedButNotSubbed // subreddits that a user likes but is not subscribed to so they wont be in subsDict
   @Default(.AppearanceDefSettings) private var appearanceDefSettings
   @Environment(\.managedObjectContext) private var context
   @Environment(\.useTheme) private var selectedTheme
@@ -127,25 +126,31 @@ struct Subreddits: View, Equatable {
               let foundSubs = Array(Array(subreddits.filter { ($0.display_name ?? "").lowercased().contains(searchText.lowercased()) }).enumerated())
               ForEach(foundSubs, id: \.self.element.uuid) { i, cachedSub in
                 let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub)
+                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
               }
             }
             
           } else {
-            
-            let favs = subreddits.filter { $0.user_has_favorited && $0.user_is_subscriber }
-            if favs.count > 0 {
+            if localFavState.count > 0 {
               Section("Favorites") {
-                let favs = Array(favs.sorted(by: { x, y in (x.display_name?.lowercased() ?? "a") < (y.display_name?.lowercased() ?? "a") }).enumerated())
-                ForEach(favs, id: \.self.element) { i, cachedSub in
+                let favs = localFavState.map { name in subreddits.first(where: { sub in sub.name == name }) ?? nil }.filter { $0 != nil }.map { $0! }
+                
+                ForEach(favs, id: \.self) { cachedSub in
                   let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub)
+                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
                     .id("\(cachedSub.uuid ?? "")-fav")
                     .onAppear{
                       UIApplication.shared.shortcutItems?.append(UIApplicationShortcutItem(type: "subFav", localizedTitle: cachedSub.display_name ?? "Test", localizedSubtitle: "", icon: UIApplicationShortcutIcon(type: .love), userInfo: ["name" : "sub" as NSSecureCoding]))
                     }
                 }
-                .onDelete(perform: deleteFromFavorites)
+                .onMove { source, destination in
+                  localFavState.move(fromOffsets: source, toOffset: destination)
+                  localFavorites.move(fromOffsets: source, toOffset: destination)
+                }
+                .onDelete { offsets in
+                  localFavState.remove(atOffsets: offsets)
+                  localFavorites.remove(atOffsets: offsets)
+                }
               }
             }
             
@@ -155,7 +160,7 @@ struct Subreddits: View, Equatable {
                 let subs = Array(subreddits.filter({ $0.user_is_subscriber }).sorted(by: { x, y in (x.display_name?.lowercased() ?? "a") < (y.display_name?.lowercased() ?? "a") }).enumerated())
                 ForEach(subs, id: \.self.element) { i, cachedSub in
                   let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub)
+                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
                 }
               }
               
@@ -169,7 +174,7 @@ struct Subreddits: View, Equatable {
                     }).enumerated())
                     ForEach(subs, id: \.self.element.uuid) { i, cachedSub in
                       let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                      SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub)
+                      SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
                     }
                     .onDelete(perform: { i in
                       deleteFromList(at: i, letter: letter)
@@ -209,14 +214,6 @@ struct Subreddits: View, Equatable {
         _ = await RedditAPI.shared.fetchSubsAndSyncCoreData()
       }
       .navigationTitle("Subs")
-    }
-  }
-  
-  func deleteFromFavorites(at offsets: IndexSet) {
-    for i in offsets {
-      Task(priority: .background) {
-        Subreddit(data: SubredditData(entity: subreddits.filter { $0.user_has_favorited && $0.user_is_subscriber }.sorted(by: { x, y in (x.display_name?.lowercased() ?? "a") < (y.display_name?.lowercased() ?? "a") })[i])).subscribeToggle(optimistic: true)
-      }
     }
   }
   

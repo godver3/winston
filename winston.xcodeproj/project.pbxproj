@@ -675,7 +675,7 @@
 		EC08541A2A4BFEB300E88389 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		EC08541D2A4BFEFE00E88389 /* fetchSubPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchSubPosts.swift; sourceTree = "<group>"; };
 		EC08541F2A4BFF0700E88389 /* fetchUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchUser.swift; sourceTree = "<group>"; };
-		EC0854212A4BFF1500E88389 /* fetchSubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchSubs.swift; sourceTree = "<group>"; };
+		EC0854212A4BFF1500E88389 /* fetchSubs.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = fetchSubs.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC0854232A4BFF6E00E88389 /* fetchComments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchComments.swift; sourceTree = "<group>"; };
 		EC0854252A4C013B00E88389 /* Avatar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Avatar.swift; sourceTree = "<group>"; };
 		EC08542A2A4C2B6B00E88389 /* if.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = if.swift; sourceTree = "<group>"; };
@@ -835,7 +835,7 @@
 		EC4C7CA32B2C54900007A4DA /* PostPageDefSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostPageDefSettings.swift; sourceTree = "<group>"; };
 		EC4C7CA92B2C6D5C0007A4DA /* ThemesDefSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemesDefSettings.swift; sourceTree = "<group>"; };
 		EC4C7CAB2B2C6FC00007A4DA /* DynamicColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicColor.swift; sourceTree = "<group>"; };
-		EC4C7CB12B2DA2030007A4DA /* FloatingFeedMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FloatingFeedMenu.swift; sourceTree = "<group>"; };
+		EC4C7CB12B2DA2030007A4DA /* FloatingFeedMenu.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = FloatingFeedMenu.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC4C7CB32B2E17D00007A4DA /* Hap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hap.swift; sourceTree = "<group>"; };
 		EC4F8F092AE7070500801104 /* getTagsFromTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getTagsFromTitle.swift; sourceTree = "<group>"; };
 		EC50A5A92A9EF59200DE8122 /* EnhancedVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedVideoPlayer.swift; sourceTree = "<group>"; };
@@ -870,7 +870,7 @@
 		EC5BA2672BCB93BC003DF7E6 /* LazyImageOpt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyImageOpt.swift; sourceTree = "<group>"; };
 		EC5BA2692BCB9659003DF7E6 /* LazyImageStateOpt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyImageStateOpt.swift; sourceTree = "<group>"; };
 		EC5EDA702A4DA94A00140A08 /* SwipeActionsOld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeActionsOld.swift; sourceTree = "<group>"; };
-		EC5EDA722A4E8EC400140A08 /* fetchSub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchSub.swift; sourceTree = "<group>"; };
+		EC5EDA722A4E8EC400140A08 /* fetchSub.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = fetchSub.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC5EDA742A4E937700140A08 /* GenericRedditEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenericRedditEntity.swift; sourceTree = "<group>"; };
 		EC5EDA762A4EA03800140A08 /* subscribeSubs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = subscribeSubs.swift; sourceTree = "<group>"; };
 		EC5EDA782A4F4D4200140A08 /* vote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = vote.swift; sourceTree = "<group>"; };
@@ -1058,7 +1058,7 @@
 		ECD77F7E2BAFFAF2006382F7 /* Blackhole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Blackhole.swift; path = winston/extensions/ViewModifiers/TipJarModal/Blackhole.swift; sourceTree = SOURCE_ROOT; };
 		ECD77F832BB0070D006382F7 /* supernova.ahap */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = supernova.ahap; sourceTree = "<group>"; };
 		ECDBA8C22A4A820800FB42DB /* Post.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Post.swift; sourceTree = "<group>"; };
-		ECDBA8C42A4A835800FB42DB /* Subreddit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subreddit.swift; sourceTree = "<group>"; };
+		ECDBA8C42A4A835800FB42DB /* Subreddit.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Subreddit.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECDBA8C62A4A83DB00FB42DB /* OldSubredditPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OldSubredditPosts.swift; sourceTree = "<group>"; };
 		ECDD514B2A72561500FD9498 /* getFlairs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getFlairs.swift; sourceTree = "<group>"; };
 		ECDD514D2A726E5900FD9498 /* modifyColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = modifyColor.swift; sourceTree = "<group>"; };
@@ -1157,7 +1157,7 @@
 		ECFA47A22BAD40BA00E864EB /* ChildStar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChildStar.swift; path = winston/extensions/ViewModifiers/TipJarModal/ChildStar.swift; sourceTree = SOURCE_ROOT; };
 		ECFB019E2B0D08420083E4FC /* MixedContentLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedContentLink.swift; sourceTree = "<group>"; };
 		ECFDEACF2A7F151500DF102D /* PostsInBoxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostsInBoxView.swift; sourceTree = "<group>"; };
-		ECFDEAD12A7F154C00DF102D /* SubItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubItem.swift; sourceTree = "<group>"; };
+		ECFDEAD12A7F154C00DF102D /* SubItem.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SubItem.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECFF6B392B15A93D00527528 /* AccountSwitcherParticles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSwitcherParticles.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 

@@ -12,7 +12,7 @@ import WebKit
 import UniformTypeIdentifiers
 
 struct GeneralPanel: View {
-    @Default(.likedButNotSubbed) var likedButNotSubbed
+    @Default(.localFavorites) var localFavorites
     @Default(.BehaviorDefSettings) var behaviorDefSettings
     @Default(.GeneralDefSettings) var generalDefSettings
     @State private var totalCacheSize: String = ""
@@ -102,9 +102,9 @@ struct GeneralPanel: View {
                     }
                     
                     WListButton {
-                        likedButNotSubbed = []
+                        localFavorites = []
                     } label: {
-                        Label("Clear " + String(likedButNotSubbed.count) + " Local Favorites", systemImage: "heart.slash.fill")
+                        Label("Clear " + String(localFavorites.count) + " Local Favorites", systemImage: "heart.slash.fill")
                             .foregroundColor(.red)
                     }
                 }

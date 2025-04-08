@@ -37,15 +37,15 @@ extension Subreddit {
   /// This is a seperate list from reddits liked intenden for usage with subreddits a user wants to favorite but not subscribe to
   /// returns true if added to favorites and false if removed
   func localFavoriteToggle() -> Bool {
-    var likedButNotSubbed = Defaults[.likedButNotSubbed]
+    var localFavorites = Defaults[.localFavorites]
     // If the user is not subscribed
     
     // If its already in liked remove it
-    if likedButNotSubbed.contains(self) {
-      likedButNotSubbed = likedButNotSubbed.filter{ $0.id != self.id }
+    if localFavorites.contains(self.data?.name ?? "") {
+      localFavorites = localFavorites.filter{ $0 != self.data?.name ?? "" }
       return false
     } else { // Else add it
-      Defaults[.likedButNotSubbed].append(self)
+        Defaults[.localFavorites].append(self.data?.name ?? "" )
       return true
     }
   }
@@ -98,7 +98,7 @@ extension Subreddit {
         }
       }
       
-      //      let likedButNotSubbed = Defaults[.likedButNotSubbed]
+      //      let localFavorites = Defaults[.localFavorites]
       if optimistic {
         doToggle()
         context.performAndWait {

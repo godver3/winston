@@ -34,21 +34,29 @@ struct SubItem: View, Equatable {
   var sub: Subreddit
   var cachedSub: CachedSub
   var action: (Subreddit) -> ()
-//  @Default(.likedButNotSubbed) private var likedButNotSubbed
+  @Binding var localFavState: [String]
+  @Default(.localFavorites) private var localFavorites
   
-  func favoriteToggle() {
-//    guard let sub = sub else { return }
-//    if likedButNotSubbed.contains(sub) {
-//      _ = sub.localFavoriteToggle()
-//    } else {
-      sub.favoriteToggle(entity: cachedSub)
-//    }
+  func localFavoriteToggle() {
+      guard let name = cachedSub.name ?? sub.data?.name else { return }
+      
+      if localFavorites.contains(name) {
+        localFavorites = localFavorites.filter { $0 != name }
+      } else {
+        localFavorites.append(name)
+      }
+      
+      DispatchQueue.main.async {
+        withAnimation {
+          localFavState = localFavorites
+        }
+      }
   }
   
   var body: some View {
     if let data = sub.data {
-      let favorite = cachedSub.user_has_favorited
-//      let localFav = likedButNotSubbed.contains(sub)
+//      let favorite = cachedSub.user_has_favorited
+        let localFav = localFavorites.contains(sub.id)
 //      let isActive = selectedSub == .reddit(.subFeed(sub))
       WListButton(showArrow: !IPAD, active: isActive) {
         action(sub)
@@ -64,8 +72,8 @@ struct SubItem: View, Equatable {
           Spacer()
           
           Image(systemName: "star.fill")
-            .foregroundColor(favorite ? Color.accentColor : .gray.opacity(0.3))
-            .highPriorityGesture( TapGesture().onEnded(favoriteToggle) )
+            .foregroundColor(localFav ? Color.accentColor : .gray.opacity(0.3))
+            .highPriorityGesture( TapGesture().onEnded(localFavoriteToggle) )
         }
       }
       

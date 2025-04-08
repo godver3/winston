@@ -16,7 +16,7 @@ struct Settings: View {
   
   @ObservedObject private var winstonAPI = WinstonAPI.shared
   @Environment(\.openURL) private var openURL
-  //  @Default(.likedButNotSubbed) private var likedButNotSubbed
+  //  @Default(.localFavorites) private var localFavorites
   @Environment(\.useTheme) private var selectedTheme
   @Environment(\.openTipJar) private var openTipJar
   @State private var id = UUID().uuidString

@@ -25,6 +25,7 @@ func cleanSubs(_ subs: [ListingChild<SubredditData>]) -> [ListingChild<Subreddit
 }
 
 extension RedditAPI {
+    
   
   func fetchAllSubs(after: String? = nil, accumulatedSubs: [ListingChild<SubredditData>]? = nil) async -> [ListingChild<SubredditData>]? {
     // Base case: If 'after' is nil and some subs are already accumulated, simply return them.
@@ -80,10 +81,12 @@ extension RedditAPI {
           }
         }
         
+        var localFavorites = Defaults[.localFavorites]
+        
         // Delete CachedSubs not present in the fetched subs
         let currentSubsSet = Set(subs.compactMap { $0.data?.name })
         results.forEach { cachedSub in
-          if !currentSubsSet.contains(cachedSub.uuid ?? "") {
+          if !currentSubsSet.contains(cachedSub.name ?? "") && !localFavorites.contains(cachedSub.name ?? "") {
             context.delete(cachedSub)
           }
         }

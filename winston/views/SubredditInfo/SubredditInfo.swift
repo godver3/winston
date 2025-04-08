@@ -26,10 +26,11 @@ struct SubredditInfo: View {
   @State private var selectedTab: SubInfoTabs = .info
   
   @State private var addedToFavs = false
-  @Default(.likedButNotSubbed) var likedButNotSubbed
+  @Default(.localFavorites) var localFavorites
   @Environment(\.useTheme) private var theme
   var body: some View {
-    let isliked = likedButNotSubbed.contains(subreddit)
+      let isliked = localFavorites.contains(subreddit.id)
+      
     List {
       Group {
         if let data = subreddit.data {
@@ -66,17 +67,10 @@ struct SubredditInfo: View {
             ToolbarItem(){
               Button{
                 Task{
-                  if !data.user_has_favorited! {
-                    let liked = subreddit.localFavoriteToggle()
-                    if liked {
-                      addedToFavs.toggle()
-                    }
-                  } else {
-                    subreddit.favoriteToggle()
-                  }
+                    subreddit.localFavoriteToggle()
                 }
               } label: {
-                Label("Favorites", systemImage: (isliked || data.user_has_favorited!) ? "star.fill" : "star")
+                Label("Favorites", systemImage: isliked ? "star.fill" : "star")
                   .foregroundColor(.blue)
                   .labelStyle(.iconOnly)
               }

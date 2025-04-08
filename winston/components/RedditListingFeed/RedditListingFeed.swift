@@ -280,7 +280,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                     }
                 }
             }
-            .floatingMenu(subId: subreddit?.id, filters: shallowCachedFilters, selectedFilter: $itemsManager.selectedFilter, customFilter: $customFilter)
+            .floatingMenu(subId: subreddit?.id, subName: subreddit?.data?.name, filters: shallowCachedFilters, selectedFilter: $itemsManager.selectedFilter, customFilter: $customFilter)
             //    .onChange(of: itemsManager.selectedFilter) { searchEnabled = $1?.type != .custom }
             .refreshable { await refetch(true) }
             .onChange(of: generalDefSettings.redditCredentialSelectedID) { _, _ in
