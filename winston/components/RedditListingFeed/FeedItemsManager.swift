@@ -50,7 +50,7 @@ class FeedItemsManager<S> {
         if !loadingMore, let currentTask, !currentTask.isCancelled {
             currentTask.cancel()
         }
-        
+      
         let lastElementId = loadingMore ? self.lastElementId : nil
         let searchQuery = selectedFilter?.type == .custom ? selectedFilter?.text : searchQuery.debounced.isEmpty ? nil : searchQuery.debounced
         let filter = selectedFilter?.type != .custom ? selectedFilter?.text : nil
@@ -69,29 +69,29 @@ class FeedItemsManager<S> {
         } else if let (fetchedEntities, after) = await fetchFn(lastElementId, sort, searchQuery, filter), let fetchedEntities {
             
             if !loadingMore {
-                var newLoadedEntitiesIds = Set<String>()
-                fetchedEntities.forEach { ent in
-                    newLoadedEntitiesIds.insert(ent.fullname)
-                }
-              
-                DispatchQueue.main.async {
-                  withAnimation {
-                    self.displayMode = fetchedEntities.count == 0 ? .empty : fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-                    self.entities = fetchedEntities
-                    self.lastElementId = after
-                    self.loadedEntitiesIds = newLoadedEntitiesIds
-                    
-                    if (noSearchQuery) {
-                      self.lastNoSearchDisplayMode = self.displayMode
-                      self.lastNoSearchEntitites = self.entities
-                      self.lastNoSearchLastElementId = self.lastElementId
-                      self.lastNoSearchLoadedEntitiesIds = self.loadedEntitiesIds
-                      self.lastSort = sort as? SubListingSortOption
-                    }
+              var newLoadedEntitiesIds = Set<String>()
+              fetchedEntities.forEach { ent in
+                  newLoadedEntitiesIds.insert(ent.fullname)
+              }
+            
+              DispatchQueue.main.async {
+                withAnimation {
+                  self.displayMode = fetchedEntities.count == 0 ? .empty : fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+                  self.entities = fetchedEntities
+                  self.lastElementId = after
+                  self.loadedEntitiesIds = newLoadedEntitiesIds
+                  
+                  if (noSearchQuery) {
+                    self.lastNoSearchDisplayMode = self.displayMode
+                    self.lastNoSearchEntitites = self.entities
+                    self.lastNoSearchLastElementId = self.lastElementId
+                    self.lastNoSearchLoadedEntitiesIds = self.loadedEntitiesIds
+                    self.lastSort = sort as? SubListingSortOption
                   }
                 }
+              }
 
-                return
+              return
             }
             
             var newLoadedEntitiesIds = loadedEntitiesIds
@@ -115,7 +115,7 @@ class FeedItemsManager<S> {
             withAnimation { displayMode = .error }
         }
       
-        self.currentTask = nil
+      self.currentTask = nil
     }
     
     func elementAppeared(entity: RedditEntityType, index: Int) async {

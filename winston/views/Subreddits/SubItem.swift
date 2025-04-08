@@ -32,13 +32,13 @@ struct SubItem: View, Equatable {
   
   var isActive: Bool
   var sub: Subreddit
-  var cachedSub: CachedSub
+  var cachedSub: CachedSub? = nil
   var action: (Subreddit) -> ()
   @Binding var localFavState: [String]
   @Default(.localFavorites) private var localFavorites
   
   func localFavoriteToggle() {
-      guard let name = cachedSub.name ?? sub.data?.name else { return }
+      guard let name = cachedSub?.name ?? sub.data?.name else { return }
       
       if localFavorites.contains(name) {
         localFavorites = localFavorites.filter { $0 != name }

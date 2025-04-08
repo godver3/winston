@@ -11,6 +11,7 @@ import Alamofire
 extension RedditAPI {
   func fetchMoreReplies(comments: [String], moreID: String, postFullname: String, sort: CommentSortOption = .confidence, dropFirst: Bool = false) async -> [ListingChild<CommentData>]? {
       let params = MoreRepliesPayload(children: comments.joined(separator: ","), link_id: postFullname, sort: sort.rawVal.value, id: moreID)
+      print("[API] fetchMoreReplies - GET /api/morechildren.json, params: \(params)")
       switch await self.doRequest("\(RedditAPI.redditApiURLBase)/api/morechildren.json", method: .get, params: params, paramsLocation: .queryString, decodable: MoreRepliesResponse.self) {
       case .success(let data):
         return data.json.data?.things

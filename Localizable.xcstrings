@@ -483,6 +483,9 @@
         }
       }
     },
+    "All subs" : {
+
+    },
     "Almost there, 1 sec!" : {
 
     },
@@ -1474,6 +1477,7 @@
       }
     },
     "Found subs" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2405,6 +2409,9 @@
           }
         }
       }
+    },
+    "My subs" : {
+
     },
     "Navigation everywhere" : {
       "localizations" : {

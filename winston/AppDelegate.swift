@@ -58,7 +58,7 @@ public func setAudioToMixWithOthers(_ activateplayback: Bool = false) {
             try audioSession.setCategory(.playback, mode: AVAudioSession.Mode.default, options: [.mixWithOthers, .duckOthers])
 			try audioSession.setActive(true)
 		} else {
-			try audioSession.setCategory(.playback, options: [.mixWithOthers])
+			try audioSession.setCategory(.ambient, options: [.mixWithOthers])
 			try audioSession.setActive(false, options: AVAudioSession.SetActiveOptions.notifyOthersOnDeactivation)
 		}
 	} catch {

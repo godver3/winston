@@ -145,7 +145,7 @@ struct FloatingFeedMenu: View, Equatable {
         VStack(spacing: itemsSpacingDownscaled) {
           VStack(spacing: itemsSpacing) {
             if menuOpen {
-                Image(systemName: localFavorites.contains(subId) ? "star.fill" : "star")
+                Image(systemName: localFavorites.contains(subName) ? "star.fill" : "star")
                 .fontSize(22, .bold)
                 .frame(width: actionsSize, height: actionsSize)
                 .foregroundStyle(Color.accentColor)

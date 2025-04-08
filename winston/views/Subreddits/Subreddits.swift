@@ -38,7 +38,8 @@ struct Subreddits: View, Equatable {
   @FetchRequest private var subreddits: FetchedResults<CachedSub>
   @FetchRequest private var multis: FetchedResults<CachedMulti>
   
-  @State private var searchText: String = ""
+  @State private var searchText = Debouncer("", delay: 0.25)
+  @State private var matchedSubs: [Subreddit] = []
   
   @Default(.AppearanceDefSettings) private var appearanceDefSettings
   @Environment(\.managedObjectContext) private var context
@@ -55,7 +56,7 @@ struct Subreddits: View, Equatable {
   var body: some View {
     ScrollViewReader { proxy in
       List(selection: $firstDestination) {
-        if searchText == "" {
+        if searchText.debounced == "" {
           VStack(spacing: 12) {
             HStack(spacing: 12) {
               ListBigBtn(icon: "chart.line.uptrend.xyaxis.circle.fill", iconColor: .blue, label: "Popular") {
@@ -120,13 +121,24 @@ struct Subreddits: View, Equatable {
         
         Group {
           
-          if searchText != "" {
+          if searchText.debounced != "" {
             
-            Section("Found subs") {
-              let foundSubs = Array(Array(subreddits.filter { ($0.display_name ?? "").lowercased().contains(searchText.lowercased()) }).enumerated())
-              ForEach(foundSubs, id: \.self.element.uuid) { i, cachedSub in
-                let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
+            let foundSubs = Array(subreddits.filter { ($0.display_name ?? "").lowercased().starts(with: searchText.debounced.lowercased()) })
+            
+            if foundSubs.count > 0 {
+              Section("My subs") {
+                ForEach(foundSubs, id: \.self.uuid) { cachedSub in
+                  let sub = Subreddit(data: SubredditData(entity: cachedSub))
+                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
+                }
+              }
+            }
+            
+            
+            let filteredMatches = matchedSubs.filter { match in !foundSubs.contains(where: { cached in cached.name == match.data?.name })}
+            Section("All subs") {
+              ForEach(filteredMatches, id: \.self.id) { sub in
+                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, action: selectSub, localFavState: $localFavState)
               }
             }
             
@@ -194,15 +206,26 @@ struct Subreddits: View, Equatable {
       .listStyle(.sidebar)
       .scrollDismissesKeyboard(.immediately)
       .loader(!loaded && subreddits.count == 0)
-      .searchable(text: $searchText, prompt: "Search my subreddits")
+      .searchable(text: $searchText.value, prompt: "Search my subreddits")
+      .onChange(of: searchText.debounced) { _, newValue in
+        Task {
+          let matches = await RedditAPI.shared.searchSubreddits(newValue)?.map({ Subreddit(data: $0) })
+          
+          DispatchQueue.main.async { [self, matches] in
+            withAnimation {
+              self.matchedSubs = matches != nil ? matches! : []
+            }
+          }
+        }
+      }
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           EditButton()
         }
       }
       .overlay(
-        AlphabetJumper(letters: sections.keys.sorted(), proxy: proxy)
-        , alignment: .trailing
+        AlphabetJumper(letters: sections.keys.sorted(), searchText: $searchText, proxy: proxy)
+          , alignment: .trailing
       )
       .refreshable {
         Task(priority: .background) {

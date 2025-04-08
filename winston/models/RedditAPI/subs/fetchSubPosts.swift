@@ -12,9 +12,10 @@ import Defaults
 extension RedditAPI {
   func fetchSubPosts(_ id: String, limit: Int = Defaults[.SubredditFeedDefSettings].chunkLoadSize, sort: SubListingSortOption = .best, after: String? = nil) async -> ([ListingChild<Either<PostData, CommentData>>]?, String?)? {
       let subID = buildSubID(id, sort, after)
-    let params = FetchSubPostsPayload(limit: limit, after: after)
+      let params = FetchSubPostsPayload(limit: limit, after: after)
           
       let urlString = "\(RedditAPI.redditApiURLBase)\(subID)".replacingOccurrences(of: " ", with: "%20")
+      print("[API] fetchSubPosts - GET \(subID.replacingOccurrences(of: " ", with: "%20")), params: \(params)")
 
       switch await self.doRequest(urlString, method: .get, params: params, paramsLocation: .queryString, decodable: Listing<Either<PostData, CommentData>>.self)  {
       case .success(let data):

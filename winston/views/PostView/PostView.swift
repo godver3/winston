@@ -48,9 +48,7 @@ struct PostView: View, Equatable {
   @SilentState private var visibleComments = Debouncer("", delay: 0.25)
   @State private var inAutoSkipMode: Bool = false
   @SilentState private var lastAppearedIdx: Int = -1
-  @SilentState private var scrollDir: Bool = false
-  @SilentState private var liveRefreshTimer: Timer? = nil
-  
+  @SilentState private var scrollDir: Bool = false  
   @FocusState private var searchFocused: Bool
 
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
@@ -88,26 +86,6 @@ struct PostView: View, Equatable {
   
   func updatePost() {
     Task(priority: .background) { await asyncFetch(true) }
-  }
-  
-  func updatePostAndInitSort() {
-    Task(priority: .background) {
-      await asyncFetch(true)
-
-      let defSettings = Defaults[.PostPageDefSettings]
-      let commentsDefSettings = Defaults[.CommentsSectionDefSettings]
-      
-      let title = post.data?.title.lowercased() ?? ""
-      let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
-        CommentSortOption.live : commentsDefSettings.preferredSort
-      sort = defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? defaultSort) : defaultSort
-      
-      if sort == .live {
-        liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-          updatePost()
-        }
-      }
-    }
   }
   
   func openUnseenSkipper(_ reader: ScrollViewProxy) {
@@ -528,15 +506,6 @@ struct PostView: View, Equatable {
         .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, currentMatchIndex: $currentMatchIndex, totalMatches: $totalMatches, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
           updatePost()
-          
-          if val == .live {
-            liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in
-              updatePost()
-            }
-          } else {
-            liveRefreshTimer?.invalidate()
-            liveRefreshTimer = nil
-          }
         }
         .onChange(of: comments) { _, val in
           Task {
@@ -559,7 +528,7 @@ struct PostView: View, Equatable {
           }
           
           if post.data == nil {
-            updatePostAndInitSort()
+            updatePost()
           }
           
           Task(priority: .background) {
@@ -573,10 +542,6 @@ struct PostView: View, Equatable {
               await subreddit.refreshSubreddit()
             }
           }
-        }
-        .onDisappear {
-          liveRefreshTimer?.invalidate()
-          liveRefreshTimer = nil
         }
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {

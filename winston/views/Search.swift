@@ -10,9 +10,8 @@ import NukeUI
 import Defaults
 
 enum SearchType: String {
-  case subreddit = "Subreddit"
-  case user = "User"
   case post = "Post"
+  case user = "User"
 }
 
 struct SearchOption: View {
@@ -45,16 +44,16 @@ enum SearchTypeArr {
 struct Search: View {
   @State var router: Router
   
-  @State private var searchType: SearchType = .subreddit
-  @State private var resultsSubs: [Subreddit] = []
+  @State private var searchType: SearchType = .post
   @State private var resultsUsers: [User] = []
   @State private var resultPosts: [Post] = []
   @State private var loading = false
   @State private var hideSpinner = false
+  @State var sort: SubListingSortOption = .best
   @State var searchQuery = Debouncer("", delay: 0.25)
   
-  @State private var dummyAllSub: Subreddit? = nil
   @State private var searchViewLoaded: Bool = false
+  @State private var dummyAllSub: Subreddit? = nil
   
   @Default(.PostLinkDefSettings) private var postLinkDefSettings
   @Environment(\.useTheme) private var theme
@@ -70,20 +69,6 @@ struct Search: View {
       loading = true
     }
     switch searchType {
-    case .subreddit:
-      resultsSubs.removeAll()
-      Task(priority: .background) {
-        if let subs = await RedditAPI.shared.searchSubreddits(searchQuery.value)?.map({ Subreddit(data: $0) }) {
-          await MainActor.run {
-            withAnimation {
-              resultsSubs = subs
-              loading = false
-              
-              hideSpinner = resultsSubs.isEmpty
-            }
-          }
-        }
-      }
     case .user:
       resultsUsers.removeAll()
       Task(priority: .background) {
@@ -101,7 +86,7 @@ struct Search: View {
     case .post:
       resultPosts.removeAll()
       Task(priority: .background) {
-        if let dummyAllSub = dummyAllSub, let result = await dummyAllSub.fetchPosts(searchText: searchQuery.value), let newPosts = result.0 {
+        if let dummyAllSub = dummyAllSub, let result = await dummyAllSub.fetchPosts(sort: sort, searchText: searchQuery.value), let newPosts = result.0 {
           let actualNewPosts = newPosts.compactMap {
             if case .post(let post) = $0 {
               return post
@@ -127,19 +112,44 @@ struct Search: View {
         Group {
           Section {
             HStack {
-              SearchOption(activateSearchType: { searchType = .subreddit }, active: searchType == SearchType.subreddit, searchType: .subreddit)
-              SearchOption(activateSearchType: { searchType = .user }, active: searchType == SearchType.user, searchType: .user)
               SearchOption(activateSearchType: { searchType = .post }, active: searchType == SearchType.post, searchType: .post)
+              SearchOption(activateSearchType: { searchType = .user }, active: searchType == SearchType.user, searchType: .user)
+                
+              Spacer()
+                
+              Menu {
+                ForEach(Array(SubListingSortOption.allCases), id: \.self) { opt in
+                    if let children = opt.meta.children {
+                        Menu {
+                            ForEach(children, id: \.self.meta.apiValue) { child in
+                                if let val = child.valueWithParent as? SubListingSortOption {
+                                    Button(child.meta.label, systemImage: child.meta.icon) {
+                                      sort = opt
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label(opt.meta.label, systemImage: opt.meta.icon)
+                        }
+                    } else {
+                        Button(opt.meta.label, systemImage: opt.meta.icon) {
+                          sort = opt
+                        }
+                    }
+                }
+              } label: {
+                  Image(systemName: sort.meta.icon)
+                      .foregroundColor(Color.accentColor)
+                      .fontSize(17, .bold)
+              }
+              
+                
             }
             .id("options")
           }
           
           Section {
             switch searchType {
-            case .subreddit:
-              ForEach(resultsSubs) { sub in
-                SubredditLink(sub: sub)
-              }
             case .user:
               ForEach(resultsUsers) { user in
                 UserLink(user: user)
@@ -182,10 +192,14 @@ struct Search: View {
       .onChange(of: searchType) { _ in fetch() }
       .onChange(of: searchQuery.debounced) { val in
         if val == "" {
-          resultsSubs = []
           resultsUsers = []
           resultPosts = []
         }
+        fetch()
+      }
+      .onChange(of: sort) { val in
+        resultsUsers = []
+        resultPosts = []
         fetch()
       }
       .onAppear() {

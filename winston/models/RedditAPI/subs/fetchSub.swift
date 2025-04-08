@@ -13,6 +13,7 @@ import CoreData
 
 extension RedditAPI {
   func fetchSub(_ name: String) async -> ListingChild<SubredditData>? {
+    print("[API] fetchSub - GET \(name.hasPrefix("/r/") ? name : "/r/\(name)/")about.json?raw_json=1")
     switch await self.doRequest("\(RedditAPI.redditApiURLBase)\(name.hasPrefix("/r/") ? name : "/r/\(name)/")about.json?raw_json=1", method: .get, decodable: ListingChild<SubredditData>.self)  {
     case .success(let data):
       Task { await updateSubInCoreData(with: data) }

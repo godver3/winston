@@ -18,6 +18,8 @@ extension RedditAPI {
     }
     url += "/search.json"
     print(advanced)
+    
+      print("[API] searchInSubreddit - GET \(url)")
     switch await self.doRequest(url, method: .get, params: advanced, paramsLocation: .queryString, decodable: Listing<Either<PostData, CommentData>>.self)  {
     case .success(let data):
       return (data.data?.children, data.data?.after)

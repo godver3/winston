@@ -62,7 +62,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
         //        withAnimation { itemsManager.loadingPinned = false }
         //      }
         //    }
-        
+      print("--> refetch force \(force)")
         await itemsManager.fetchCaller(loadingMore: false, force: force)
 //        if let subreddit, !fetchedFilters {
 //            Task { await subreddit.fetchAndCacheFlairs() }
@@ -294,7 +294,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             .onChange(of: itemsManager.searchQuery.value) { itemsManager.displayMode = .loading }
             .onChange(of: subredditFeedDefSettings.chunkLoadSize) { itemsManager.chunkSize = $1 }
             .onChange(of: forceRefresh?.wrappedValue) { newValue in
-                if newValue == true {
+              if newValue == true {
                     Task {
                         await refetch()
                         forceRefresh?.wrappedValue = false // Reset
@@ -307,7 +307,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             .onAppear {
               if itemsManager.displayMode != .loading { return }
               Task { await refetch() }
-                         }
+            }
             .sheet(item: $customFilter) { custom in
               CustomFilterView(filter: custom, subId: subreddit?.id ?? "")
             }

@@ -11,6 +11,7 @@ import Alamofire
 extension RedditAPI {
   func fetchInfo(fullnames: [String]) async -> FetchInfoResponse? {
     let params = FetchPostsPayload(id: fullnames.joined(separator: ","))
+      print("[API] fetchInfo - GET /api/info, params: \(params)")
     switch await self.doRequest("\(RedditAPI.redditApiURLBase)/api/info", method: .get, params: params, paramsLocation: .queryString, decodable: FetchInfoResponse.self)  {
     case .success(let data):
       return data

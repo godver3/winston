@@ -15,6 +15,8 @@ extension RedditAPI {
             RedditAPI.shared.me = me
         }
     } else {
+        print("[API] fetchMe - GET /api/v1/me")
+
       switch await self.doRequest("\(RedditAPI.redditApiURLBase)/api/v1/me", method: .get, decodable: UserData.self, altCredential: altCredential, saveToken: saveToken)  {
       case .success(let data):
         await MainActor.run {

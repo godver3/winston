@@ -860,7 +860,7 @@
 		EC593AF12A47AD97002D6454 /* Subreddits.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Subreddits.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC593AF32A47AE1F002D6454 /* Inbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inbox.swift; sourceTree = "<group>"; };
 		EC593AF52A47AE30002D6454 /* Me.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Me.swift; sourceTree = "<group>"; };
-		EC593AF72A47AE39002D6454 /* Search.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Search.swift; sourceTree = "<group>"; };
+		EC593AF72A47AE39002D6454 /* Search.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Search.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC593AF92A47AE3E002D6454 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		EC593AFC2A47AEBC002D6454 /* RedditAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedditAPI.swift; sourceTree = "<group>"; };
 		EC593B912A494E7F002D6454 /* defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = defaults.swift; sourceTree = "<group>"; };
@@ -980,7 +980,7 @@
 		EC982A372B4A6BE200FFE582 /* confetti.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = confetti.json; sourceTree = "<group>"; };
 		EC982A392B4A6F8B00FFE582 /* confetti-magic.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "confetti-magic.json"; sourceTree = "<group>"; };
 		EC9BB1BA2A89E98D0070CD97 /* hidePost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = hidePost.swift; sourceTree = "<group>"; };
-		EC9BB1BC2A8ACD300070CD97 /* AlphabetJumper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlphabetJumper.swift; sourceTree = "<group>"; };
+		EC9BB1BC2A8ACD300070CD97 /* AlphabetJumper.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AlphabetJumper.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC9D29F92BCB801700D5795E /* CollectionViewDelegateProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewDelegateProxy.swift; sourceTree = "<group>"; };
 		EC9D29FB2BCB802500D5795E /* CollectionViewWithDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewWithDataSource.swift; sourceTree = "<group>"; };
 		EC9D29FD2BCB803100D5795E /* CollectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionView.swift; sourceTree = "<group>"; };

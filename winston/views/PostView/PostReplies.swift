@@ -35,7 +35,6 @@ struct PostReplies: View {
   var updateVisibleComments: (String, Bool) -> Void
   
   @State private var loading = true
-      
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
   
   func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
@@ -79,11 +78,6 @@ struct PostReplies: View {
         ForEach(Array(comments.enumerated()), id: \.element.id) { i, comment in
           Section {
             
-//            Spacer()
-//              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
-//              .id("\(comment.id)-top-spacer")
-            
-            
             CommentLinkDecoration(top: true, comment: comment, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, theme: theme)
               .id("\(comment.id)-top-decoration")
             
@@ -100,10 +94,6 @@ struct PostReplies: View {
             
             CommentLinkDecoration(top: false, comment: comment, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, theme: theme)
               .id("\(comment.id)-bot-decoration")
-            
-//            Spacer()
-//              .frame(maxWidth: .infinity, minHeight: theme.spacing / 2, maxHeight: theme.spacing / 2)
-//              .id("\(comment.id)-bot-spacer")
             
             if comments.count - 1 != i {
               NiceDivider(divider: theme.divider)
@@ -149,14 +139,26 @@ struct PostReplies: View {
             if comments.count == 0 || post.data == nil {
               Task(priority: .background) {
                 await asyncFetch(post.data == nil)
+                
+                DispatchQueue.main.async {
+                  withAnimation {
+                    seenComments = post.winstonData?.seenComments
+                    
+                    if let seen = seenComments, !seen.isEmpty {
+                      // Open unseen skipper automatically
+                      fadeSeenComments = true
+                    }
+                  }
+                }
               }
-            }
-            withAnimation {
-              seenComments = post.winstonData?.seenComments
-              
-              if let seen = seenComments, !seen.isEmpty {
-                // Open unseen skipper automatically
-                fadeSeenComments = true
+            } else {
+              withAnimation {
+                seenComments = post.winstonData?.seenComments
+                
+                if let seen = seenComments, !seen.isEmpty {
+                  // Open unseen skipper automatically
+                  fadeSeenComments = true
+                }
               }
             }
           }
