@@ -428,6 +428,7 @@ struct PostView: View, Equatable {
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(1)
+                    .allowsTightening(true)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
@@ -437,7 +438,7 @@ struct PostView: View, Equatable {
               
               HStack(spacing: 4) {
                 Image(systemName: "chevron.left")
-                  .fontSize(16, .semibold)
+                  .fontSize(17, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                   .padding(.horizontal, 10)
                   .padding(.vertical, 6)
@@ -448,7 +449,7 @@ struct PostView: View, Equatable {
                   }
                 
                 Image(systemName: "chevron.right")
-                  .fontSize(16, .semibold)
+                  .fontSize(17, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                   .padding(.horizontal, 10)
                   .padding(.vertical, 6)

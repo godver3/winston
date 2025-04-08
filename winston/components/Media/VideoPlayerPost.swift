@@ -180,13 +180,14 @@ struct VideoPlayerPost: View, Equatable {
             firstFullscreen = true
 						sharedVideo.player.isMuted = muteVideos
             sharedVideo.player.play()
-          } 
-					if !val && !autoPlayVideos {
-						sharedVideo.player.seek(to: .zero)
-						sharedVideo.player.pause()
-						firstFullscreen = false
-					 }
+          }
           
+          if !val && !autoPlayVideos {
+              sharedVideo.player.seek(to: .zero)
+              sharedVideo.player.pause()
+              firstFullscreen = false
+           }
+
 //          if pauseBackgroundAudioOnFullscreen {
 //            Task(priority: .background) {
 //              setAudioToMixWithOthers(val)
