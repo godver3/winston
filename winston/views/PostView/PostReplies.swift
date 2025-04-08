@@ -27,10 +27,10 @@ struct PostReplies: View {
   @Binding var matchMap: [String: String]
   @Binding var seenComments: String?
   @Binding var fadeSeenComments: Bool
+  @Binding var highlightCurrentMatch: Bool
   
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
-  var highlightCurrentMatch: Bool = false
   var newCommentsLoaded: () -> Void
   var updateVisibleComments: (String, Bool) -> Void
   

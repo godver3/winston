@@ -15,7 +15,7 @@ protocol GenericRedditEntityDataType: Codable, Hashable, Identifiable {
 }
 
 @Observable
-class GenericRedditEntity<T: GenericRedditEntityDataType, B: Hashable>: Identifiable, Hashable, ObservableObject, Observable, Codable, Defaults.Serializable {
+class GenericRedditEntity<T: GenericRedditEntityDataType, B: Hashable>: Identifiable, Hashable, ObservableObject, Observable, Codable, Defaults.Serializable, Sendable {
   func hash(into hasher: inout Hasher) {
 //    hasher.combine(data)
 //    hasher.combine(childrenWinston)

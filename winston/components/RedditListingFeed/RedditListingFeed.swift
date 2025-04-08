@@ -301,12 +301,15 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                     }
                 }
             }
+            .onChange(of: itemsManager.searchQuery.debounced) { Task { await refetch() } }
+            .onChange(of: itemsManager.selectedFilter?.text) { Task { await refetch() } }
+            .onChange(of: itemsManager.sorting?.meta.apiValue) { Task { await refetch() } }
+            .onAppear {
+              if itemsManager.displayMode != .loading { return }
+              Task { await refetch() }
+                         }
             .sheet(item: $customFilter) { custom in
               CustomFilterView(filter: custom, subId: subreddit?.id ?? "")
-            }
-            .task(id: [itemsManager.searchQuery.debounced, itemsManager.selectedFilter?.text, itemsManager.sorting?.meta.apiValue]) {
-                if itemsManager.displayMode != .loading { return }
-                Task { await refetch() } 
             }
         }
     }

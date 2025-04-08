@@ -18,6 +18,10 @@ struct PostLink: View, Equatable, Identifiable {
     return lhs.id == rhs.id && lhs.repostAvatarRequest?.url == rhs.repostAvatarRequest?.url && lhs.defSettings == rhs.defSettings && lhs.compactPerSubreddit == rhs.compactPerSubreddit && lhs.theme == rhs.theme && lhs.contentWidth == rhs.contentWidth
   }
   
+  @Environment(\.contextPost) var post
+  @Environment(\.contextSubreddit) var sub
+  @Environment(\.contextPostWinstonData) var winstonData
+  
   //  var disableOuterVSpacing = false
   var id: String
   weak var controller: UIViewController? = nil

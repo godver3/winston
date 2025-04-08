@@ -97,6 +97,25 @@ class CommentUtils {
     
     return moreCount
   }
+  
+  func getLastChild(_ comment: Comment) -> String {
+    if comment.childrenWinston.isEmpty { return comment.id }
+    return getLastChild(comment.childrenWinston.last!)
+  }
+  
+  func containsCurrentMatch(comment: Comment, currentMatchId: String?) -> Bool {
+    if comment.id == currentMatchId {
+      return true
+    }
+    
+    for comment in comment.childrenWinston {
+      if self.containsCurrentMatch(comment: comment, currentMatchId: currentMatchId) {
+        return true
+      }
+    }
+    
+    return false
+  }
 }
 
 extension String {

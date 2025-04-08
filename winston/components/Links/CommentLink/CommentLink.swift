@@ -75,7 +75,7 @@ struct CommentLinkDecoration: View, Equatable {
   let theme: CommentsSectionTheme
   
   var body: some View {
-    let highlight = highlightCurrentMatch && ((top || comment.childrenWinston.count == 0) && currentMatchId == comment.id) || (!top && comment.childrenWinston.last?.id == currentMatchId)
+    let highlight = highlightCurrentMatch && (((top || comment.childrenWinston.count == 0) && currentMatchId == comment.id) || (!top && CommentUtils.shared.getLastChild(comment) == currentMatchId))
     Spacer()
       .frame(maxWidth: .infinity, minHeight: theme.theme.cornerRadius * 2, maxHeight: theme.theme.cornerRadius * 2, alignment: .top)
       .background(highlight ? Color.gray.opacity(0.17) : theme.theme.bg())
@@ -144,7 +144,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, newCommentsLoaded: newCommentsLoaded)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, highlightCurrentMatch: highlightCurrentMatch)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, containsCurrentMatch: CommentUtils.shared.containsCurrentMatch(comment: comment, currentMatchId: currentMatchId), highlightCurrentMatch: highlightCurrentMatch)
           }
         }
         .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.5 : 1)

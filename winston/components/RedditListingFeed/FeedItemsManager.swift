@@ -106,21 +106,15 @@ class FeedItemsManager<S> {
             self.loadedEntitiesIds = newLoadedEntitiesIds
             self.lastElementId = after
 //
-            await MainActor.run { [newEntities ] in
-              if loadingMore {
-                self.entities = newEntities
-                self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-              } else {
-                withAnimation {
-                  self.entities = newEntities
-                  self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-                }
-              }
+            await MainActor.run { [newEntities] in
+              self.entities = newEntities
+              self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
             }
             
         } else {
             withAnimation { displayMode = .error }
         }
+      
         self.currentTask = nil
     }
     
