@@ -11,42 +11,49 @@ import Nuke
 
 @Observable
 class FeedItemsManager<S> {
-    typealias ItemsFetchFn = (_ lastElementId: String?, _ sorting: S?, _ searchQuery: String?, _ flair: String?) async -> (entities: [RedditEntityType]?, after: String?)?
-    
-    enum DisplayMode: String { case loading, empty, items, endOfFeed, error }
-    
-    private var currentTask: Task<(), Never>? = nil
-    var displayMode: DisplayMode = .loading
-    var loadingPinned = false
-    var pinnedPosts: [Post] = []
-    var entities: [RedditEntityType] = []
-    var loadedEntitiesIds: Set<String> = []
-    var lastElementId: String? = nil
-    var sorting: S? {
-        willSet { withAnimation { displayMode = .loading } }
-    }
-    var searchQuery = Debouncer("")
-    var selectedFilter: ShallowCachedFilter? {
-        willSet { withAnimation { displayMode = .loading } }
-    }
-    var chunkSize: Int
-    private var onScreenEntities: [(entity: RedditEntityType, index: Int)] = []
-    private var fetchFn: ItemsFetchFn
-    private let prefetchRange = 2
+  typealias ItemsFetchFn = (_ lastElementId: String?, _ sorting: S?, _ searchQuery: String?, _ flair: String?) async -> (entities: [RedditEntityType]?, after: String?)?
   
-    private var lastNoSearchEntitites: [RedditEntityType] = []
-    private var lastNoSearchLastElementId: String? = nil
-    private var lastNoSearchLoadedEntitiesIds: Set<String> = []
-    private var lastNoSearchDisplayMode: DisplayMode = .loading
-    private var lastSort: SubListingSortOption?
+  enum DisplayMode: String { case loading, empty, items, endOfFeed, error }
+  
+  private var currentTask: Task<(), Never>? = nil
+  var displayMode: DisplayMode = .loading
+  var loadingPinned = false
+  var pinnedPosts: [Post] = []
+  var entities: [RedditEntityType] = []
+  var loadedEntitiesIds: Set<String> = []
+  var lastElementId: String? = nil
+  var sorting: S? {
+      willSet { withAnimation { displayMode = .loading } }
+  }
+  var searchQuery = Debouncer("")
+  var selectedFilter: ShallowCachedFilter? {
+      willSet { withAnimation { displayMode = .loading } }
+  }
+  var chunkSize: Int
+  private var onScreenEntities: [(entity: RedditEntityType, index: Int)] = []
+  private var fetchFn: ItemsFetchFn
+  private let prefetchRange = 2
+
+  private var lastNoSearchEntitites: [RedditEntityType] = []
+  private var lastNoSearchLastElementId: String? = nil
+  private var lastNoSearchLoadedEntitiesIds: Set<String> = []
+  private var lastNoSearchDisplayMode: DisplayMode = .loading
+  private var lastSort: SubListingSortOption?
+  
+  private var lastAppearedIndex = 0
+  private var lastAppearedId = ""
+  
+  var scrollProxy: ScrollViewProxy? = nil
+  
+  private var previousId: String? = nil
 
     init(sorting: S?, fetchFn: @escaping ItemsFetchFn) {
         self.sorting = sorting
         self.fetchFn = fetchFn
         self.chunkSize = Defaults[.SubredditFeedDefSettings].chunkLoadSize
     }
-    
-    func fetchCaller(loadingMore: Bool, force: Bool = false) async {
+  
+  func fetchCaller(loadingMore: Bool, force: Bool = false) async {
         if !loadingMore, let currentTask, !currentTask.isCancelled {
             currentTask.cancel()
         }
@@ -58,7 +65,7 @@ class FeedItemsManager<S> {
         let sort = noSearchQuery ? sorting : (SubListingSortOption.new as? S)
         
         if noSearchQuery && self.lastNoSearchEntitites.count > 0 && !force && !loadingMore && (sort as? SubListingSortOption) == self.lastSort {
-            DispatchQueue.main.async {
+            await MainActor.run {
               withAnimation {
                 self.displayMode = self.lastNoSearchDisplayMode
                 self.entities = self.lastNoSearchEntitites
@@ -74,7 +81,7 @@ class FeedItemsManager<S> {
                   newLoadedEntitiesIds.insert(ent.fullname)
               }
             
-              DispatchQueue.main.async {
+              await MainActor.run {
                 withAnimation {
                   self.displayMode = fetchedEntities.count == 0 ? .empty : fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
                   self.entities = fetchedEntities
@@ -94,23 +101,21 @@ class FeedItemsManager<S> {
               return
             }
             
-            var newLoadedEntitiesIds = loadedEntitiesIds
             var newEntities = entities
-            
+          
             fetchedEntities.forEach { ent in
-                if newLoadedEntitiesIds.contains(ent.fullname) { return }
-                newLoadedEntitiesIds.insert(ent.fullname)
-                newEntities.append(ent)
+              if loadedEntitiesIds.contains(ent.fullname) { return }
+              loadedEntitiesIds.insert(ent.fullname)
+              newEntities.append(ent)
             }
-//            
-            self.loadedEntitiesIds = newLoadedEntitiesIds
-            self.lastElementId = after
-//
-            await MainActor.run { [newEntities] in
-              self.entities = newEntities
-              self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
-            }
+
+//          print("[LIST-LOAD] Adding \(newEntities.count) entities, first = \(newEntities.first?.id ?? "")")
+          await MainActor.run { [newEntities ] in
+            self.entities = newEntities
+            self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+          }
             
+          self.lastElementId = after
         } else {
             withAnimation { displayMode = .error }
         }
@@ -118,17 +123,30 @@ class FeedItemsManager<S> {
       self.currentTask = nil
     }
     
-    func elementAppeared(entity: RedditEntityType, index: Int) async {
-        if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 7, currentTask == nil {
-            self.currentTask = Task { await fetchCaller(loadingMore: true) }
-        }
+    func elementAppeared(entity: RedditEntityType, index: Int, currentPostId: String?) async {
+//      print("[LIST-APPEARED] idx: \(index) id: \(entity.id)")
+      if !lastAppearedId.isEmpty, abs(index - lastAppearedIndex) > 6, let scrollProxy {
+        let target = currentPostId ?? lastAppearedId
+//        print("[LIST-WARN] Skipped \(abs(lastAppearedIndex - index)) posts. Scrolling back to \(target)")
+        lastAppearedId = ""
+        scrollProxy.scrollTo(target)
         
-        let start = index - prefetchRange < 0 ? 0 : index - prefetchRange
-        let end = index + (prefetchRange + 1) > entities.count ? entities.count : index + (prefetchRange + 1)
-        let toPrefetch = start < end ? Array(entities[start..<end]) : []
-        let reqs = getImgReqsFrom(toPrefetch)
+        return
+      }
+            
+      lastAppearedId = entity.id
+      lastAppearedIndex = index
         
-        Post.prefetcher.startPrefetching(with: reqs)
+      if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 2, currentTask == nil {
+          self.currentTask = Task { await fetchCaller(loadingMore: true) }
+      }
+      
+      let start = index - prefetchRange < 0 ? 0 : index - prefetchRange
+      let end = index + (prefetchRange + 1) > entities.count ? entities.count : index + (prefetchRange + 1)
+      let toPrefetch = start < end ? Array(entities[start..<end]) : []
+      let reqs = getImgReqsFrom(toPrefetch)
+      
+      Post.prefetcher.startPrefetching(with: reqs)
     }
     
     func elementDisappeared(entity: RedditEntityType, index: Int) async {

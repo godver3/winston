@@ -62,11 +62,12 @@ struct Tabber: View, Equatable {
             .tabItem { Label("Posts", systemImage: "doc.text.image") }
             
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-                Inbox(router: nav[.inbox])
+                SavedContainer(router: nav[.saved])
             }
             .measureTabBar(setTabBarHeight)
-            .tag(Nav.TabIdentifier.inbox)
-            .tabItem { Label("Inbox", systemImage: "bell.fill") }
+            .tag(Nav.TabIdentifier.saved)
+            .tabItem { Label("Saved", systemImage: "bookmark") }
+            
             
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 Me(router: nav[.me])
@@ -78,6 +79,7 @@ struct Tabber: View, Equatable {
                     appearanceDefSettings.showUsernameInTabBar ? RedditAPI.shared.me?.data?.name ?? "Me" : "Me",
                     systemImage: "person.fill")
             }
+            
             //
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 Search(router: nav[.search])
@@ -85,6 +87,13 @@ struct Tabber: View, Equatable {
             .measureTabBar(setTabBarHeight)
             .tag(Nav.TabIdentifier.search)
             .tabItem { Label("Search", systemImage: "magnifyingglass") }
+            
+//            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
+//                Inbox(router: nav[.inbox])
+//            }
+//            .measureTabBar(setTabBarHeight)
+//            .tag(Nav.TabIdentifier.inbox)
+//            .tabItem { Label("Inbox", systemImage: "bell.fill") }
             
             Settings(router: nav[.settings])
                 .measureTabBar(setTabBarHeight)

@@ -32,6 +32,7 @@ struct PostLink: View, Equatable, Identifiable {
   let compactPerSubreddit: Bool?
   let contentWidth: CGFloat
   var defSettings: PostLinkDefSettings = Defaults[.PostLinkDefSettings]
+  var setCurrentPostId: ((String) -> Void)?
     
   var body: some View {
     
@@ -44,7 +45,8 @@ struct PostLink: View, Equatable, Identifiable {
           showSub: showSub,
           secondary: secondary,
           contentWidth: contentWidth,
-          defSettings: defSettings
+          defSettings: defSettings,
+          setCurrentPostId: setCurrentPostId
         )
         .equatable()
       } else {
@@ -55,7 +57,8 @@ struct PostLink: View, Equatable, Identifiable {
           showSub: showSub,
           secondary: secondary,
           contentWidth: contentWidth,
-          defSettings: defSettings
+          defSettings: defSettings,
+          setCurrentPostId: setCurrentPostId
         )
         .equatable()
       }
@@ -75,7 +78,7 @@ extension View {
       .contentShape(Rectangle())
       .compositingGroup()
 //      .brightness(isOpen.wrappedValue ? 0.075 : 0)
-      .opacity(fadeReadPosts && seen ? theme.unseenFadeOpacity : 1)
+      .opacity(fadeReadPosts && seen && sub.id != savedKeyword ? theme.unseenFadeOpacity : 1)
       .contextMenu(menuItems: {
         PostLinkContext(post: post)
         

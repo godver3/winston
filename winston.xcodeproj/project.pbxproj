@@ -64,6 +64,7 @@
 		BBD6E9DE2B51B03600901C1C /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = BBD6E9DD2B51B03600901C1C /* MarkdownUI */; };
 		BBD6E9E02B51B45D00901C1C /* Winston MD.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */; };
 		CE0EC5D82B1A9E9600C6E210 /* SubredditFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */; };
+		CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5985BD2DA73F75005523D1 /* SavedContainer.swift */; };
 		EC051C472ACAF2DC00E9D9ED /* themeFileIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */; };
 		EC082F252A65FB4300BA2727 /* measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F242A65FB4300BA2727 /* measure.swift */; };
 		EC082F272A66132600BA2727 /* CommentLinkMore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F262A66132600BA2727 /* CommentLinkMore.swift */; };
@@ -662,6 +663,7 @@
 		BBD6E9DA2B50F5D300901C1C /* Comment util.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; name = "Comment util.swift"; path = "winston/utils/Comment util.swift"; sourceTree = SOURCE_ROOT; tabWidth = 2; };
 		BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Winston MD.swift"; path = "winston/components/Markdown Handling/Winston MD.swift"; sourceTree = SOURCE_ROOT; };
 		CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditFilters.swift; sourceTree = "<group>"; };
+		CE5985BD2DA73F75005523D1 /* SavedContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedContainer.swift; sourceTree = "<group>"; };
 		EC051C2A2ACAEFC500E9D9ED /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
 		EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = themeFileIcon.png; sourceTree = "<group>"; };
 		EC082F242A65FB4300BA2727 /* measure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = measure.swift; sourceTree = "<group>"; };
@@ -750,9 +752,9 @@
 		EC2760802B2AD9E600ADCE26 /* concurrentMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = concurrentMap.swift; sourceTree = "<group>"; };
 		EC2760822B2ADFD100ADCE26 /* ConcurrentRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrentRunner.swift; sourceTree = "<group>"; };
 		EC2830EE2AC330F00042BE65 /* PreviewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewModel.swift; sourceTree = "<group>"; };
-		EC2A39122AC1FF63001E5354 /* PostLinkCompact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLinkCompact.swift; sourceTree = "<group>"; };
+		EC2A39122AC1FF63001E5354 /* PostLinkCompact.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostLinkCompact.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC2A39142AC20155001E5354 /* PostLinkTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLinkTitle.swift; sourceTree = "<group>"; };
-		EC2A39162AC2035F001E5354 /* PostLinkNormal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostLinkNormal.swift; sourceTree = "<group>"; };
+		EC2A39162AC2035F001E5354 /* PostLinkNormal.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostLinkNormal.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC2CD94F2B1B3D770040EF85 /* package-lock.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = "package-lock.json"; sourceTree = "<group>"; };
 		EC2CD9502B1B3D770040EF85 /* package.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
 		EC2CD9512B1B3D770040EF85 /* .parcelrc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .parcelrc; sourceTree = "<group>"; };
@@ -1682,6 +1684,7 @@
 		EC593AEE2A47ACA1002D6454 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CE5985BD2DA73F75005523D1 /* SavedContainer.swift */,
 				ECF974412AA1706800C3BC75 /* Announcements */,
 				ECFDEACE2A7F150400DF102D /* Subreddits */,
 				ECAEFF6E2A77E9ED0052FCD3 /* Onboarding */,
@@ -3075,6 +3078,7 @@
 				ECA30A192A604ACC00BB19D1 /* SubredditIcon.swift in Sources */,
 				EC8EF59C2B606E37009E51D2 /* RedditListingFeed.swift in Sources */,
 				EC9ECA082A8805DF00470F89 /* performantShadow.swift in Sources */,
+				CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */,
 				EC7FBE232B4118460082FA44 /* CGSizeScreenSize.swift in Sources */,
 				EC4C7C9A2B2C545D0007A4DA /* BehaviorDefSettings.swift in Sources */,
 				ECEE87B02B634A1E0042032B /* CustomFilterView.swift in Sources */,

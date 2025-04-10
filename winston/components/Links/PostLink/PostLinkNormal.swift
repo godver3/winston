@@ -39,17 +39,21 @@ struct PostLinkNormal: View, Equatable, Identifiable {
   var secondary = false
   let contentWidth: CGFloat
   let defSettings: PostLinkDefSettings
+  var setCurrentPostId: ((String) -> Void)?
     
   func markAsRead() async {
     Task(priority: .background) { await post.toggleSeen(true) }
   }
   
   func openPost() {
+    setCurrentPostId?(post.id)
     Nav.to(.reddit(.post(post)))
   }
   
   func openSubreddit() {
     if let subName = post.data?.subreddit {
+      setCurrentPostId?(post.id)
+
       withAnimation {
         Nav.to(.reddit(.subFeed(Subreddit(id: subName))))
       }

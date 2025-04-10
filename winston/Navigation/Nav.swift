@@ -27,7 +27,7 @@ class Nav: Identifiable, Equatable {
   
   enum TabIdentifier: String, Codable, Hashable, CaseIterable, Identifiable, Equatable {
     var id: String { self.rawValue }
-    case posts, inbox, me, search, settings
+    case posts, saved, me, search, settings
   }
   
   enum PresentingSheet: Codable, Hashable, Identifiable, Equatable {

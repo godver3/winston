@@ -18,7 +18,7 @@ struct FloatingFeedMenu: View, Equatable {
   @Default(.localFavorites) var localFavorites
   
   var subId: String
-  var subName: String
+  var subName: String?
   var filters: [ShallowCachedFilter]
   @Binding var selectedFilter: ShallowCachedFilter?
   @Binding var customFilter: ShallowCachedFilter?
@@ -39,7 +39,7 @@ struct FloatingFeedMenu: View, Equatable {
   @Default(.SubredditFeedDefSettings) var subredditFeedDefSettings
   @Default(.PostLinkDefSettings) var postLinkDefSettings
   
-  init(subId: String, subName: String, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) {
+  init(subId: String, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) {
     self.subId = subId
     self.subName = subName
     self.filters = filters
@@ -145,23 +145,25 @@ struct FloatingFeedMenu: View, Equatable {
         VStack(spacing: itemsSpacingDownscaled) {
           VStack(spacing: itemsSpacing) {
             if menuOpen {
+              if let subName {
                 Image(systemName: localFavorites.contains(subName) ? "star.fill" : "star")
-                .fontSize(22, .bold)
-                .frame(width: actionsSize, height: actionsSize)
-                .foregroundStyle(Color.accentColor)
-                .floating()
-                .transition(.comeFrom(.bottom, index: 1, total: 2))
-                .highPriorityGesture(TapGesture().onEnded({
-                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                  
-                  withAnimation {
-                    if localFavorites.contains(subName) {
-                      localFavorites = localFavorites.filter{ $0 != subName }
-                    } else {
-                      localFavorites.append(subName)
+                  .fontSize(22, .bold)
+                  .frame(width: actionsSize, height: actionsSize)
+                  .foregroundStyle(Color.accentColor)
+                  .floating()
+                  .transition(.comeFrom(.bottom, index: 1, total: 2))
+                  .highPriorityGesture(TapGesture().onEnded({
+                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    
+                    withAnimation {
+                      if localFavorites.contains(subName) {
+                        localFavorites = localFavorites.filter{ $0 != subName }
+                      } else {
+                        localFavorites.append(subName)
+                      }
                     }
-                  }
-                }))
+                  }))
+              }
               
               Image(systemName: compact ? "doc.text.image" : "doc.plaintext")
                 .fontSize(22, .bold)
@@ -203,7 +205,7 @@ struct FloatingFeedMenu: View, Equatable {
 extension View {
   func floatingMenu(subId: String?, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) -> some View {
     self.overlay(alignment: .bottomTrailing) {
-        if let subId, let subName {
+        if let subId {
           FloatingFeedMenu(subId: subId, subName: subName, filters: filters, selectedFilter: selectedFilter, customFilter: customFilter)
         }
       }
