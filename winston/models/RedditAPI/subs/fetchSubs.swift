@@ -57,7 +57,7 @@ extension RedditAPI {
     }
   }
   
-  func updateSubsInCoreData(with subs: [ListingChild<SubredditData>]) async {
+  func updateSubsInCoreData(with subs: [ListingChild<SubredditData>], deleteOthers: Bool = true) async {
     guard let credentialID = Defaults[.GeneralDefSettings].redditCredentialSelectedID else { return }
     let context = PersistenceController.shared.container.newBackgroundContext()
     
@@ -81,13 +81,15 @@ extension RedditAPI {
           }
         }
         
-        var localFavorites = Defaults[.localFavorites]
-        
-        // Delete CachedSubs not present in the fetched subs
-        let currentSubsSet = Set(subs.compactMap { $0.data?.name })
-        results.forEach { cachedSub in
-          if !currentSubsSet.contains(cachedSub.name ?? "") && !localFavorites.contains(cachedSub.name ?? "") {
-            context.delete(cachedSub)
+        if deleteOthers {
+          var localFavorites = Defaults[.localFavorites]
+          
+          // Delete CachedSubs not present in the fetched subs
+          let currentSubsSet = Set(subs.compactMap { $0.data?.name })
+          results.forEach { cachedSub in
+            if !currentSubsSet.contains(cachedSub.name ?? "") && !localFavorites.contains(cachedSub.name ?? "") {
+              context.delete(cachedSub)
+            }
           }
         }
         
