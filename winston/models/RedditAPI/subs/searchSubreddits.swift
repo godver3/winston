@@ -13,6 +13,7 @@ extension RedditAPI {
     let params = SearchSubredditPayload(q: query)
     switch await self.doRequest("\(RedditAPI.redditApiURLBase)/subreddits/search", method: .get, params: params, paramsLocation: .queryString, decodable: Listing<SubredditData>.self)  {
     case .success(let data):
+      await updateSubsInCoreData(with: data.data?.children ?? [])
       return data.data?.children?.compactMap { $0.data }
     case .failure(let error):
       print(error)

@@ -120,10 +120,9 @@ struct Subreddits: View, Equatable {
         }
         
         Group {
-          
+                    
           if searchText.debounced != "" {
-            
-            let foundSubs = Array(subreddits.filter { ($0.display_name ?? "").lowercased().starts(with: searchText.debounced.lowercased()) })
+            let foundSubs = Array(subreddits.filter {  ($0.user_is_subscriber || localFavorites.contains($0.name ?? "")) && ($0.display_name ?? "").lowercased().starts(with: searchText.debounced.lowercased()) })
             
             if foundSubs.count > 0 {
               Section("My subs") {
