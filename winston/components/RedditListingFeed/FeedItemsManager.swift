@@ -40,8 +40,11 @@ class FeedItemsManager<S> {
   private var lastNoSearchDisplayMode: DisplayMode = .loading
   private var lastSort: SubListingSortOption?
   
-  private var lastAppearedIndex = 0
-  private var lastAppearedId = ""
+  var lastAppearedIndex = 0
+  var lastAppearedId = ""
+  
+  private var scrollingDown = true
+  private var scrolling = false
   
   var scrollProxy: ScrollViewProxy? = nil
   
@@ -125,14 +128,22 @@ class FeedItemsManager<S> {
     
     func elementAppeared(entity: RedditEntityType, index: Int, currentPostId: String?) async {
 //      print("[LIST-APPEARED] idx: \(index) id: \(entity.id)")
-      if !lastAppearedId.isEmpty, abs(index - lastAppearedIndex) > 6, let scrollProxy {
-        let target = currentPostId ?? lastAppearedId
-//        print("[LIST-WARN] Skipped \(abs(lastAppearedIndex - index)) posts. Scrolling back to \(target)")
+      
+      if currentPostId != nil, !scrolling, !lastAppearedId.isEmpty, scrollingDown && (index - lastAppearedIndex) > 3, let scrollProxy {
+        scrolling = true
+        
+        print("[LIST-WARN] Skipped \(abs(lastAppearedIndex - index)) posts. Scrolling back to \(lastAppearedId)")
+        scrollProxy.scrollTo(lastAppearedId, anchor: .center)
         lastAppearedId = ""
-        scrollProxy.scrollTo(target)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          self.scrolling = false
+        }
         
         return
       }
+      
+      scrollingDown = index > lastAppearedIndex
             
       lastAppearedId = entity.id
       lastAppearedIndex = index

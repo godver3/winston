@@ -312,6 +312,11 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
           .onChange(of: itemsManager.selectedFilter?.text) { Task { await refetch() } }
           .onChange(of: itemsManager.sorting?.meta.apiValue) { Task { await refetch() } }
           .onAppear {
+            if currentPostId != nil {
+              proxy.scrollTo(currentPostId, anchor: .center)
+              itemsManager.lastAppearedId = ""
+            }
+            
             itemsManager.scrollProxy = proxy
             currentPostId = nil
             
