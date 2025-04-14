@@ -25,6 +25,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   
     @State private var customFilter: ShallowCachedFilter?
     @State private var currentPostId: String? = nil
+    @State private var currentPostAnchor: UnitPoint = .center
   
     init(feedId: String, showSubInPosts: Bool = false, title: String, theme: ThemeBG, fetch: @escaping FeedItemsManager<S>.ItemsFetchFn, @ViewBuilder header: @escaping () -> Header = { EmptyView() }, @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }, initialSorting: S? = nil, disableSearch: Bool = true, subreddit: Subreddit? = nil, forceRefresh: Binding<Bool>? = nil) where S == SubListingSortOption {
       self.showSubInPosts = showSubInPosts
@@ -71,8 +72,14 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
 //        }
     }
   
-    func setCurrentPostId(id: String) {
-      currentPostId = id
+    func setCurrentOpenPost(post: Post) {
+      currentPostId = post.id
+      
+      if let height = post.winstonData?.postDimensions.size.height, height > 640 {
+        currentPostAnchor = .top
+      } else {
+        currentPostAnchor = .center
+      }
     }
       
     func sortUpdated(opt: S) {
@@ -143,7 +150,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                       switch el {
                       case .post(let post):
                         if let winstonData = post.winstonData, let sub = winstonData.subreddit ?? subreddit {
-                          PostLink(id: post.id, theme: selectedTheme.postLinks, showSub: showSubInPosts, compactPerSubreddit: feedDefSettings.compactPerSubreddit[sub.id], contentWidth: contentWidth, defSettings: postLinkDefSettings, setCurrentPostId: setCurrentPostId)
+                          PostLink(id: post.id, theme: selectedTheme.postLinks, showSub: showSubInPosts, compactPerSubreddit: feedDefSettings.compactPerSubreddit[sub.id], contentWidth: contentWidth, defSettings: postLinkDefSettings, setCurrentOpenPost: setCurrentOpenPost)
                             .id(post.id)
                             .environment(\.contextPost, post)
                             .environment(\.contextSubreddit, sub)
@@ -313,7 +320,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
           .onChange(of: itemsManager.sorting?.meta.apiValue) { Task { await refetch() } }
           .onAppear {
             if currentPostId != nil {
-              proxy.scrollTo(currentPostId, anchor: .center)
+              proxy.scrollTo(currentPostId, anchor: currentPostAnchor)
               itemsManager.lastAppearedId = ""
             }
             

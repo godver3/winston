@@ -32,7 +32,7 @@ struct PostLink: View, Equatable, Identifiable {
   let compactPerSubreddit: Bool?
   let contentWidth: CGFloat
   var defSettings: PostLinkDefSettings = Defaults[.PostLinkDefSettings]
-  var setCurrentPostId: ((String) -> Void)?
+  var setCurrentOpenPost: ((Post) -> Void)?
     
   var body: some View {
     
@@ -46,7 +46,7 @@ struct PostLink: View, Equatable, Identifiable {
           secondary: secondary,
           contentWidth: contentWidth,
           defSettings: defSettings,
-          setCurrentPostId: setCurrentPostId
+          setCurrentOpenPost: setCurrentOpenPost
         )
         .equatable()
       } else {
@@ -58,7 +58,7 @@ struct PostLink: View, Equatable, Identifiable {
           secondary: secondary,
           contentWidth: contentWidth,
           defSettings: defSettings,
-          setCurrentPostId: setCurrentPostId
+          setCurrentOpenPost: setCurrentOpenPost
         )
         .equatable()
       }
