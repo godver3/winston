@@ -32,41 +32,41 @@ struct PostContent: View, Equatable {
       Nav.to(.reddit(.subFeed(Subreddit(id: subName))))
     }
   }
-  
-  var body: some View {
-    let postsTheme = selectedTheme.posts
-    let isCollapsed = forceCollapse || collapsed || (defSettings.collapsedPosts[post.id] ?? false)
-    let data = post.data ?? emptyPostData
-    let over18 = data.over_18 ?? false
-    Group {
-      
-      if post.data == nil {
-        VStack {
-          ProgressView()
-            .progressViewStyle(.circular)
-            .frame(maxWidth: .infinity, minHeight: .screenH - 200 )
-            .id("post-loading")
-        }
-      }
-      
-      Group {
-        HStack {
-        Text(data.formattedTitle())
-          .fontSize(postsTheme.titleText.size, .semibold)
-          .foregroundColor(postsTheme.titleText.color())
-          .fixedSize(horizontal: false, vertical: true)
-          .id("post-title")
-          .onAppear { Task { await post.toggleSeen(true) } }
-          .listRowInsets(EdgeInsets(top: postsTheme.padding.vertical, leading: postsTheme.padding.horizontal, bottom: postsTheme.spacing / 2, trailing: selectedTheme.posts.padding.horizontal))
 
-          if MarkdownUtil.containsSpoiler(data.selftext ?? "") {
-              Spacer()
-              Image(systemName: showSpoiler ? "eye.slash.fill" : "eye.fill")
-                .onTapGesture {
-                  withAnimation {
-                   showSpoiler = !showSpoiler
-                  }
-                }
+var body: some View {
+let postsTheme = selectedTheme.posts
+let isCollapsed = forceCollapse || collapsed || (defSettings.collapsedPosts[post.id] ?? false)
+let data = post.data ?? emptyPostData
+let over18 = data.over_18 ?? false
+Group {
+  
+  if post.data == nil {
+    VStack {
+      ProgressView()
+        .progressViewStyle(.circular)
+        .frame(maxWidth: .infinity, minHeight: .screenH - 200 )
+        .id("post-loading")
+    }
+  }
+      
+  Group {
+    HStack {
+    Text(data.formattedTitle())
+      .fontSize(postsTheme.titleText.size, .semibold)
+      .foregroundColor(postsTheme.titleText.color())
+      .fixedSize(horizontal: false, vertical: true)
+      .id("post-title")
+      .onAppear { Task { await post.toggleSeen(true) } }
+      .listRowInsets(EdgeInsets(top: postsTheme.padding.vertical, leading: postsTheme.padding.horizontal, bottom: postsTheme.spacing / 2, trailing: selectedTheme.posts.padding.horizontal))
+
+      if MarkdownUtil.containsSpoiler(data.selftext ?? "") {
+          Spacer()
+          Image(systemName: showSpoiler ? "eye.slash.fill" : "eye.fill")
+            .onTapGesture {
+              withAnimation {
+               showSpoiler = !showSpoiler
+              }
+            }
           }
         }
         
@@ -75,7 +75,7 @@ struct PostContent: View, Equatable {
             VStack(spacing: 0) {
               VStack(spacing: selectedTheme.posts.spacing) {
                 if let extractedMedia = winstonData.extractedMediaForcedNormal {
-                  MediaPresenter(winstonData: winstonData, fullPage: true, controller: nil, postTitle: data.formattedTitle(), badgeKit: data.badgeKit, avatarImageRequest: winstonData.avatarImageRequest, markAsSeen: {}, cornerRadius: selectedTheme.postLinks.theme.mediaCornerRadius, blurPostLinkNSFW: defSettings.blurNSFW, media: extractedMedia, over18: over18, compact: false, contentWidth: winstonData.postDimensionsForcedNormal.mediaSize?.width ?? 0, maxMediaHeightScreenPercentage: Defaults[.PostLinkDefSettings].maxMediaHeightScreenPercentage, resetVideo: nil)
+                    MediaPresenter(winstonData: winstonData, fullPage: true, controller: nil, postTitle: data.formattedTitle(), badgeKit: data.badgeKit, avatarImageRequest: winstonData.avatarImageRequest, markAsSeen: {}, cornerRadius: selectedTheme.postLinks.theme.mediaCornerRadius, blurPostLinkNSFW: defSettings.blurNSFW, media: extractedMedia, over18: over18, compact: false, contentWidth: winstonData.postDimensions.mediaSize?.width ?? 0, maxMediaHeightScreenPercentage: Defaults[.PostLinkDefSettings].maxMediaHeightScreenPercentage, resetVideo: nil)
                 }
                 
                 if !(data.selftext?.isEmpty ?? true) {

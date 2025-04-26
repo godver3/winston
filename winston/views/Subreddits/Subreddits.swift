@@ -128,7 +128,7 @@ struct Subreddits: View, Equatable {
               Section("My subs") {
                 ForEach(foundSubs, id: \.self.uuid) { cachedSub in
                   let sub = Subreddit(data: SubredditData(entity: cachedSub))
-                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState)
+                  SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, cachedSub: cachedSub, action: selectSub, localFavState: $localFavState, showSubs: true)
                 }
               }
             }
@@ -137,7 +137,7 @@ struct Subreddits: View, Equatable {
             let filteredMatches = matchedSubs.filter { match in !foundSubs.contains(where: { cached in cached.name == match.data?.name })}
             Section("All subs") {
               ForEach(filteredMatches, id: \.self.id) { sub in
-                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, action: selectSub, localFavState: $localFavState)
+                SubItem(isActive: Router.NavDest.reddit(.subFeed(sub)) == firstDestination, sub: sub, action: selectSub, localFavState: $localFavState, showSubs: true)
               }
             }
             

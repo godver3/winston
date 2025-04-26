@@ -46,7 +46,7 @@ func createTitleTagsAttrString(titleTheme: ThemeText, postData: PostData, textCo
       .foregroundColor: textColor
     ]
     
-    let attributedString = NSAttributedString(string: title, attributes: attrs)
+      let attributedString = NSAttributedString(string: title.cleanEmojis(), attributes: attrs)
     let textSize = attributedString.size()
     
     let padding = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: 4)

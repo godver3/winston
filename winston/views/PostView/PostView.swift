@@ -379,20 +379,26 @@ struct PostView: View, Equatable {
             
             HStack(spacing: 12) {
               HStack(spacing: 8) {
+                
+                let matchesStr = "\(currentMatchIndex)/\(totalMatches)"
+                let matchesWidth = matchesStr.width(font: UIFont.systemFont(ofSize: 16, weight: .semibold))
                 HStack(spacing: 4)  {
                   Image(systemName: searchOpen ? "text.page.badge.magnifyingglass" : "message.badge")
                     .fontSize(13, .semibold)
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                   
-                  Text("\(currentMatchIndex)/\(totalMatches)")
+                  Text(matchesStr)
                     .fontSize(16, .semibold)
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                     .lineLimit(1)
                 }
+                .frame(width: matchesWidth + 22)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
               
+                let commentStr = "\(flattened.count)/\(post.data?.num_comments ?? 0)"
+                let commentWidth = commentStr.width(font: UIFont.systemFont(ofSize: 16, weight: .semibold))
                 HStack(spacing: 4)  {
                   let numComments = post.data?.num_comments ?? 0
                   let allLoaded = flattened.count >= numComments
@@ -401,13 +407,14 @@ struct PostView: View, Equatable {
                   .fontSize(13, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
               
-                  Text("\(flattened.count)/\(post.data?.num_comments ?? 0)")
+                  Text(commentStr)
                     .fontSize(16, .semibold)
                     .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(1)
                     .allowsTightening(true)
                 }
+                .frame(width: commentWidth + 22)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))

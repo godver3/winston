@@ -33,8 +33,8 @@ struct AppContent: View {
                 Tabber(theme: InMemoryTheme.shared.currentTheme)
             }
         }
-        .whatsNewSheet()
-        .tipJarModalProvider()
+//        .whatsNewSheet()
+//        .tipJarModalProvider()
         .environment(\.tabBarHeight, tabBarHeight)
         .environment(\.setTabBarHeight, setTabBarHeight)
         .environmentObject(themeStore)

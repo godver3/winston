@@ -1021,7 +1021,7 @@
 		ECAEFF5F2A77A41D0052FCD3 /* stringFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = stringFallback.swift; sourceTree = "<group>"; };
 		ECAEFF612A77AF8E0052FCD3 /* AppDelegate.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECAEFF652A77C43B0052FCD3 /* isVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = isVideoPlayer.swift; sourceTree = "<group>"; };
-		ECAEFF682A77DE2B0052FCD3 /* StringEmojize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringEmojize.swift; sourceTree = "<group>"; };
+		ECAEFF682A77DE2B0052FCD3 /* StringEmojize.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = StringEmojize.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECAEFF6A2A77DE490052FCD3 /* emojiCodes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = emojiCodes.swift; sourceTree = "<group>"; };
 		ECAEFF6C2A77E8CA0052FCD3 /* Onboarding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Onboarding.swift; sourceTree = "<group>"; };
 		ECB03BFA2AEC2D090090674A /* AltImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AltImage.swift; sourceTree = "<group>"; };
@@ -1113,7 +1113,7 @@
 		ECEE87B72B638F4F0042032B /* SubredditPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditPosts.swift; sourceTree = "<group>"; };
 		ECEE87B92B6452330042032B /* SimpleInit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleInit.swift; sourceTree = "<group>"; };
 		ECEE87BB2B64A2650042032B /* urlEncoded.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = urlEncoded.swift; sourceTree = "<group>"; };
-		ECEF41222B239ADC005FE84E /* Nav.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nav.swift; sourceTree = "<group>"; };
+		ECEF41222B239ADC005FE84E /* Nav.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Nav.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECEF41272B239F94005FE84E /* Published+Value.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Published+Value.swift"; sourceTree = "<group>"; };
 		ECEF41292B239FAC005FE84E /* Published+Codable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Published+Codable.swift"; sourceTree = "<group>"; };
 		ECEFC25A2A5DAA970003C6C4 /* searchUsers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = searchUsers.swift; sourceTree = "<group>"; };

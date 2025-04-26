@@ -7,14 +7,15 @@ import Combine
 
 struct SharedVideo: Equatable {
   static func == (lhs: SharedVideo, rhs: SharedVideo) -> Bool {
-    lhs.url == rhs.url && lhs.player.currentItem == rhs.player.currentItem
+    lhs.url == rhs.url && lhs.id == rhs.id && lhs.player.currentItem == rhs.player.currentItem
   }
   
   var player: AVPlayer
   var url: URL
+  var id: String
   var size: CGSize
   
-  static func get(url: URL, size: CGSize, resetCache: Bool = false) -> SharedVideo {
+  static func get(url: URL, size: CGSize, resetCache: Bool = false, prevVideoId: String? = nil) -> SharedVideo {
     let cacheKey =  SharedVideo.cacheKey(url: url, size: size)
     
     if resetCache {
@@ -25,6 +26,12 @@ struct SharedVideo: Equatable {
       return sharedVideo
     } else {
       let sharedVideo = SharedVideo(url: url, size: size)
+      
+      if let prevVideoId {
+        Nav.shared.currVideos[sharedVideo.id] = Nav.shared.currVideos[prevVideoId]
+        Nav.shared.currVideos[prevVideoId] = nil
+      }
+      
       Caches.videos.addKeyValue(key: cacheKey, data: { sharedVideo }, expires: Date().dateByAdding(1, .day).date)
       
       return sharedVideo
@@ -37,12 +44,31 @@ struct SharedVideo: Equatable {
   
   init(url: URL, size: CGSize) {
     self.url = url
+    self.id = randomString(length: 12)
     self.size = size
     let newPlayer = AVPlayer(url: url)
     newPlayer.volume = 0.0
+    newPlayer.isMuted = true
     self.player = newPlayer
   }
 }
+
+func randomString(length: Int) -> String {
+
+    let letters : NSString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    let len = UInt32(letters.length)
+
+    var randomString = ""
+
+    for _ in 0 ..< length {
+        let rand = arc4random_uniform(len)
+        var nextChar = letters.character(at: Int(rand))
+        randomString += NSString(characters: &nextChar, length: 1) as String
+    }
+
+    return randomString
+}
+
 
 struct VideoPlayerPost: View, Equatable {
   static func == (lhs: VideoPlayerPost, rhs: VideoPlayerPost) -> Bool {
@@ -106,11 +132,11 @@ struct VideoPlayerPost: View, Equatable {
           }
       } else {
         ZStack {
-          
           Group {
             if !fullscreen {
               VideoPlayer(player: sharedVideo.player)
                 .scaledToFill()
+                .ignoresSafeArea()
             } else {
               Color.clear
             }
@@ -143,7 +169,6 @@ struct VideoPlayerPost: View, Equatable {
           Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity(autoPlayVideos ? 0 : 1).allowsHitTesting(false)
         }
         .onAppear {
-          
           if loopVideos {
             addObserver()
           }
@@ -155,6 +180,8 @@ struct VideoPlayerPost: View, Equatable {
           if autoPlayVideos {
             sharedVideo.player.play()
           }
+          
+          Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) + 1
         }
         .onChange(of: scenePhase) { newPhase in
           if newPhase == .active {
@@ -168,12 +195,16 @@ struct VideoPlayerPost: View, Equatable {
           }
         }
         .onDisappear() {
-            removeObserver()
-          Task(priority: .background) {
-//            setAudioToMixWithOthers(false)
-            sharedVideo.player.seek(to: .zero)
-            sharedVideo.player.pause()
+          removeObserver()
+          if (Nav.shared.currVideos[sharedVideo.id] ?? 0) <= 1 {
+            Task(priority: .background) {
+              //            setAudioToMixWithOthers(false)
+              sharedVideo.player.seek(to: .zero)
+              sharedVideo.player.pause()
+            }
           }
+          
+          Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) > 1 ? Nav.shared.currVideos[sharedVideo.id]! - 1 : nil
         }
         .onChange(of: fullscreen) { val in
           if !firstFullscreen {
@@ -224,14 +255,14 @@ struct VideoPlayerPost: View, Equatable {
           }
         }
       
-      NotificationCenter.default.addObserver(
-        forName: .AVPlayerItemPlaybackStalled,
-        object: sharedVideo.player.currentItem,
-        queue: nil) { notif in
-          Task(priority: .background) {
-            resetVideo?(sharedVideo)
-          }
-        }
+//      NotificationCenter.default.addObserver(
+//        forName: .AVPlayerItemPlaybackStalled,
+//        object: sharedVideo.player.currentItem,
+//        queue: nil) { notif in
+//          Task(priority: .background) {
+//            resetVideo?(sharedVideo)
+//          }
+//        }
     }
   }
   
@@ -247,10 +278,10 @@ struct VideoPlayerPost: View, Equatable {
         name: .AVPlayerItemFailedToPlayToEndTime,
         object: sharedVideo.player.currentItem)
       
-      NotificationCenter.default.removeObserver(
-        self,
-        name: .AVPlayerItemPlaybackStalled,
-        object: sharedVideo.player.currentItem)
+//      NotificationCenter.default.removeObserver(
+//        self,
+//        name: .AVPlayerItemPlaybackStalled,
+//        object: sharedVideo.player.currentItem)
     }
   }
 }

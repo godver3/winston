@@ -74,6 +74,11 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   
     func setCurrentOpenPost(post: Post) {
       currentPostId = post.id
+//      if let currentVideo = post.winstonData?.media as? SharedVideo {
+//        Nav.shared.currVideoId = currentVideo.id
+//      } else {
+//        Nav.shared.currVideoId = nil
+//      }
       
       if let height = post.winstonData?.postDimensions.size.height, height > 640 {
         currentPostAnchor = .top
@@ -326,6 +331,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             
             itemsManager.scrollProxy = proxy
             currentPostId = nil
+//            Nav.shared.currVideoId = nil
             
             if itemsManager.displayMode != .loading { return }
             Task { await refetch() }

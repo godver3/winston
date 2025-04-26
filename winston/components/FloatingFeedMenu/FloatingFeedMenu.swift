@@ -129,7 +129,12 @@ struct FloatingFeedMenu: View, Equatable {
                   .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: !showBackButton)
                   .onTapGesture {
                       Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    
+                    if Nav.shared.activeTab == .saved {
+                      Nav.shared.activeTab = .posts
+                    } else {
                       Nav.shared.activeRouter.goBack()
+                    }
                   }
             }
             .padding(.trailing, 12)

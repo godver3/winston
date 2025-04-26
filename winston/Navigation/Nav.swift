@@ -72,6 +72,7 @@ class Nav: Identifiable, Equatable {
   }
   var activeRouter: Router { Nav.shared[activeTab] }
   private var cancellables = Set<AnyCancellable>()
+  var currVideos: [String:Int] = [:]
   
   
   private init(activeTab: TabIdentifier = .posts) {

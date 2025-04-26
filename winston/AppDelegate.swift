@@ -19,10 +19,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   
   func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     AppDelegate.instance = self
-    setAudioToMixWithOthers()
-    
     let hapticCapability = CHHapticEngine.capabilitiesForHardware()
     supportsHaptics = hapticCapability.supportsHaptics
+    
+    NotificationCenter.default.addObserver(forName: UIScene.willEnterForegroundNotification, object: nil, queue: nil) { (_) in
+      setAudioToMixWithOthers()
+    }
     
     return true
   }
@@ -39,10 +41,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     return sceneConfiguration
   }
     
-  func applicationWillEnterForeground(_ application: UIApplication) {
-      setAudioToMixWithOthers()
-  }
-    
 }
 
 class CustomSceneDelegate: UIResponder, UIWindowSceneDelegate {
@@ -51,17 +49,13 @@ class CustomSceneDelegate: UIResponder, UIWindowSceneDelegate {
   }
 }
 
-public func setAudioToMixWithOthers(_ activateplayback: Bool = false) {
+public func setAudioToMixWithOthers() {
 	do {
 		let audioSession = AVAudioSession.sharedInstance()
-		if (activateplayback == true) {
-            try audioSession.setCategory(.playback, mode: AVAudioSession.Mode.default, options: [.mixWithOthers, .duckOthers])
-			try audioSession.setActive(true)
-		} else {
-			try audioSession.setCategory(.ambient, options: [.mixWithOthers])
-			try audioSession.setActive(false, options: AVAudioSession.SetActiveOptions.notifyOthersOnDeactivation)
-		}
+    try audioSession.setCategory(.playback, mode: AVAudioSession.Mode.default, options: [.mixWithOthers])
+    try audioSession.setActive(true)
+    print("[AUDIO] Set session to mix with others")
 	} catch {
-		print("Error setting audio session to mix with others")
+		print("[AUDIO] Error setting audio session to mix with others")
 	}
 }

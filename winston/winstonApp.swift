@@ -21,10 +21,10 @@ struct winstonApp: App {
       AppContent()
         .environment(\.managedObjectContext, persistenceController.container.viewContext)
         .environment(\.primaryBGContext, persistenceController.primaryBGContext)
-        .environment(
-          \.whatsNew,
-           WhatsNewEnvironment(currentVersion: .current(), whatsNewCollection: getCurrentChangelog())
-        )
+//        .environment(
+//          \.whatsNew,
+//           WhatsNewEnvironment(currentVersion: .current(), whatsNewCollection: getCurrentChangelog())
+//        )
         .task {
           ImagePipeline.shared = ImagePipeline(configuration: .withDataCache(name: "lo.cafe.winston.datacache", sizeLimit: 1024 * 1024 * 300))
         }
