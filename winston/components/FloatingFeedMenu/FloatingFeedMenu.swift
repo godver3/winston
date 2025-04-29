@@ -22,10 +22,12 @@ struct FloatingFeedMenu: View, Equatable {
   var filters: [ShallowCachedFilter]
   @Binding var selectedFilter: ShallowCachedFilter?
   @Binding var customFilter: ShallowCachedFilter?
+  var refresh: (() async -> Void)
   
   @State private var menuOpen = false
   @State private var showingFilters = false
   @State private var compact: Bool
+  @State private var refreshRotationDegrees = 0.0
   
   @Namespace private var ns
   
@@ -39,10 +41,11 @@ struct FloatingFeedMenu: View, Equatable {
   @Default(.SubredditFeedDefSettings) var subredditFeedDefSettings
   @Default(.PostLinkDefSettings) var postLinkDefSettings
   
-  init(subId: String, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) {
+  init(subId: String, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>, refresh: @escaping (() async -> Void)) {
     self.subId = subId
     self.subName = subName
     self.filters = filters
+    self.refresh = refresh
     
     self._selectedFilter = selectedFilter
     self._customFilter = customFilter
@@ -136,6 +139,27 @@ struct FloatingFeedMenu: View, Equatable {
                       Nav.shared.activeRouter.goBack()
                     }
                   }
+            
+            Image(systemName: "arrow.clockwise")
+              .fontSize(showBackButton ? 22 : 0, .semibold)
+              .foregroundStyle(Color.accentColor)
+              .padding(.horizontal, 14)
+              .frame(width: showBackButton ? actionsSize : 0, height: showBackButton ? actionsSize : 0)
+              .clipShape(Circle())
+              .drawingGroup()
+              .floating()
+              .animation(.bouncy.delay(0), value: showBackButton)
+              .onTapGesture {
+                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  Task {
+                    await refresh()
+                  }
+                  
+                  withAnimation {
+                      refreshRotationDegrees += 360
+                  }
+              }
+              .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
             }
             .padding(.trailing, 12)
             .frame(height: mainTriggerSize, alignment: .trailing)
@@ -208,10 +232,10 @@ struct FloatingFeedMenu: View, Equatable {
 
 
 extension View {
-  func floatingMenu(subId: String?, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>) -> some View {
+  func floatingMenu(subId: String?, subName: String?, filters: [ShallowCachedFilter], selectedFilter: Binding<ShallowCachedFilter?>, customFilter: Binding<ShallowCachedFilter?>, refresh: @escaping (() async -> Void)) -> some View {
     self.overlay(alignment: .bottomTrailing) {
         if let subId {
-          FloatingFeedMenu(subId: subId, subName: subName, filters: filters, selectedFilter: selectedFilter, customFilter: customFilter)
+          FloatingFeedMenu(subId: subId, subName: subName, filters: filters, selectedFilter: selectedFilter, customFilter: customFilter, refresh: refresh)
         }
       }
   }

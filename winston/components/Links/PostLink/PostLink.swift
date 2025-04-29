@@ -35,7 +35,6 @@ struct PostLink: View, Equatable, Identifiable {
   var setCurrentOpenPost: ((Post) -> Void)?
     
   var body: some View {
-    
     Group {
       if compactPerSubreddit ?? defSettings.compactMode.enabled {
         PostLinkCompact(

@@ -35,6 +35,8 @@ extension RedditAPI {
       print("Error: Unable to create a valid URL")
       return nil
     }
+      
+    print("[API] fetchUserOverview - GET \(urlComponents.url!.path())")
     
     switch await self.doRequest(requestURL.absoluteString, method: .get, decodable: Listing<Either<PostData, CommentData>>.self)  {
     case .success(let data):

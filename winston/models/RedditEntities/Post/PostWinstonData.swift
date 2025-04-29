@@ -12,6 +12,7 @@ import Nuke
 class PostWinstonData: Hashable {
   static func == (lhs: PostWinstonData, rhs: PostWinstonData) -> Bool { lhs.permaURL == rhs.permaURL }
   
+  var uniqueId: String = ""
   var permaURL: URL? = nil
   var extractedMedia: MediaExtractedType? = nil
   var extractedMediaForcedNormal: MediaExtractedType? = nil

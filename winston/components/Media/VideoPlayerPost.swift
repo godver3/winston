@@ -53,23 +53,6 @@ struct SharedVideo: Equatable {
   }
 }
 
-func randomString(length: Int) -> String {
-
-    let letters : NSString = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    let len = UInt32(letters.length)
-
-    var randomString = ""
-
-    for _ in 0 ..< length {
-        let rand = arc4random_uniform(len)
-        var nextChar = letters.character(at: Int(rand))
-        randomString += NSString(characters: &nextChar, length: 1) as String
-    }
-
-    return randomString
-}
-
-
 struct VideoPlayerPost: View, Equatable {
   static func == (lhs: VideoPlayerPost, rhs: VideoPlayerPost) -> Bool {
     lhs.url == rhs.url && lhs.sharedVideo == rhs.sharedVideo
@@ -192,6 +175,8 @@ struct VideoPlayerPost: View, Equatable {
             if autoPlayVideos {
               sharedVideo.player.play()
             }
+          } else if newPhase == .inactive {
+            sharedVideo.player.pause()
           }
         }
         .onDisappear() {

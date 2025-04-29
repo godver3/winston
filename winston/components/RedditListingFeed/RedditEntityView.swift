@@ -35,7 +35,7 @@ struct RedditEntityView: View, Equatable {
             if let winstonData = post.winstonData, let sub = winstonData.subreddit ?? subreddit {
                 PostLink(
                     id: post.id,
-                    theme: selectedTheme.postLinks, 
+                    theme: selectedTheme.postLinks,
                     showSub: showSubInPosts, 
                     compactPerSubreddit: feedDefSettings.compactPerSubreddit[sub.id], 
                     contentWidth: contentWidth, 

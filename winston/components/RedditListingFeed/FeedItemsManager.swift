@@ -77,28 +77,34 @@ class FeedItemsManager<S> {
               }
             }
         } else if let (fetchedEntities, after) = await fetchFn(lastElementId, sort, searchQuery, filter), let fetchedEntities {
-            
             if !loadingMore {
               var newLoadedEntitiesIds = Set<String>()
               fetchedEntities.forEach { ent in
-                  newLoadedEntitiesIds.insert(ent.fullname)
+                newLoadedEntitiesIds.insert(ent.fullname)
               }
             
-              await MainActor.run {
-                withAnimation {
+              DispatchQueue.main.async {
+                if self.entities.count == fetchedEntities.count && self.entities.first?.id == fetchedEntities.first?.id {
                   self.displayMode = fetchedEntities.count == 0 ? .empty : fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
                   self.entities = fetchedEntities
                   self.lastElementId = after
                   self.loadedEntitiesIds = newLoadedEntitiesIds
-                  
-                  if (noSearchQuery) {
-                    self.lastNoSearchDisplayMode = self.displayMode
-                    self.lastNoSearchEntitites = self.entities
-                    self.lastNoSearchLastElementId = self.lastElementId
-                    self.lastNoSearchLoadedEntitiesIds = self.loadedEntitiesIds
-                    self.lastSort = sort as? SubListingSortOption
+                } else {
+                  withAnimation {
+                    self.displayMode = fetchedEntities.count == 0 ? .empty : fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+                    self.entities = fetchedEntities
+                    self.lastElementId = after
+                    self.loadedEntitiesIds = newLoadedEntitiesIds
                   }
                 }
+              }
+              
+              if (noSearchQuery) {
+                self.lastNoSearchDisplayMode = self.displayMode
+                self.lastNoSearchEntitites = self.entities
+                self.lastNoSearchLastElementId = self.lastElementId
+                self.lastNoSearchLoadedEntitiesIds = self.loadedEntitiesIds
+                self.lastSort = sort as? SubListingSortOption
               }
 
               return
@@ -145,7 +151,15 @@ class FeedItemsManager<S> {
       
       scrollingDown = index > lastAppearedIndex
             
-      lastAppearedId = entity.id
+      switch entity {
+        case .post(let post):
+          lastAppearedId = post.id + (post.winstonData?.uniqueId ?? "")
+          break
+        default:
+          lastAppearedId = entity.id
+          break
+      }
+
       lastAppearedIndex = index
         
       if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 2, currentTask == nil {

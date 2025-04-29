@@ -281,5 +281,18 @@ enum Either<A: Codable & Hashable, B: Codable & Hashable>: Codable, Hashable {
             try container.encode(value)
         }
     }
+    
+    func isFirst() -> Bool {
+        switch self {
+        case .first(let _):
+            return true
+        case .second(let _):
+            return false
+        }
+    }
+    
+    func isSecond() -> Bool {
+        return !isFirst()
+    }
 }
 

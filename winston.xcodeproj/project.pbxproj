@@ -652,7 +652,7 @@
 		65E544BD2B0F6D4F00FF6965 /* Shiny.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shiny.swift; sourceTree = "<group>"; };
 		65E544BF2B0F70D500FF6965 /* createPaletteFromColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = createPaletteFromColors.swift; sourceTree = "<group>"; };
 		ABC2180E2ABA528D00F0DABA /* Biometrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Biometrics.swift; sourceTree = "<group>"; };
-		BB0D15262B0698FD00668448 /* MixedContentFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MixedContentFeedView.swift; sourceTree = "<group>"; };
+		BB0D15262B0698FD00668448 /* MixedContentFeedView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = MixedContentFeedView.swift; sourceTree = "<group>"; tabWidth = 2; };
 		BB0D15282B069A9700668448 /* getItemId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getItemId.swift; sourceTree = "<group>"; };
 		BB53CA992B0D827F003D3332 /* EndOfFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfFeedView.swift; sourceTree = "<group>"; };
 		BB978B382B4F3BE200BE90D1 /* MDEditor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MDEditor.swift; sourceTree = "<group>"; };
