@@ -1,5 +1,5 @@
 {
-  "originHash" : "6f0faa2bf7c692b2aa970e7f12e136cf8e9a9769e340ec55b3e131da49a959a2",
+  "originHash" : "15c951ac1c54d4b2acbc7a2456107d63bf0d977a6e959ea5d4b0554028a0537e",
   "pins" : [
     {
       "identity" : "alamofire",
@@ -52,7 +52,7 @@
       "location" : "https://github.com/sindresorhus/Defaults",
       "state" : {
         "branch" : "main",
-        "revision" : "4c009d5c2496e7aa126e922c94dd3d6ae049efa2"
+        "revision" : "00c82eff4550c87cf9c547d7e5493a6a97837061"
       }
     },
     {
@@ -74,6 +74,15 @@
       }
     },
     {
+      "identity" : "giphy-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Giphy/giphy-ios-sdk",
+      "state" : {
+        "revision" : "9a3970c258ef5cc005f9359ba4c6a344fe062abe",
+        "version" : "2.2.15"
+      }
+    },
+    {
       "identity" : "highlightedtexteditor",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/kyle-n/HighlightedTextEditor",
@@ -89,6 +98,15 @@
       "state" : {
         "branch" : "master",
         "revision" : "e0c7eebc5a4465a3c4680764f26b7a61f567cdaf"
+      }
+    },
+    {
+      "identity" : "libwebp-xcode",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SDWebImage/libwebp-Xcode",
+      "state" : {
+        "revision" : "0d60654eeefd5d7d2bef3835804892c40225e8b2",
+        "version" : "1.5.0"
       }
     },
     {
@@ -170,6 +188,15 @@
       "state" : {
         "revision" : "55441810c0f678c78ed7e2ebd46dde89228e02fc",
         "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "f99ae8aa18f0cf0d53481901f88a0991dc3bd4a2",
+        "version" : "601.0.1"
       }
     },
     {

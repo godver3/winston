@@ -18,7 +18,6 @@ private let placeholders: [String] = [
   "It's gonna change the world for good. After years we finally found...",
   "The cosmos is within us. We are made of star-stuff. We are...",
   "I like the way you die, boy...",
-  "— Don’t you hate that?\n— What?\n— Uncomfortable silences...",
   "All we have to decide is what to do with the time that is given us...",
   "FLY, YOU FOOLS! ...yes, it's fly, not run...",
   "Winston, I mean, Houston, we have a problem!...",
@@ -27,7 +26,9 @@ private let placeholders: [String] = [
 
 struct MDEditor: View {
   @Binding var text: String
+  @FocusState.Binding var editorFocused: Bool
   @State var placeholder: String = placeholders.randomElement()!
+
     var body: some View {
       ZStack(alignment: .topLeading) {
         if text.isEmpty {
@@ -36,9 +37,16 @@ struct MDEditor: View {
             .padding(.top, 8)
             .padding(.leading, 5)
         }
+        
+        Text("a\na").opacity(0).padding(.all, 8)
+        Text(text).opacity(0).padding(.all, 8)
+        
         TextEditor(text: $text)
+          .focused($editorFocused)
+          .fixedSize(horizontal: false, vertical: true)
           .scrollContentBackground(.hidden)
           .background(.clear)
+        
         // The HighlightedTextEditor package currently does not integrate well with iOS 17's predictive text. It will be disabled until that issue is remedied.
         // HighlightedTextEditor(text: $text, highlightRules: winstonMDEditorPreset)
 //          .introspect { editor in

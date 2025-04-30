@@ -655,7 +655,7 @@
 		BB0D15262B0698FD00668448 /* MixedContentFeedView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = MixedContentFeedView.swift; sourceTree = "<group>"; tabWidth = 2; };
 		BB0D15282B069A9700668448 /* getItemId.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getItemId.swift; sourceTree = "<group>"; };
 		BB53CA992B0D827F003D3332 /* EndOfFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndOfFeedView.swift; sourceTree = "<group>"; };
-		BB978B382B4F3BE200BE90D1 /* MDEditor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MDEditor.swift; sourceTree = "<group>"; };
+		BB978B382B4F3BE200BE90D1 /* MDEditor.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = MDEditor.swift; sourceTree = "<group>"; tabWidth = 2; };
 		BB978B422B4F756400BE90D1 /* External to Internal Links.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "External to Internal Links.swift"; path = "winston/components/Markdown Handling/External to Internal Links.swift"; sourceTree = SOURCE_ROOT; };
 		BB978B442B4FA4A500BE90D1 /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageView.swift; path = winston/components/Media/ImageView.swift; sourceTree = SOURCE_ROOT; };
 		BBD6E9D62B50F37200901C1C /* QuirkyMsgUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = QuirkyMsgUtil.swift; path = winston/components/QuirkyMsgUtil.swift; sourceTree = SOURCE_ROOT; };
@@ -1093,7 +1093,7 @@
 		ECE2859C2A50130D009CF9DD /* fetchUserOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchUserOverview.swift; sourceTree = "<group>"; };
 		ECE2859E2A501CD4009CF9DD /* fetchMe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchMe.swift; sourceTree = "<group>"; };
 		ECE285A02A50EC9E009CF9DD /* Badge.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Badge.swift; sourceTree = "<group>"; tabWidth = 2; };
-		ECE285A72A513342009CF9DD /* ReplyModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyModal.swift; sourceTree = "<group>"; };
+		ECE285A72A513342009CF9DD /* ReplyModal.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = ReplyModal.swift; sourceTree = "<group>"; tabWidth = 2; };
 		ECE449702A67610A00E2A3B7 /* VotesPopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotesPopover.swift; sourceTree = "<group>"; };
 		ECE449762A68895500E2A3B7 /* SubredditInfoTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditInfoTab.swift; sourceTree = "<group>"; };
 		ECE449782A68897600E2A3B7 /* SubredditRulesTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditRulesTab.swift; sourceTree = "<group>"; };
@@ -2727,6 +2727,7 @@
 				ECB0D46C2B5ED1DE00F90B9B /* XCRemoteSwiftPackageReference "SwiftyUI" */,
 				EC66A2A32BA00530004E20BB /* XCRemoteSwiftPackageReference "Pow" */,
 				EC7BFE482BB46B3E00E375C1 /* XCRemoteSwiftPackageReference "CloudStorage" */,
+				CE7FD5492DC7DB4B00890F14 /* XCRemoteSwiftPackageReference "giphy-ios-sdk" */,
 			);
 			productRefGroup = EC593AD52A4673B2002D6454 /* Products */;
 			projectDirPath = "";
@@ -3704,6 +3705,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.3.0;
+			};
+		};
+		CE7FD5492DC7DB4B00890F14 /* XCRemoteSwiftPackageReference "giphy-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Giphy/giphy-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.2.15;
 			};
 		};
 		EC08543B2A4CFE1C00E88389 /* XCRemoteSwiftPackageReference "swiftui-introspect" */ = {

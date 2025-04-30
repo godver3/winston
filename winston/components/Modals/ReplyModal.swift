@@ -67,7 +67,13 @@ struct ReplyModalComment: View {
     ReplyModal(thingFullname: comment.data?.name ?? "", action: action) {
       VStack {
         if let commentWinstonData = comment.winstonData {
-          CommentLink(indentLines: 0, showReplies: false, comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston)
+          VStack(spacing: 0) {
+            CommentLink(indentLines: 0, showReplies: false, comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston)
+            
+            NiceDivider(divider: .init(style: .line, thickness: 3, color: .init(light: .init(hex: "555555"), dark: .init(hex: "555555"))))
+              .opacity(0.6)
+              .padding(.vertical, 12)
+          }
         }
       }
     }
@@ -110,9 +116,10 @@ struct ReplyModal<Content: View>: View {
   @Environment(\.dismiss) private var dismiss
   @Environment(\.managedObjectContext) private var viewContext
   @State private var currentDraft: ReplyDraft?
-  @State private var editorHeight: CGFloat = 200
   @State private var loading = false
-  @State private var selection: PresentationDetent = .medium
+  @State private var sheetHeight: CGFloat = 300
+  @State private var selection: PresentationDetent = .height(300)
+  @FocusState private var editorFocused: Bool
   @Environment(\.useTheme) private var selectedTheme
   @FetchRequest(sortDescriptors: []) var drafts: FetchedResults<ReplyDraft>
   @Environment(\.globalLoaderStart) private var globalLoaderStart
@@ -132,17 +139,21 @@ struct ReplyModal<Content: View>: View {
     NavigationView {
       ScrollView {
         VStack(spacing: 12) {
-          
           VStack(alignment: .leading) {
+            if let content = content {
+              content()
+            }
+            
             if let me = RedditAPI.shared.me?.data, let avatarLink = me.icon_img ?? me.snoovatar_img, let rootURL = rootURLString(avatarLink), let avatarURL = URL(string: rootURL) {
               BadgeView(avatarRequest: ImageRequest(url: avatarURL), saved: false, author: me.name, fullname: "t2_\(me.id)", userFlair: "", created: Date().timeIntervalSince1970, avatarURL: me.icon_img ?? me.snoovatar_img, theme: selectedTheme.comments.theme.badge, commentsCount: "0", votesCount: "0")
-//              BadgeOpt(avatarRequest: ImageRequest(url: avatarURL), badgeKit: .init(numComments: 0, ups: 0, saved: false, author: me.name, authorFullname: "t2_\(me.id)", userFlair: "", created: Date().timeIntervalSince1970), avatarURL: me.icon_img ?? me.snoovatar_img, theme: selectedTheme.comments.theme.badge)
+                .allowsHitTesting(false)
+  //              BadgeOpt(avatarRequest: ImageRequest(url: avatarURL), badgeKit: .init(numComments: 0, ups: 0, saved: false, author: me.name, authorFullname: "t2_\(me.id)", userFlair: "", created: Date().timeIntervalSince1970), avatarURL: me.icon_img ?? me.snoovatar_img, theme: selectedTheme.comments.theme.badge)
             }
-            MDEditor(text: $textWrapper.replyText)
+            MDEditor(text: $textWrapper.replyText, editorFocused: $editorFocused)
           }
           .padding(.horizontal, 12)
           .padding(.vertical, 8)
-          .frame(maxWidth: .infinity, minHeight: 200)
+          .frame(maxWidth: .infinity)
           .background(RR(16, Color.secondary.opacity(0.1)))
           .allowsHitTesting(!loading)
           .blur(radius: loading ? 24 : 0)
@@ -153,42 +164,19 @@ struct ReplyModal<Content: View>: View {
               .progressViewStyle(.circular)
           )
           
-          if let content = content {
-            content()
-          }
-          
           
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 16)
-      }
-      .overlay(
-        MasterButton(icon: "paperplane.fill", label: submitBtnLabel, height: 48, fullWidth: true, cornerRadius: 16) {
-          withAnimation(spring) {
-            dismiss()
-          }
-          globalLoaderStart(loadingLabel)
-          action({ result in
-            globalLoaderDismiss()
-            if result {
-              if let currentDraft = currentDraft {
-                Task {
-                  await viewContext.perform(schedule: .enqueued) {
-                    viewContext.delete(currentDraft)
-                    try? viewContext.save()
-                  }
-                }
-              }
+        .padding(.bottom, 96)
+        .overlay {
+            GeometryReader { geometry in
+                Color.clear.preference(key: InnerHeightPreferenceKey.self, value: geometry.size.height)
             }
-          }, textWrapper.replyText)
         }
-          .shrinkOnTap()
-          .offset(y: loading || selection == collapsedPresentation ? 90 : 0)
-          .animation(spring, value: selection)
-          .padding(.horizontal, 16)
-          .padding(.bottom, 8)
-        , alignment: .bottom
-      )
+        .onPreferenceChange(InnerHeightPreferenceKey.self) { newHeight in
+            sheetHeight = newHeight + 48
+        }
+      }
       .onChange(of: textWrapper.debouncedTeplyText, perform: { val in
         currentDraft?.replyText = val
         Task {
@@ -222,6 +210,11 @@ struct ReplyModal<Content: View>: View {
           newDraft.thingID = thingFullname
           currentDraft = newDraft
         }
+        
+        DispatchQueue.main.async {
+//          selection = .height(sheetHeight)
+          editorFocused = true
+        }
       }
       .toolbar {
         ToolbarItem {
@@ -251,17 +244,47 @@ struct ReplyModal<Content: View>: View {
             }
             
             MasterButton(icon: "chevron.down", mode: .subtle, color: .primary, textColor: .primary, shrinkHoverEffect: true, height: 52, proportional: .circle) {
-              withAnimation(spring) {
-                dismiss()
+              if editorFocused {
+                editorFocused = false
+              } else {
+                withAnimation(spring) {
+                  dismiss()
+                }
               }
             }
-            
           }
         }
       }
       .navigationBarTitleDisplayMode(.inline)
       .navigationTitle(title)
     }
+    .overlay(
+      MasterButton(icon: "paperplane.fill", label: submitBtnLabel, height: 48, fullWidth: true, cornerRadius: 16) {
+        withAnimation(spring) {
+          dismiss()
+        }
+        globalLoaderStart(loadingLabel)
+        action({ result in
+          globalLoaderDismiss()
+          if result {
+            if let currentDraft = currentDraft {
+              Task {
+                await viewContext.perform(schedule: .enqueued) {
+                  viewContext.delete(currentDraft)
+                  try? viewContext.save()
+                }
+              }
+            }
+          }
+        }, textWrapper.replyText)
+      }
+      .shrinkOnTap()
+      .offset(y: loading ? 90 : (editorFocused ? -16 : 0))
+      .animation(spring, value: selection)
+      .padding(.horizontal, 16)
+      .padding(.bottom, 8)
+    , alignment: .bottom
+    )
     .background(
       !selectedTheme.general.modalsBG.blurry
       ? nil
@@ -272,9 +295,16 @@ struct ReplyModal<Content: View>: View {
         .edgesIgnoringSafeArea(.all)
     )
     .presentationBackground(selectedTheme.general.modalsBG.blurry ? AnyShapeStyle(.bar) : AnyShapeStyle(selectedTheme.general.modalsBG.color()))
-    .presentationDetents([.large, .fraction(0.75), .medium, collapsedPresentation], selection: $selection)
+    .presentationDetents([.height(editorFocused ? sheetHeight - 16 : sheetHeight)], selection: $selection)
     .presentationCornerRadius(32)
     .presentationBackgroundInteraction(.enabled)
     .presentationDragIndicator(.hidden)
   }
+}
+
+struct InnerHeightPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = .zero
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
 }
