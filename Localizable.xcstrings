@@ -582,6 +582,9 @@
         }
       }
     },
+    "Back" : {
+
+    },
     "Backup" : {
       "localizations" : {
         "de" : {
@@ -1155,9 +1158,6 @@
         }
       }
     },
-    "Download" : {
-
-    },
     "Drag Left" : {
       "localizations" : {
         "de" : {
@@ -1508,6 +1508,9 @@
           }
         }
       }
+    },
+    "Front" : {
+
     },
     "General" : {
       "localizations" : {
@@ -3764,9 +3767,6 @@
         }
       }
     },
-    "Theme Store" : {
-
-    },
     "Theme Store Tint" : {
       "localizations" : {
         "de" : {
@@ -3835,9 +3835,6 @@
 
     },
     "There was an error" : {
-
-    },
-    "There was an error importing this theme" : {
 
     },
     "They say the stars hide a secret..." : {

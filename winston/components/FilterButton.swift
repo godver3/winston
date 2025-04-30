@@ -40,7 +40,7 @@ struct FilterButton: View, Equatable {
           trans.animation = .bouncy
         }
       
-      Text(filter.text)
+        Text(filter.label.isEmpty ? filter.text : filter.label)
         .fontSize(15, .medium)
         .foregroundColor(isSelected ? contrastColor : .primary)
     }

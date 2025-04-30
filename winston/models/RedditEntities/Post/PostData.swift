@@ -109,6 +109,8 @@ struct PostData: GenericRedditEntityDataType {
     
   func formattedTitle () -> String {
     return title.replacingOccurrences(of: "&amp;", with: "&")
+          .replacingOccurrences(of: "&gt;", with: ">")
+          .replacingOccurrences(of: "&lt;", with: "<")
   }
   
   var badgeKit: BadgeKit {

@@ -19,7 +19,7 @@ struct CustomFilterView: View {
   var filter: ShallowCachedFilter
   var subId: String
   
-  @State var draftFilter = CachedFilter.getShallow(bgColor: "FFFFF", subID: "", text: "")
+    @State var draftFilter = CachedFilter.getShallow(bgColor: "FFFFF", subID: "", text: "", label: "")
   
   func removeFromDefaults() {
     var subFilters = CachedFilter.filtersFromDefaultsString(subredditFilters[subId])
@@ -28,10 +28,15 @@ struct CustomFilterView: View {
     subredditFilters[subId] = CachedFilter.getDefaultsString(subFilters)
   }
   
-  func saveToDefaults() {
+  func saveToDefaults(last: Bool) {
     var subFilters = CachedFilter.filtersFromDefaultsString(subredditFilters[subId])
     subFilters.removeAll { other in filter == other }
-    subFilters.append(draftFilter)
+    
+    if last {
+      subFilters.insert(draftFilter, at: 0)
+    } else {
+      subFilters.append(draftFilter)
+    }
     
     subredditFilters[subId] = CachedFilter.getDefaultsString(subFilters)
   }
@@ -45,11 +50,15 @@ struct CustomFilterView: View {
         VStack(alignment: .leading, spacing: 20) {
           Text(filter.new ? "New filter" : "Edit filter").fontSize(24, .semibold)
           
-          HStack(alignment: .top, spacing: 8) {
-            BigInput(l: "Filter text", t: Binding(get: { draftFilter.text }, set: { draftFilter = draftFilter.updateText($0) }), placeholder: "Ex: filter")
+          VStack (alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 8) {
+              
+              BigInput(l: "Search text", t: Binding(get: { draftFilter.text }, set: { draftFilter = draftFilter.updateText($0) }), placeholder: "Filter text")
+              
+              BigColorPicker(title: "Color", initialValue: filter.bgColor ?? "FFFFFF", color:  Binding(get: { ThemeColor(hex: draftFilter.bgColor  ?? "FFFFFF") }, set: { draftFilter = draftFilter.updateBG($0.hex) }))
+            }
             
-            BigColorPicker(title: "Color", initialValue: filter.bgColor ?? "FFFFFF", color:  Binding(get: { ThemeColor(hex: draftFilter.bgColor  ?? "FFFFFF") }, set: { draftFilter = draftFilter.updateBG($0.hex) }))
-            
+            BigInput(l: "Label", t: Binding(get: { draftFilter.label }, set: { draftFilter = draftFilter.updateLabel($0) }), placeholder: "Custom label")
           }
         }
         .padding(.top, 16)
@@ -74,11 +83,17 @@ struct CustomFilterView: View {
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-          Button("Save") {
-            saveToDefaults()
+          Button("Back") {
+            saveToDefaults(last: true)
             dismiss()
           }
-          .disabled(!anyChanges)
+        }
+        
+        ToolbarItem(placement: .topBarTrailing) {
+          Button("Front") {
+            saveToDefaults(last: false)
+            dismiss()
+          }
         }
       }
       .onAppear {

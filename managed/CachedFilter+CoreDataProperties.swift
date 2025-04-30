@@ -15,6 +15,7 @@ struct ShallowCachedFilter: Equatable, Identifiable, Hashable {
   private(set) var bgColor: String?
   private(set) var subID: String
   private(set) var text: String
+  private(set) var label: String
   private(set) var textColor: String?
   private(set) var new: Bool = false
   fileprivate var rawType: String
@@ -23,15 +24,19 @@ struct ShallowCachedFilter: Equatable, Identifiable, Hashable {
   }
   
   func updateText(_ newText: String) -> ShallowCachedFilter {
-    return CachedFilter.getShallow(bgColor: bgColor, subID: subID, text: newText)
+    return CachedFilter.getShallow(bgColor: bgColor, subID: subID, text: newText, label: label)
+  }
+  
+  func updateLabel(_ newLabel: String) -> ShallowCachedFilter {
+    return CachedFilter.getShallow(bgColor: bgColor, subID: subID, text: text, label: newLabel)
   }
   
   func updateBG(_ newBG: String) -> ShallowCachedFilter {
-    return CachedFilter.getShallow(bgColor: newBG, subID: subID, text: text)
+    return CachedFilter.getShallow(bgColor: newBG, subID: subID, text: text, label: label)
   }
   
   func toString() -> String {
-    return "\(bgColor ?? "FFFFFF"),\(subID),\(text)"
+    return "\(bgColor ?? "FFFFFF")~\(subID)~\(text)~\(label)"
   }
 }
 
@@ -44,6 +49,7 @@ extension CachedFilter {
   @NSManaged public var bgColor: String?
   @NSManaged public var subID: String
   @NSManaged public var text: String
+  @NSManaged public var label: String
   @NSManaged public var textColor: String?
   @NSManaged fileprivate var rawType: String
   
@@ -53,20 +59,21 @@ extension CachedFilter {
   }
   
   static func fromString(_ str: String) -> ShallowCachedFilter {
-    let components = str.components(separatedBy: ",")
+    let components = str.components(separatedBy: "~")
     let bg = components.count > 0 ? components[0] : "FFFFFF"
     let sub = components.count > 1 ? components[1] : ""
     let txt = components.count > 2 ? components[2] : ""
+    let label = components.count > 3 ? components[3] : ""
     
-    return ShallowCachedFilter(bgColor: bg, subID: sub, text: txt, textColor: "FFFFFF", rawType: "custom")
+    return ShallowCachedFilter(bgColor: bg, subID: sub, text: txt, label: label, textColor: "FFFFFF", rawType: "custom")
   }
   
-  static func getShallow(bgColor: String?, subID: String, text: String) -> ShallowCachedFilter {
-    ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, textColor: "FFFFFF", rawType: "custom")
+  static func getShallow(bgColor: String?, subID: String, text: String, label: String) -> ShallowCachedFilter {
+    ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, label: label, textColor: "FFFFFF", rawType: "custom")
   }
   
   static func getNewShallow(subredditId: String) -> ShallowCachedFilter {
-    ShallowCachedFilter(bgColor: "FFFFFF", subID: subredditId, text: "", textColor: "FFFFFF", new: true, rawType: "custom")
+    ShallowCachedFilter(bgColor: "FFFFFF", subID: subredditId, text: "", label: "", textColor: "FFFFFF", new: true, rawType: "custom")
   }
   
   static func getDefaultsString(_ filters: [ShallowCachedFilter]) -> String {
@@ -79,7 +86,7 @@ extension CachedFilter {
   }
   
   func getShallow() -> ShallowCachedFilter {
-    ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, textColor: textColor, rawType: rawType)
+    ShallowCachedFilter(bgColor: bgColor, subID: subID, text: text, label: label ?? text, textColor: textColor, rawType: rawType)
   }
   
   var type: FilterType {

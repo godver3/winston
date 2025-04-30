@@ -351,7 +351,13 @@ extension Post {
           
           let finalSeen = seenComments
           seenPost.seenComments = finalSeen
-          try? context.save()
+
+          do {
+            try context.save()
+//            print("[SEEN-COMMENTS] Saved \(newComments.count) seen comments. Total seen comments: \(finalSeen.numberOfOccurrences(of: ",") + 1)")
+          } catch {
+            print("[SEEN-COMMENTS] Failed to save \(newComments.count) seen comments")
+          }
           
           DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             withAnimation {
@@ -383,7 +389,13 @@ extension Post {
           
           let finalSeen = seenComments
           seenPost.seenComments = finalSeen
-          try? context.save()
+            
+          do {
+            try context.save()
+//            print("[SEEN-COMMENTS] Saved \(comments.count) more seen comments. Total seen comments: \(finalSeen.numberOfOccurrences(of: ",") + 1)")
+          } catch {
+            print("[SEEN-COMMENTS] Failed to save \(comments.count) more seen comments")
+          }
           
           DispatchQueue.main.async {
             withAnimation {

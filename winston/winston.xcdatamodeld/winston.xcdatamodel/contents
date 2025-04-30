@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22522" systemVersion="23C71" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23605" systemVersion="24D81" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="CachedFilter" representedClassName="CachedFilter" syncable="YES">
         <attribute name="bgColor" optional="YES" attributeType="String"/>
+        <attribute name="label" optional="YES" attributeType="String"/>
         <attribute name="rawType" attributeType="String" defaultValueString="flair"/>
         <attribute name="subID" optional="YES" attributeType="String"/>
         <attribute name="text" optional="YES" attributeType="String"/>

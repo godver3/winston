@@ -93,22 +93,28 @@ struct FloatingFeedMenu: View, Equatable {
           }
           
           if menuOpen {
-            HStack(spacing: 8) {
-              ForEach(Array(customFilters.enumerated()).reversed(), id: \.element) { i, el in
-                let isSelected = selectedFilter?.id == el.id
-                let placeholder = isSelected && !showingFilters
-                let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
-                
-                FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter, customFilter: $customFilter)
-                //                    .equatable()
-                  .matchedGeometryEffect(id: "floating-\(el.id)", in: ns)
-                  .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .trailing)
-                  .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
-                  .animation(.bouncy.delay(Double(showingFilters && !isSelected ? i : 0) * 0.125), value: showingFilters)
-                  .transition(.offset(x: 0.01))
-                  .id(elId)
+            ScrollView(.horizontal, showsIndicators: false) {
+              HStack(spacing: 8) {
+                ForEach(Array(customFilters.enumerated()).reversed(), id: \.element) { i, el in
+                  let isSelected = selectedFilter?.id == el.id
+                  let placeholder = isSelected && !showingFilters
+                  let elId = "floating-\(el.id)\(placeholder ? "-placeholder" : "")"
+                  
+                  FilterButton(filter: el, isSelected: isSelected, selectFilter: selectFilter, customFilter: $customFilter)
+                  //                    .equatable()
+                    .rotation3DEffect(Angle(degrees: 180), axis: (x: CGFloat(0), y: CGFloat(10), z: CGFloat(0)))
+                    .matchedGeometryEffect(id: "floating-\(el.id)", in: ns)
+                    .scaleEffect(showingFilters || isSelected ? 1 : 0.01, anchor: .leading)
+                    .opacity((showingFilters || isSelected) && !placeholder ? 1 : 0)
+                    .animation(.bouncy.delay(Double(showingFilters && !isSelected ? customFilters.count - i - 1 : 0) * 0.125), value: showingFilters)
+                    .transition(.offset(x: -0.01))
+                    .id(elId)
+                }
               }
             }
+            .environment(\EnvironmentValues.refresh as! WritableKeyPath<EnvironmentValues, RefreshAction?>, nil)
+            .flipsForRightToLeftLayoutDirection(true)
+            .environment(\.layoutDirection, .rightToLeft)
             .padding(.trailing, 12)
             .frame(height: mainTriggerSize, alignment: .trailing)
             .padding(.top, 16)
