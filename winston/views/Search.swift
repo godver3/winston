@@ -10,6 +10,7 @@ import NukeUI
 import Defaults
 
 enum SearchType: String {
+  case subreddit = "Subreddit"
   case post = "Post"
   case user = "User"
 }
@@ -44,13 +45,14 @@ enum SearchTypeArr {
 struct Search: View {
   @State var router: Router
   
-  @State private var searchType: SearchType = .post
+  @State private var searchType: SearchType = .subreddit
+  @State private var resultsSubs: [Subreddit] = []
   @State private var resultsUsers: [User] = []
   @State private var resultPosts: [Post] = []
   @State private var loading = false
   @State private var hideSpinner = false
   @State var sort: SubListingSortOption = .best
-  @State var searchQuery = Debouncer("", delay: 0.25)
+  @State var searchQuery = Debouncer("", delay: 0.35)
   
   @State private var searchViewLoaded: Bool = false
   @State private var dummyAllSub: Subreddit? = nil
@@ -69,6 +71,19 @@ struct Search: View {
       loading = true
     }
     switch searchType {
+    case .subreddit:
+      resultsSubs.removeAll()
+      Task(priority: .background) {
+        if let subs = await RedditAPI.shared.searchSubreddits(searchQuery.value)?.map({ Subreddit(data: $0) }) {
+          await MainActor.run {
+            withAnimation {
+              resultsSubs = subs
+              loading = false
+              hideSpinner = resultsSubs.isEmpty
+            }
+          }
+        }
+      }
     case .user:
       resultsUsers.removeAll()
       Task(priority: .background) {
@@ -112,35 +127,38 @@ struct Search: View {
         Group {
           Section {
             HStack {
+              SearchOption(activateSearchType: { searchType = .subreddit }, active: searchType == SearchType.subreddit, searchType: .subreddit)
               SearchOption(activateSearchType: { searchType = .post }, active: searchType == SearchType.post, searchType: .post)
               SearchOption(activateSearchType: { searchType = .user }, active: searchType == SearchType.user, searchType: .user)
                 
               Spacer()
-                
-              Menu {
-                ForEach(Array(SubListingSortOption.allCases), id: \.self) { opt in
+              
+              if searchType == .post {
+                Menu {
+                  ForEach(Array(SubListingSortOption.allCases), id: \.self) { opt in
                     if let children = opt.meta.children {
-                        Menu {
-                            ForEach(children, id: \.self.meta.apiValue) { child in
-                                if let val = child.valueWithParent as? SubListingSortOption {
-                                    Button(child.meta.label, systemImage: child.meta.icon) {
-                                      sort = opt
-                                    }
-                                }
+                      Menu {
+                        ForEach(children, id: \.self.meta.apiValue) { child in
+                          if let val = child.valueWithParent as? SubListingSortOption {
+                            Button(child.meta.label, systemImage: child.meta.icon) {
+                              sort = opt
                             }
-                        } label: {
-                            Label(opt.meta.label, systemImage: opt.meta.icon)
+                          }
                         }
+                      } label: {
+                        Label(opt.meta.label, systemImage: opt.meta.icon)
+                      }
                     } else {
-                        Button(opt.meta.label, systemImage: opt.meta.icon) {
-                          sort = opt
-                        }
+                      Button(opt.meta.label, systemImage: opt.meta.icon) {
+                        sort = opt
+                      }
                     }
-                }
-              } label: {
+                  }
+                } label: {
                   Image(systemName: sort.meta.icon)
-                      .foregroundColor(Color.accentColor)
-                      .fontSize(17, .bold)
+                    .foregroundColor(Color.accentColor)
+                    .fontSize(17, .bold)
+                }
               }
               
                 
@@ -150,6 +168,10 @@ struct Search: View {
           
           Section {
             switch searchType {
+            case .subreddit:
+              ForEach(resultsSubs) { sub in
+                SubredditLink(sub: sub)
+              }
             case .user:
               ForEach(resultsUsers) { user in
                 UserLink(user: user)
@@ -192,12 +214,14 @@ struct Search: View {
       .onChange(of: searchType) { _ in fetch() }
       .onChange(of: searchQuery.debounced) { val in
         if val == "" {
+          resultsSubs = []
           resultsUsers = []
           resultPosts = []
         }
         fetch()
       }
       .onChange(of: sort) { val in
+        resultsSubs = []
         resultsUsers = []
         resultPosts = []
         fetch()

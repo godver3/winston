@@ -66,7 +66,7 @@ struct AvatarView: View, Equatable {
     .frame(width: avatarSize, height: avatarSize)
     .background(RR(cornerRadius, .primary.opacity(0.15)).frame(avatarSize))
     .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-    .background(SavedFlag(cornerRadius: cornerRadius, saved: saved))
+//    .background(SavedFlag(cornerRadius: cornerRadius, saved: saved))
   }
 }
 

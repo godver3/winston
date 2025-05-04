@@ -52,9 +52,47 @@ extension Comment {
   
   func setupWinstonData() {
     self.winstonData = .init()
+    
+    if let url = checkForGif() {
+      self.winstonData?.gifURL = url
+      
+      if let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) {
+        if let imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as Dictionary? {
+          self.winstonData?.gifSize = .init(width: imageProperties[kCGImagePropertyPixelWidth] as! CGFloat, height: imageProperties[kCGImagePropertyPixelHeight] as! CGFloat)
+        }
+      }
+    }
 //    guard let winstonData = self.winstonData, let data = self.data else { return }
 //    let theme = InMemoryTheme.shared.currentTheme.comments.theme
 //    let cs: ColorScheme = UIScreen.main.traitCollection.userInterfaceStyle == .dark ? .dark : .light
+  }
+
+    
+  private func checkForGif() -> URL? {
+    if data?.body?.contains("![gif](giphy|") ?? false {
+      var str = data!.body!
+      
+      guard let range1 = str.range(of: "![gif](") else { return nil }
+      str = String(str[range1.upperBound...])
+      
+      str = str.components(separatedBy: ")")[0]
+      
+      let components = str.components(separatedBy: "|")
+      if components.count < 2 { return nil }
+      
+      let id = components[1]
+      let downsized = components.count > 2 && components[2] == "downsized"
+      
+      let urlString = downsized ? "https://i.giphy.com/media/\(id)/giphy-downsized.gif" : "https://i.giphy.com/\(id).gif"
+
+      return URL(string: urlString)
+    }
+    
+    if let match = try? /https?:\/\/\S+\.gif/.firstMatch(in: data?.body ?? "") {
+      return URL(string: String(match.output))
+    }
+    
+    return nil
   }
   
   convenience init(message: Message) throws {
@@ -373,7 +411,7 @@ extension Comment {
 
 @Observable
 class CommentWinstonData: Hashable {
-  static func == (lhs: CommentWinstonData, rhs: CommentWinstonData) -> Bool { lhs.avatarImageRequest?.url == rhs.avatarImageRequest?.url }
+    static func == (lhs: CommentWinstonData, rhs: CommentWinstonData) -> Bool { lhs.avatarImageRequest?.url == rhs.avatarImageRequest?.url && lhs.gifURL == rhs.gifURL && lhs.gifSize == rhs.gifSize }
   
   //  var permaURL: URL? = nil
   //  @Published var extractedMedia: MediaExtractedType? = nil
@@ -382,10 +420,15 @@ class CommentWinstonData: Hashable {
   var avatarImageRequest: ImageRequest? = nil
   var commentBodySize: CGSize = .zero
   var bodyAttr: NSAttributedString?
+  // If gif exists, save url/size
+  var gifURL: URL?
+  var gifSize: CGSize? = .zero
   
   func hash(into hasher: inout Hasher) {
     hasher.combine(avatarImageRequest?.description)
     hasher.combine(commentBodySize)
+    hasher.combine(gifURL)
+    hasher.combine(gifSize)
   }
 }
 

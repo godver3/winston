@@ -159,7 +159,7 @@ struct CommentLink: View, Equatable {
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
               CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
-                .id(commentChild.id)
+                .id("\(commentChild.id)-\(childrenCount)")
             }
           }
         }

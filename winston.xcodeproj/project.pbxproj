@@ -65,6 +65,7 @@
 		BBD6E9E02B51B45D00901C1C /* Winston MD.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */; };
 		CE0EC5D82B1A9E9600C6E210 /* SubredditFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */; };
 		CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5985BD2DA73F75005523D1 /* SavedContainer.swift */; };
+		CE7FD54E2DC7E41500890F14 /* SwiftyGif in Frameworks */ = {isa = PBXBuildFile; productRef = CE7FD54D2DC7E41500890F14 /* SwiftyGif */; };
 		EC051C472ACAF2DC00E9D9ED /* themeFileIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */; };
 		EC082F252A65FB4300BA2727 /* measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F242A65FB4300BA2727 /* measure.swift */; };
 		EC082F272A66132600BA2727 /* CommentLinkMore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F262A66132600BA2727 /* CommentLinkMore.swift */; };
@@ -672,7 +673,7 @@
 		EC08540D2A4BD26600E88389 /* ObservedScrollView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObservedScrollView.swift; sourceTree = "<group>"; };
 		EC0854122A4BE13000E88389 /* PostView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostView.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC0854142A4BE1D800E88389 /* PostLink.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = PostLink.swift; sourceTree = "<group>"; tabWidth = 2; };
-		EC0854162A4BF45C00E88389 /* Comment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; };
+		EC0854162A4BF45C00E88389 /* Comment.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Comment.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC0854182A4BFC4600E88389 /* CommentLink.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = CommentLink.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC08541A2A4BFEB300E88389 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		EC08541D2A4BFEFE00E88389 /* fetchSubPosts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchSubPosts.swift; sourceTree = "<group>"; };
@@ -1196,6 +1197,7 @@
 				EC6650EA2AB7E21E006B83A4 /* Zip in Frameworks */,
 				6514FFEC2AFD01520051D264 /* WhatsNewKit in Frameworks */,
 				EC9269F22A51A732003F33B1 /* HighlightedTextEditor in Frameworks */,
+				CE7FD54E2DC7E41500890F14 /* SwiftyGif in Frameworks */,
 				ECA370102B480FC900C73CB0 /* WrappingHStack in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2644,6 +2646,7 @@
 				ECB0D46D2B5ED1DE00F90B9B /* SwiftyUI */,
 				EC66A2A42BA00530004E20BB /* Pow */,
 				EC7BFE492BB46B3E00E375C1 /* CloudStorage */,
+				CE7FD54D2DC7E41500890F14 /* SwiftyGif */,
 			);
 			productName = winston;
 			productReference = EC593AD42A4673B2002D6454 /* winston.app */;
@@ -2727,7 +2730,7 @@
 				ECB0D46C2B5ED1DE00F90B9B /* XCRemoteSwiftPackageReference "SwiftyUI" */,
 				EC66A2A32BA00530004E20BB /* XCRemoteSwiftPackageReference "Pow" */,
 				EC7BFE482BB46B3E00E375C1 /* XCRemoteSwiftPackageReference "CloudStorage" */,
-				CE7FD5492DC7DB4B00890F14 /* XCRemoteSwiftPackageReference "giphy-ios-sdk" */,
+				CE7FD54C2DC7E41500890F14 /* XCRemoteSwiftPackageReference "SwiftyGif" */,
 			);
 			productRefGroup = EC593AD52A4673B2002D6454 /* Products */;
 			projectDirPath = "";
@@ -3707,12 +3710,12 @@
 				minimumVersion = 2.3.0;
 			};
 		};
-		CE7FD5492DC7DB4B00890F14 /* XCRemoteSwiftPackageReference "giphy-ios-sdk" */ = {
+		CE7FD54C2DC7E41500890F14 /* XCRemoteSwiftPackageReference "SwiftyGif" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Giphy/giphy-ios-sdk";
+			repositoryURL = "https://github.com/alexiscreuzot/SwiftyGif.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.2.15;
+				minimumVersion = 5.4.5;
 			};
 		};
 		EC08543B2A4CFE1C00E88389 /* XCRemoteSwiftPackageReference "swiftui-introspect" */ = {
@@ -3916,6 +3919,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = BBD6E9DC2B51B01B00901C1C /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
 			productName = MarkdownUI;
+		};
+		CE7FD54D2DC7E41500890F14 /* SwiftyGif */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CE7FD54C2DC7E41500890F14 /* XCRemoteSwiftPackageReference "SwiftyGif" */;
+			productName = SwiftyGif;
 		};
 		EC08543C2A4CFE1C00E88389 /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -9,6 +9,26 @@ import SwiftUI
 import Defaults
 import SwiftUIIntrospect
 import MarkdownUI
+import SwiftyGif
+
+
+struct AnimatedGifView: UIViewRepresentable {
+  var url: URL
+  
+  func makeUIView(context: Context) -> UIImageView {
+    let imageView = UIImageView(gifURL: self.url)
+    imageView.contentMode = .scaleAspectFit
+    imageView.clipsToBounds = true
+      
+    imageView.setContentHuggingPriority(.defaultLow, for: .vertical)
+    imageView.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+    return imageView
+  }
+
+  func updateUIView(_ uiView: UIImageView, context: Context) {
+    uiView.setGifFromURL(self.url, levelOfIntegrity: 0.8)
+  }
+}
 
 struct CommentLinkContentPreview: View {
   var forcedBodySize: CGSize?
@@ -55,7 +75,7 @@ struct CommentLinkContent: View {
   var containsCurrentMatch: Bool = false
   var highlightCurrentMatch: Bool = false
 
-  @SilentState private var size: CGSize = .zero
+  @State private var size: CGSize = .zero
   @State private var offsetX: CGFloat = 0
   @State private var highlight = false
   @State private var showSpoiler = false
@@ -81,6 +101,7 @@ struct CommentLinkContent: View {
     let selectable = (comment.data?.winstonSelecting ?? false)
     let horPad = theme.theme.innerPadding.horizontal
     
+    let contentW = CGFloat.screenW - horPad * 2 - (CGFloat(comment.data?.depth ?? 0) + 1) * 13
     
     if let data = comment.data {
       let collapsed = (highlightCurrentMatch ? !containsCurrentMatch : true) && data.collapsed ?? false
@@ -219,7 +240,7 @@ struct CommentLinkContent: View {
               .mask(Rectangle())
             }
             if let body = data.body {
-              VStack {
+              VStack(alignment: .leading, spacing: 8) {
                 Group {
                   if lineLimit != nil {
                     Text(body)
@@ -244,6 +265,15 @@ struct CommentLinkContent: View {
                 }
                 .fontSize(theme.theme.bodyText.size, theme.theme.bodyText.weight.t)
                 .foregroundColor(theme.theme.bodyText.color())
+                
+                if let url = winstonData.gifURL {
+                  let contentH = winstonData.gifSize != nil ? contentW * (winstonData.gifSize!.height / winstonData.gifSize!.width) : contentW * 9/16
+                  
+                  AnimatedGifView(url: url)
+                    .frame(width: contentW, height: contentH)
+                    .clipped()
+                    .id("\(data.id)-gif")
+                }
               }
               .offset(x: offsetX)
               .animation(draggingAnimation, value: offsetX)
@@ -267,7 +297,7 @@ struct CommentLinkContent: View {
           }
           .padding(.horizontal, horPad)
           .mask(Color.black.padding(.top, -(data.depth != 0 ? 42 : 30)).padding(.bottom, -8))
-          .id("\(data.id)-body\(forcedBodySize == nil ? "" : "-preview")")
+          .id("\(data.id)-body-\(forcedBodySize == nil ? "" : "-preview")")
         }
       }
       .introspect(.listCell, on: .iOS(.v16, .v17)) { cell in

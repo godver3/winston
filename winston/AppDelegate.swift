@@ -26,6 +26,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       setAudioToMixWithOthers()
     }
     
+//    Giphy.configure(apiKey: "FQzGYEadKctSRRGgBRUxdOYUtq0DW2sT")
+    
     return true
   }
     

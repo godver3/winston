@@ -38,48 +38,33 @@ struct PostReplies: View {
   @State private var loading = false
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
   
-  init(update: Bool, post: Post, subreddit: Subreddit, ignoreSpecificComment: Bool, highlightID: String?, sort: CommentSortOption, proxy: ScrollViewProxy, geometryReader: GeometryProxy, topVisibleCommentId: Binding<String?>, previousScrollTarget: Binding<String?>, comments: Binding<[Comment]>, matchMap: Binding<[String: String]>, seenComments: Binding<String?>, fadeSeenComments: Binding<Bool>, highlightCurrentMatch: Binding<Bool>, searchQuery: String?, currentMatchId: String?, newCommentsLoaded: @escaping () -> Void, updateVisibleComments: @escaping (String, Bool) -> Void) {
-    self.update = update
-    self.post = post
-    self.subreddit = subreddit
-    self.ignoreSpecificComment = ignoreSpecificComment
-    self.highlightID = highlightID
-    self.sort = sort
-    self.proxy = proxy
-    self.geometryReader = geometryReader
-    self._topVisibleCommentId = topVisibleCommentId
-    self._previousScrollTarget = previousScrollTarget
-    self._comments = comments
-    self._matchMap = matchMap
-    self._seenComments = seenComments
-    self._fadeSeenComments = fadeSeenComments
-    self._highlightCurrentMatch = highlightCurrentMatch
-    self.searchQuery = searchQuery
-    self.currentMatchId = currentMatchId
-    self.newCommentsLoaded = newCommentsLoaded
-    self.updateVisibleComments = updateVisibleComments
-    
-    if !loading && (comments.count == 0 || post.data == nil) {
-      reloadPost()
-    }
-  }
-  
-  func reloadPost () {
-    Task(priority: .background) {
-      await asyncFetch(post.data == nil)
-      
-      DispatchQueue.main.async {
-        withAnimation {
-          seenComments = post.winstonData?.seenComments
-          
-          if let seen = seenComments, !seen.isEmpty {
-            // Open unseen skipper automatically
-            fadeSeenComments = true
-          }
-        }
-      }
-    }
-  }
+//  init(update: Bool, post: Post, subreddit: Subreddit, ignoreSpecificComment: Bool, highlightID: String?, sort: CommentSortOption, proxy: ScrollViewProxy, geometryReader: GeometryProxy, topVisibleCommentId: Binding<String?>, previousScrollTarget: Binding<String?>, comments: Binding<[Comment]>, matchMap: Binding<[String: String]>, seenComments: Binding<String?>, fadeSeenComments: Binding<Bool>, highlightCurrentMatch: Binding<Bool>, searchQuery: String?, currentMatchId: String?, newCommentsLoaded: @escaping () -> Void, updateVisibleComments: @escaping (String, Bool) -> Void) {
+//    self.update = update
+//    self.post = post
+//    self.subreddit = subreddit
+//    self.ignoreSpecificComment = ignoreSpecificComment
+//    self.highlightID = highlightID
+//    self.sort = sort
+//    self.proxy = proxy
+//    self.geometryReader = geometryReader
+//    self._topVisibleCommentId = topVisibleCommentId
+//    self._previousScrollTarget = previousScrollTarget
+//    self._comments = comments
+//    self._matchMap = matchMap
+//    self._seenComments = seenComments
+//    self._fadeSeenComments = fadeSeenComments
+//    self._highlightCurrentMatch = highlightCurrentMatch
+//    self.searchQuery = searchQuery
+//    self.currentMatchId = currentMatchId
+//    self.newCommentsLoaded = newCommentsLoaded
+//    self.updateVisibleComments = updateVisibleComments
+//    
+//    if !loading && (comments.count == 0 || post.data == nil) {
+//      Task(priority: .background) { [self] in
+//        await asyncFetch(post.data == nil)
+//      }
+//    }
+//  }
   
   func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
    loading = true 
@@ -177,26 +162,39 @@ struct PostReplies: View {
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
       }
+      .onAppear {
+        if !loading && (comments.count == 0 || post.data == nil) {
+          Task(priority: .background) {
+            await asyncFetch(post.data == nil)
+            
+            DispatchQueue.main.async {
+              withAnimation {
+                seenComments = post.winstonData?.seenComments
+                
+                if let seen = seenComments, !seen.isEmpty {
+                  // Open unseen skipper automatically
+//                      fadeSeenComments = true
+                }
+              }
+            }
+          }
+        } else {
+          withAnimation {
+            seenComments = post.winstonData?.seenComments
+            
+            if let seen = seenComments, !seen.isEmpty {
+              // Open unseen skipper automatically
+              fadeSeenComments = true
+            }
+          }
+        }
+      }
       
       if initialLoading {
         ProgressView()
           .progressViewStyle(.circular)
           .frame(maxWidth: .infinity, minHeight: 100 )
           .listRowBackground(Color.clear)
-          .onAppear {
-            if !loading && (comments.count == 0 || post.data == nil) {
-              reloadPost()
-            } else {
-              withAnimation {
-                seenComments = post.winstonData?.seenComments
-                
-                if let seen = seenComments, !seen.isEmpty {
-                  // Open unseen skipper automatically
-                  fadeSeenComments = true
-                }
-              }
-            }
-          }
           .id("loading-comments")
       } else if comments.count == 0 {
         Text(QuirkyMessageUtil.noCommentsFoundMessage())

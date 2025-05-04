@@ -15,6 +15,13 @@ class MarkdownUtil {
     
     static func formatForMarkdown(_ text: String, showSpoiler: Bool = false, isMatch: Bool = false, searchQuery: String? = nil) -> String {
         var processedText = text
+                
+        // Remove gif links, as they will be displayed
+        processedText = processedText.replacingOccurrences(
+            of: "https?://\\S+\\.gif",
+            with: "",
+            options: .regularExpression
+        )
         
         // Replace http:// or https:// in existing markdown links
         processedText = processedText.replacingOccurrences(
@@ -73,11 +80,18 @@ class MarkdownUtil {
             with: "^"
         )
         
+        processedText = processedText.replacingOccurrences(
+            of: #"!\[gif\]\([\da-zA-Z|]+\)"#,
+            with: "",
+            options: .regularExpression
+        )
+        
         if containsSpoiler(processedText) {
             if showSpoiler {
                 processedText = processedText.replacingOccurrences(
                     of: ">!",
-                    with: ""
+                    with: "",
+                    options: .regularExpression
                 )
                 
                 processedText = processedText.replacingOccurrences(
