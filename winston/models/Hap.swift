@@ -114,7 +114,6 @@ class Hap {
   }
   
   func play(intensity: Float, sharpness: Float) {
-    
     guard supportsHaptics, let engine = self.engine else { return }
     
     let intensityParameter = CHHapticEventParameter(parameterID: .hapticIntensity, value: intensity)

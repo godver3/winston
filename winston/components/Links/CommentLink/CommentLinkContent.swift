@@ -101,7 +101,7 @@ struct CommentLinkContent: View {
     let selectable = (comment.data?.winstonSelecting ?? false)
     let horPad = theme.theme.innerPadding.horizontal
     
-    let contentW = CGFloat.screenW - horPad * 2 - (CGFloat(comment.data?.depth ?? 0) + 1) * 13
+    let contentW = CGFloat.screenW - horPad * 2 - CGFloat(comment.data?.depth ?? 0) * 18
     
     if let data = comment.data {
       let collapsed = (highlightCurrentMatch ? !containsCurrentMatch : true) && data.collapsed ?? false

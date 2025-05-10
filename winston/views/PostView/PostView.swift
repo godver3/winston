@@ -50,6 +50,8 @@ struct PostView: View, Equatable {
   @SilentState private var lastAppearedIdx: Int = -1
   @SilentState private var scrollDir: Bool = false  
   @FocusState private var searchFocused: Bool
+  @State private var liveRefreshTimer: Timer? = nil
+  @State private var initialLoading: Bool = true
 
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -60,20 +62,44 @@ struct PostView: View, Equatable {
     let defSettings = Defaults[.PostPageDefSettings]
     let commentsDefSettings = Defaults[.CommentsSectionDefSettings]
     
-    let title = post.data?.title.lowercased() ?? ""
-    let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
+    let defaultSort = isGameThread(post.data?.title) ?
       CommentSortOption.live : commentsDefSettings.preferredSort
     _sort = State(initialValue: defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? defaultSort) : defaultSort);
   }
   
-  func asyncFetch(_ full: Bool = true) async {
-    if full {
-      update.toggle()
+  func handleLiveRefreshTimer() {
+    if sort != .live {
+      liveRefreshTimer?.invalidate()
+      liveRefreshTimer = nil
+    } else if liveRefreshTimer == nil {
+      liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) {_ in
+        print("[LIVE] REFRESH for \(post.data?.title ?? post.id)")
+        updatePost()
+      }
     }
-    if let result = await post.refreshPost(commentID: ignoreSpecificComment ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
-            
+  }
+  
+  func asyncFetch() async {
+    if let result = await post.refreshPost(commentID: ignoreSpecificComment ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: true), let newComments = result.0 {
+      
+      if initialLoading {
+        seenComments = post.winstonData?.seenComments
+        
+        if let seen = seenComments, !seen.isEmpty, !isGameThread(post.data?.title) {
+          unseenSkipperOpen = true
+        }
+      }
+                  
       Task(priority: .background) {
         await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
+      }
+      
+      newComments.forEach { $0.parentWinston = comments }
+      await MainActor.run {
+        withAnimation {
+          comments = newComments
+          initialLoading = false
+        }
       }
       
       Task(priority: .background) {
@@ -81,11 +107,26 @@ struct PostView: View, Equatable {
           await post.saveCommentsCount(numComments: numComments)
         }
       }
+    } else {
+      await MainActor.run {
+        withAnimation {
+          initialLoading = false
+        }
+      }
     }
   }
   
-  func updatePost() {
-    Task(priority: .background) { await asyncFetch(true) }
+  func updatePost(_ then: (() -> Void)? = nil) {
+    Task(priority: .background) {
+      await asyncFetch()
+      if let then {
+        then()
+      }
+    }
+  }
+  
+  func refresh() {
+    updatePost()
   }
   
   func openUnseenSkipper(_ reader: ScrollViewProxy) {
@@ -308,7 +349,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen,  highlightCurrentMatch: $inAutoSkipMode, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen,  highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -317,6 +358,13 @@ struct PostView: View, Equatable {
                   globalLoaderStart("Loading full post...")
                   withAnimation {
                     ignoreSpecificComment = true
+                    if let highlightID {
+                      doThisAfter(1) {
+                        withAnimation(spring) {
+                          proxy.scrollTo("\(highlightID)t1", anchor: .top)
+                        }
+                      }
+                    }
                   }
                 } label: {
                   HStack {
@@ -512,6 +560,7 @@ struct PostView: View, Equatable {
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
         .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, currentMatchIndex: $currentMatchIndex, totalMatches: $totalMatches, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
+          handleLiveRefreshTimer()
           updatePost()
         }
         .onChange(of: comments) { _, val in
@@ -534,8 +583,24 @@ struct PostView: View, Equatable {
             }
           }
           
-          if post.data == nil {
-            updatePost()
+          if post.data == nil || comments.isEmpty {
+            updatePost() {
+              let title = post.data?.title.lowercased() ?? ""
+              let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
+                CommentSortOption.live : Defaults[.CommentsSectionDefSettings].preferredSort
+              sort = Defaults[.PostPageDefSettings].perPostSort ? (Defaults[.PostPageDefSettings].postSorts[post.id] ?? defaultSort) : defaultSort
+              self.handleLiveRefreshTimer()
+              
+              if let highlightID {
+                doThisAfter(0.5) {
+                  withAnimation(spring) {
+                    proxy.scrollTo("\(highlightID)t1", anchor: .top)
+                  }
+                }
+              }
+            }
+          } else {
+            self.handleLiveRefreshTimer()
           }
           
           Task(priority: .background) {
@@ -550,6 +615,10 @@ struct PostView: View, Equatable {
             }
           }
         }
+        .onDisappear {
+          liveRefreshTimer?.invalidate()
+          liveRefreshTimer = nil
+        }
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {
             topVisibleCommentId = CommentUtils.shared.topCommentRow(of: anchors, in: geometryReader)
@@ -561,7 +630,7 @@ struct PostView: View, Equatable {
           previousScrollTarget: $previousScrollTarget,
           comments: comments,
           reader: proxy,
-          refresh: updatePost,
+          refresh: refresh,
           openUnseenSkipper : openUnseenSkipper,
           searchOpen: $searchOpen,
           unseenSkipperOpen: $unseenSkipperOpen
@@ -653,4 +722,12 @@ extension View {
   func blinking(duration: Double = 1, min: Double = 0.5) -> some View {
     modifier(BlinkViewModifier(duration: duration, min: min))
     }
+}
+
+
+func isGameThread(_ str: String?) -> Bool {
+  guard let str else { return false }
+  
+  let lowercase = str.lowercased()
+  return lowercase.contains("game thread") && !lowercase.contains("post game thread")
 }

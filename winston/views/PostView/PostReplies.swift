@@ -28,77 +28,37 @@ struct PostReplies: View {
   @Binding var seenComments: String?
   @Binding var fadeSeenComments: Bool
   @Binding var highlightCurrentMatch: Bool
+  @Binding var initialLoading: Bool
   
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
   var newCommentsLoaded: () -> Void
   var updateVisibleComments: (String, Bool) -> Void
   
-  @State private var initialLoading = true
-  @State private var loading = false
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
-  
-//  init(update: Bool, post: Post, subreddit: Subreddit, ignoreSpecificComment: Bool, highlightID: String?, sort: CommentSortOption, proxy: ScrollViewProxy, geometryReader: GeometryProxy, topVisibleCommentId: Binding<String?>, previousScrollTarget: Binding<String?>, comments: Binding<[Comment]>, matchMap: Binding<[String: String]>, seenComments: Binding<String?>, fadeSeenComments: Binding<Bool>, highlightCurrentMatch: Binding<Bool>, searchQuery: String?, currentMatchId: String?, newCommentsLoaded: @escaping () -> Void, updateVisibleComments: @escaping (String, Bool) -> Void) {
-//    self.update = update
-//    self.post = post
-//    self.subreddit = subreddit
-//    self.ignoreSpecificComment = ignoreSpecificComment
-//    self.highlightID = highlightID
-//    self.sort = sort
-//    self.proxy = proxy
-//    self.geometryReader = geometryReader
-//    self._topVisibleCommentId = topVisibleCommentId
-//    self._previousScrollTarget = previousScrollTarget
-//    self._comments = comments
-//    self._matchMap = matchMap
-//    self._seenComments = seenComments
-//    self._fadeSeenComments = fadeSeenComments
-//    self._highlightCurrentMatch = highlightCurrentMatch
-//    self.searchQuery = searchQuery
-//    self.currentMatchId = currentMatchId
-//    self.newCommentsLoaded = newCommentsLoaded
-//    self.updateVisibleComments = updateVisibleComments
-//    
-//    if !loading && (comments.count == 0 || post.data == nil) {
-//      Task(priority: .background) { [self] in
-//        await asyncFetch(post.data == nil)
-//      }
-//    }
-//  }
-  
-  func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
-   loading = true 
-    
-    if let result = await post.refreshPost(commentID: (altIgnoreSpecificComment ?? ignoreSpecificComment) ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
-        Task(priority: .background) {
-          _ = await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
-        }
-        newComments.forEach { $0.parentWinston = comments }
-        await MainActor.run {
-          withAnimation {
-            comments = newComments
-            initialLoading = false
-            loading = false
-          }
-          
-          newCommentsLoaded()
 
-          if var specificID = highlightID {
-            specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
-            doThisAfter(0.1) {
-              withAnimation(spring) {
-                proxy.scrollTo("\(specificID)-body", anchor: .center)
-              }
+func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
+  if let result = await post.refreshPost(commentID: (altIgnoreSpecificComment ?? ignoreSpecificComment) ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: full), let newComments = result.0 {
+      Task(priority: .background) {
+        _ = await RedditAPI.shared.updateCommentsWithAvatar(comments: newComments, avatarSize: selectedTheme.comments.theme.badge.avatar.size)
+      }
+      newComments.forEach { $0.parentWinston = comments }
+      await MainActor.run {
+        withAnimation {
+          comments = newComments
+        }
+        
+        newCommentsLoaded()
+
+        if var specificID = highlightID {
+          specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
+          doThisAfter(0.1) {
+            withAnimation(spring) {
+              proxy.scrollTo("\(specificID)-body", anchor: .center)
             }
           }
         }
-      } else {
-        await MainActor.run {
-          withAnimation {
-            initialLoading = false
-            loading = false
-          }
-        }
+      }
     }
   }
   
@@ -161,33 +121,6 @@ struct PostReplies: View {
         }
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-      }
-      .onAppear {
-        if !loading && (comments.count == 0 || post.data == nil) {
-          Task(priority: .background) {
-            await asyncFetch(post.data == nil)
-            
-            DispatchQueue.main.async {
-              withAnimation {
-                seenComments = post.winstonData?.seenComments
-                
-                if let seen = seenComments, !seen.isEmpty {
-                  // Open unseen skipper automatically
-//                      fadeSeenComments = true
-                }
-              }
-            }
-          }
-        } else {
-          withAnimation {
-            seenComments = post.winstonData?.seenComments
-            
-            if let seen = seenComments, !seen.isEmpty {
-              // Open unseen skipper automatically
-              fadeSeenComments = true
-            }
-          }
-        }
       }
       
       if initialLoading {
