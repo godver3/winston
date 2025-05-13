@@ -133,6 +133,10 @@ struct ReplyModal<Content: View>: View {
     self.thingFullname = thingFullname
     self.action = action
     self._textWrapper = StateObject(wrappedValue: TextFieldObserver(delay: 0.5, text: text))
+    
+    DispatchQueue.main.asyncAfter(deadline: .now()) { [self] in
+      editorFocused = true
+    }
   }
   
   var body: some View {

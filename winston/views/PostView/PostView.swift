@@ -73,17 +73,28 @@ struct PostView: View, Equatable {
       liveRefreshTimer = nil
     } else if liveRefreshTimer == nil {
       liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) {_ in
-        print("[LIVE] REFRESH for \(post.data?.title ?? post.id)")
-        updatePost()
+        if comments.isEmpty || visibleComments.value.contains("|\(comments.first?.id ?? "")|") {
+          print("[LIVE] REFRESH for \(post.data?.title ?? post.id)")
+          updatePost()
+        }
       }
     }
   }
   
-  func asyncFetch() async {
-    if let result = await post.refreshPost(commentID: ignoreSpecificComment ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: true), let newComments = result.0 {
+  func asyncFetch(_ reloadPost: Bool = false) async {
+    var seenCommentsSet = false
+    
+    if initialLoading && post.winstonData != nil {
+      seenComments = post.winstonData?.seenComments
+      seenCommentsSet = true
+    }
+    
+    if let result = await post.refreshPost(commentID: ignoreSpecificComment ? nil : highlightID, sort: sort, after: nil, subreddit: subreddit.data?.display_name ?? subreddit.id, full: post.data == nil || reloadPost), let newComments = result.0 {
       
       if initialLoading {
-        seenComments = post.winstonData?.seenComments
+        if !seenCommentsSet {
+          seenComments = post.winstonData?.seenComments
+        }
         
         if let seen = seenComments, !seen.isEmpty, !isGameThread(post.data?.title) {
           unseenSkipperOpen = true
@@ -116,9 +127,9 @@ struct PostView: View, Equatable {
     }
   }
   
-  func updatePost(_ then: (() -> Void)? = nil) {
+  func updatePost(_ reloadPost: Bool = false, then: (() -> Void)? = nil) {
     Task(priority: .background) {
-      await asyncFetch()
+      await asyncFetch(reloadPost)
       if let then {
         then()
       }
@@ -126,7 +137,7 @@ struct PostView: View, Equatable {
   }
   
   func refresh() {
-    updatePost()
+    updatePost(true)
   }
   
   func openUnseenSkipper(_ reader: ScrollViewProxy) {
@@ -399,7 +410,7 @@ struct PostView: View, Equatable {
           }
         }))
         .refreshable {
-          updatePost()
+          updatePost(true)
         }
         .overlay(alignment: .bottomTrailing) {
           if !selectedTheme.posts.inlineFloatingPill {

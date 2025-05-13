@@ -31,7 +31,6 @@ struct AnimatedGifView: UIViewRepresentable {
 }
 
 struct CommentLinkContentPreview: View {
-  var forcedBodySize: CGSize?
   var showReplies = true
   var arrowKinds: [ArrowKind]
   var indentLines: Int? = nil
@@ -39,13 +38,24 @@ struct CommentLinkContentPreview: View {
   var post: Post?
   var comment: Comment
   var avatarsURL: [String:String]?
+  
+  var parentShowReplies = true
+  var parentArrowKinds: [ArrowKind] = []
+  var parentIndentLines: Int? = nil
+  var parentLineLimit: Int? = nil
+  var parentComment: Comment? = nil
+  var parentAvatarsURL: [String:String]?
+
   var body: some View {
-    if let winstonData = comment.winstonData, let forcedBodySize {
-      
+    if let winstonData = comment.winstonData {
       VStack(alignment: .leading, spacing: 0) {
+        if let parentComment, let parentWinstonData = parentComment.winstonData {
+          CommentLinkContent(forcedBodySize: nil, showReplies: parentShowReplies, arrowKinds: parentArrowKinds, indentLines: parentIndentLines, lineLimit: parentLineLimit, post: post, comment: parentComment, winstonData: parentWinstonData, avatarsURL: parentAvatarsURL)
+        }
+        
         CommentLinkContent(forcedBodySize: nil, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: winstonData, avatarsURL: avatarsURL)
       }
-//      .frame(width: .screenW, height: forcedBodySize.height + CGFloat((data.depth != 0 ? 42 : 30) + 16))
+      //      .frame(width: .screenW, height: forcedBodySize.height + CGFloat((data.depth != 0 ? 42 : 30) + 16))
       .padding(.vertical, 12)
       .frame(width: .screenW)
       .fixedSize()
@@ -74,6 +84,13 @@ struct CommentLinkContent: View {
   var isCurrentMatch: Bool = false
   var containsCurrentMatch: Bool = false
   var highlightCurrentMatch: Bool = false
+  
+  var parentShowReplies = true
+  var parentArrowKinds: [ArrowKind] = []
+  var parentIndentLines: Int? = nil
+  var parentLineLimit: Int? = nil
+  var parentComment: Comment? = nil
+  var parentAvatarsURL: [String:String]?
 
   @State private var size: CGSize = .zero
   @State private var offsetX: CGFloat = 0
@@ -340,7 +357,7 @@ struct CommentLinkContent: View {
           
         }
       } preview: {
-        CommentLinkContentPreview(forcedBodySize: size, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, avatarsURL: avatarsURL)
+        CommentLinkContentPreview(showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, avatarsURL: avatarsURL, parentShowReplies: parentShowReplies, parentArrowKinds: parentArrowKinds, parentIndentLines: parentIndentLines, parentLineLimit: parentLineLimit, parentComment: parentComment, parentAvatarsURL: parentAvatarsURL)
           .id("\(data.id)-preview")
       }
     } else {

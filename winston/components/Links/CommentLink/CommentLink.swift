@@ -127,6 +127,13 @@ struct CommentLink: View, Equatable {
   var newCommentsLoaded: (() -> Void)?
   var updateVisibleComments: ((String, Bool) -> Void)?
   
+  var parentShowReplies = true
+  var parentArrowKinds: [ArrowKind] = []
+  var parentIndentLines: Int? = nil
+  var parentLineLimit: Int? = nil
+  var parentComment: Comment? = nil
+  var parentAvatarsURL: [String:String]?
+  
   var isLast: Bool = false
   var commentLinkMore: CommentLinkMore? = nil
   
@@ -144,7 +151,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, isLast: isLast, newCommentsLoaded: newCommentsLoaded)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, containsCurrentMatch: CommentUtils.shared.containsCurrentMatch(comment: comment, currentMatchId: currentMatchId), highlightCurrentMatch: highlightCurrentMatch)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, containsCurrentMatch: CommentUtils.shared.containsCurrentMatch(comment: comment, currentMatchId: currentMatchId), highlightCurrentMatch: highlightCurrentMatch,parentShowReplies: parentShowReplies, parentArrowKinds: parentArrowKinds, parentIndentLines: parentIndentLines, parentLineLimit: parentLineLimit, parentComment: parentComment, parentAvatarsURL: parentAvatarsURL)
           }
         }
         .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.5 : 1)
@@ -158,7 +165,7 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, parentShowReplies: showReplies, parentArrowKinds: arrowKinds, parentIndentLines: indentLines, parentLineLimit: lineLimit, parentComment: comment, parentAvatarsURL: avatarsURL)
                 .id("\(commentChild.id)-\(childrenCount)")
             }
           }

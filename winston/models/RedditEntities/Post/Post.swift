@@ -334,7 +334,7 @@ extension Post {
   
   func saveSeenComments(comments: ListingData<CommentData>?) async -> Void {
     let context = PersistenceController.shared.primaryBGContext
-    let newComments = self.getCommentIds(comments: comments)
+    let newComments = self.getCommentIds(comments)
     
     let fetchRequest = NSFetchRequest<SeenPost>(entityName: "SeenPost")
     if let results = (await context.perform(schedule: .enqueued) { try? context.fetch(fetchRequest) }) {
@@ -379,7 +379,7 @@ extension Post {
         
         if let seenPost = foundPost {
           var seenComments = seenPost.seenComments ?? ""
-          let newComments: [String] = comments.map { $0.data?.id ?? "" }
+          let newComments = self.getMoreCommentIds(comments)
           
           newComments.forEach { id in
             if (!seenComments.contains(id)) {
@@ -392,7 +392,6 @@ extension Post {
             
           do {
             try context.save()
-//            print("[SEEN-COMMENTS] Saved \(comments.count) more seen comments. Total seen comments: \(finalSeen.numberOfOccurrences(of: ",") + 1)")
           } catch {
             print("[SEEN-COMMENTS] Failed to save \(comments.count) more seen comments")
           }
@@ -407,8 +406,19 @@ extension Post {
     }
   }
   
+  func getMoreCommentIds(_ comments: [Comment]) -> [String] {
+    var ids = comments.map { $0.data?.id ?? "" }
+    
+    comments.forEach { comment in
+      if !comment.childrenWinston.isEmpty {
+        ids += getMoreCommentIds(comment.childrenWinston)
+      }
+    }
+    
+    return ids
+  }
   
-  func getCommentIds(comments: ListingData<CommentData>?) -> Array<String> {
+  func getCommentIds(_ comments: ListingData<CommentData>?) -> Array<String> {
     var ids = Array<String>()
     
     if let children = comments?.children {
@@ -426,7 +436,7 @@ extension Post {
           case .first(_):
             break
           case .second(let actualData):
-            ids += getCommentIds(comments: actualData.data)
+            ids += getCommentIds(actualData.data)
           }
         }
       }
@@ -501,7 +511,8 @@ extension Post {
           case .first(let actualData):
             if full {
               await MainActor.run {
-                let newData = actualData.data?.children?[0].data
+                var newData = actualData.data?.children?[0].data
+                newData?.winstonSeen = self.data?.winstonSeen
                 self.data = newData
                 setupWinstonData(data: newData, secondary: false, theme: InMemoryTheme.shared.currentTheme)
               }
