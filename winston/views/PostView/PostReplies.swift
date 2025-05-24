@@ -19,10 +19,9 @@ struct PostReplies: View {
   var geometryReader: GeometryProxy
   @Environment(\.useTheme) private var selectedTheme
   
+  @Binding var topCommentIdx: Int
+  @Binding var commentIndexMap: [String: Int]
   
-  // MARK: Properties related to comment skipper
-  @Binding var topVisibleCommentId: String?
-  @Binding var previousScrollTarget: String?
   @Binding var comments: [Comment]
   @Binding var matchMap: [String: String]
   @Binding var seenComments: String?
@@ -32,8 +31,8 @@ struct PostReplies: View {
   
   var searchQuery: String? = nil
   var currentMatchId: String? = nil
-  var newCommentsLoaded: () -> Void
   var updateVisibleComments: (String, Bool) -> Void
+  var newCommentsLoaded: (() -> Void)?
   
   @Environment(\.globalLoaderDismiss) private var globalLoaderDismiss
 
@@ -48,8 +47,6 @@ func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
           comments = newComments
         }
         
-        newCommentsLoaded()
-
         if var specificID = highlightID {
           specificID = specificID.hasPrefix("t1_") ? String(specificID.dropFirst(3)) : specificID
           doThisAfter(0.1) {
@@ -75,7 +72,7 @@ func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments, isLast: i == comments.count - 1)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, index: i)
                 .id(comment.id)
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(

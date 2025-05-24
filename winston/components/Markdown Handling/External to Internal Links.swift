@@ -58,27 +58,7 @@ class MarkdownUtil {
             options: [.regularExpression, .caseInsensitive]
         )
         
-        // Replace &#x200B; and &nbsp; with a space
-        processedText = processedText.replacingOccurrences(
-            of: "&amp;#x200B;|&amp;nbsp;",
-            with: " ",
-            options: [.regularExpression, .caseInsensitive]
-        )
-        
-        processedText = processedText.replacingOccurrences(
-            of: "&gt;",
-            with: ">"
-        )
-        
-        processedText = processedText.replacingOccurrences(
-            of: "&lt;",
-            with: "<"
-        )
-        
-        processedText = processedText.replacingOccurrences(
-            of: "&Hat;",
-            with: "^"
-        )
+        processedText = cleanupText(processedText)
         
         processedText = processedText.replacingOccurrences(
             of: #"!\[gif\]\([\da-zA-Z|]+\)"#,
@@ -117,6 +97,70 @@ class MarkdownUtil {
             .replacingOccurrences(of: "``", with: "")
         }
         
+        return processedText
+    }
+    
+    static func cleanupText(_ text: String, forBody: Bool = false) -> String {
+        var processedText = text
+        // Replace &#x200B; and &nbsp; with a space
+        processedText = processedText.replacingOccurrences(
+            of: "&amp;#x200B;|&amp;nbsp;",
+            with: " ",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        
+        // Replace &#x200B; with an empty string
+        processedText = processedText.replacingOccurrences(
+            of: "&#x200B;",
+            with: " ",
+            options: [.regularExpression, .caseInsensitive]
+        )
+        
+        processedText = processedText.replacingOccurrences(
+            of: "&gt;",
+            with: ">"
+        )
+        
+        processedText = processedText.replacingOccurrences(
+            of: "&lt;",
+            with: "<"
+        )
+        
+        processedText = processedText.replacingOccurrences(
+            of: "&Hat;",
+            with: "^"
+        )
+        
+        if forBody {
+            // Remove gif links
+            processedText = processedText.replacingOccurrences(
+                of: "https?://\\S+\\.gif",
+                with: "",
+                options: .regularExpression
+            )
+            
+            // Replace http:// or https:// in existing markdown links
+            processedText = processedText.replacingOccurrences(
+                of: #"([[(\w\])\/.:*]+])\((https?:\/\/)(\S+?|)(?:)\)"#,
+                with: "",
+                options: .regularExpression
+            )
+            
+            processedText = processedText.replacingOccurrences(
+                of: #"\b(?<!\[)(https?:\/\/)(.*\.(?:png|jpe?g|bmp|tiff|webp|svgz?|ico)(?:\?.*)?)(?!\])\b"#,
+                with: "",
+                options: .regularExpression
+            )
+            
+            processedText = processedText.replacingOccurrences(
+                of: "\\b(?<!\\[|\\()(https?://)(\\S+)(?!\\]|\\))\\b",
+                with: "",
+                options: .regularExpression
+            )
+            
+            processedText = processedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+            
         return processedText
     }
 }

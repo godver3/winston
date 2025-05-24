@@ -42,6 +42,12 @@ class PostWinstonData: Hashable {
     hasher.combine(titleAttr)
     hasher.combine(postBodyAttr)
   }
+    
+  func getSeenCount() -> Int? {
+    return seenCommentsCount
+//    guard let seenComments else { return nil }
+//    return seenComments.numberOfOccurrences(of: ",") + 1
+  }
 }
 
 enum PostWinstonDataMedia {

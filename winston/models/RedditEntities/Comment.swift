@@ -17,7 +17,26 @@ enum RandomErr: Error {
   case oops
 }
 
-enum CommentParentElement {
+enum CommentParentElement: Equatable {
+  static func == (lhs: CommentParentElement, rhs: CommentParentElement) -> Bool {
+    switch lhs {
+    case .post(let lhsBinding):
+      switch rhs {
+        case .post(let rhsBinding):
+          return lhsBinding.wrappedValue == rhsBinding.wrappedValue
+        case .comment(_):
+          return false
+      }
+    case .comment(let lhsComment):
+      switch rhs {
+        case .comment(let rhsComment):
+          return lhsComment.id == rhsComment.id
+        case .post(_):
+          return false
+      }
+    }
+  }
+  
   case post(Binding<[Comment]>)
   case comment(Comment)
 }
@@ -202,7 +221,7 @@ extension Comment {
     }    
   }
   
-  func loadChildren(parent: CommentParentElement, postFullname: String, avatarSize: Double, post: Post?) async {
+  func loadChildren(parent: CommentParentElement, postFullname: String, avatarSize: Double, post: Post?, index: Int) async {
     if let kind = kind, kind == "more", let data = data, let count = data.count, let parent_id = data.parent_id, let childrenIDS = data.children {
       let actualID = id
       //      if actualID.hasSuffix("-more") {
@@ -235,19 +254,19 @@ extension Comment {
         await MainActor.run { [loadedComments] in
           switch parent {
           case .comment(let comment):
-            if let index = comment.childrenWinston.firstIndex(where: { $0.id == id }) {
-              withAnimation {
-                  if (self.data?.children?.count ?? 0) <= childrensLimit {
-                  comment.childrenWinston.remove(at: index)
-                } else {
-                  self.data?.children?.removeFirst(childrensLimit)
-                  if let _ = self.data?.count {
-                    self.data?.count! -= children.count
-                  }
+//            if let index = comment.childrenWinston.firstIndex(where: { $0.id == id }) {
+            withAnimation {
+                if (self.data?.children?.count ?? 0) <= childrensLimit {
+                comment.childrenWinston.remove(at: index)
+              } else {
+                self.data?.children?.removeFirst(childrensLimit)
+                if let _ = self.data?.count {
+                  self.data?.count! -= children.count
                 }
-                comment.childrenWinston.insert(contentsOf: loadedComments, at: index)
               }
+              comment.childrenWinston.insert(contentsOf: loadedComments, at: index)
             }
+//            }
           case .post(let postArr):
             if let index = postArr.wrappedValue.firstIndex(where: { $0.id == id }) {
               withAnimation {

@@ -15,9 +15,12 @@ struct CommentLinkMore: View {
   var postFullname: String?
   var parentElement: CommentParentElement?
   var indentLines: Int?
-  var isLast: Bool = false
+  var topCommentIdx: Int
+  var commentIndexMap: [String: Int]
   var newCommentsLoaded: (() -> Void)?
+  var index: Int = 0
   
+  @SilentState var loadMoreTimer: Timer? = nil
   @State var loadMoreLoading = false
   
   @Environment(\.useTheme) private var selectedTheme
@@ -28,16 +31,17 @@ struct CommentLinkMore: View {
         loadMoreLoading = true
       }
       Task(priority: .background) {
-        await comment.loadChildren(parent: parentElement, postFullname: postFullname, avatarSize: selectedTheme.comments.theme.badge.avatar.size, post: post)
-        await MainActor.run {
-          doThisAfter(0.5) {
-            withAnimation(spring) {
-              loadMoreLoading = false
+        await comment.loadChildren(parent: parentElement, postFullname: postFullname, avatarSize: selectedTheme.comments.theme.badge.avatar.size, post: post, index: index)
+        
+          await MainActor.run {
+            doThisAfter(0.5) {
+              withAnimation(spring) {
+                loadMoreLoading = false
+              }
             }
-            
-            newCommentsLoaded?()
           }
-        }
+          
+          newCommentsLoaded?()
       }
     }
   }
@@ -100,9 +104,17 @@ struct CommentLinkMore: View {
       .allowsHitTesting(!loadMoreLoading)
       .id("\(comment.id)-more")
       .onAppear {
-        if isLast {
-          handleTap()
+        if let depth = data.depth, depth < 3 {
+          loadMoreTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
+            if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
+              handleTap()
+            }
+          }
         }
+      }
+      .onDisappear() {
+        loadMoreTimer?.invalidate()
+        loadMoreTimer = nil
       }
     }
   }

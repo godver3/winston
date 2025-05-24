@@ -12,4 +12,8 @@ extension String {
   static func +(lhs: String, rhs: String?) -> String {
     return "\(lhs)\(rhs ?? "")"
   }
+    
+  func first(_ n: Int) -> String {
+      return String(self[self.startIndex..<self.index(self.startIndex, offsetBy: n)])
+  }
 }

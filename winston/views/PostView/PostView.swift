@@ -12,7 +12,7 @@ import AlertToast
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
-    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments.count == rhs.comments.count && lhs.searchOpen == rhs.searchOpen && lhs.unseenSkipperOpen == rhs.unseenSkipperOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.totalMatches == rhs.totalMatches
+    lhs.post == rhs.post && lhs.subreddit.id == rhs.subreddit.id && lhs.hideElements == rhs.hideElements && lhs.ignoreSpecificComment == rhs.ignoreSpecificComment && lhs.sort == rhs.sort && lhs.update == rhs.update && lhs.comments == rhs.comments && lhs.searchOpen == rhs.searchOpen && lhs.unseenSkipperOpen == rhs.unseenSkipperOpen && lhs.searchFocused == rhs.searchFocused && lhs.searchQuery.value == rhs.searchQuery.value && lhs.searchQuery.debounced == rhs.searchQuery.debounced && lhs.currentMatchIndex == rhs.currentMatchIndex && lhs.totalMatches == rhs.totalMatches
   }
   
   var post: Post
@@ -29,8 +29,10 @@ struct PostView: View, Equatable {
   @State private var update = false
   
   @SilentState private var topVisibleCommentId: String? = nil
+  @State private var topCommentIdx: Int = 0
   @SilentState private var previousScrollTarget: String? = nil
   @State private var comments: [Comment] = []
+  @State private var commentUpdate: Debouncer<Int> = Debouncer(0, delay: 0.25)
   @SilentState private var flattened: [[String:String]] = []
   @SilentState private var matches: [String] = []
   // Map of comment id to target id to scroll to
@@ -65,6 +67,10 @@ struct PostView: View, Equatable {
     let defaultSort = isGameThread(post.data?.title) ?
       CommentSortOption.live : commentsDefSettings.preferredSort
     _sort = State(initialValue: defSettings.perPostSort ? (defSettings.postSorts[post.id] ?? defaultSort) : defaultSort);
+  }
+  
+  func newCommentsLoaded() {
+    commentUpdate.value += 1
   }
   
   func handleLiveRefreshTimer() {
@@ -194,13 +200,6 @@ struct PostView: View, Equatable {
     }
   }
   
-  func newCommentsLoaded() {
-    Task {
-      flattenComments(true)
-      updateMatches()
-    }
-  }
-  
   func flattenComments(_ update: Bool = false)  {
     if !update && (!flattened.isEmpty || comments.isEmpty) { return }
     
@@ -208,6 +207,14 @@ struct PostView: View, Equatable {
     commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
       partial[eo.element["id"]!] = eo.offset
     }
+    
+    if let topVisibleCommentId {
+      updateTopCommentIdx(topVisibleCommentId)
+    }
+  }
+  
+  func updateTopCommentIdx(_ id: String) {
+    topCommentIdx = commentIndexMap[id] ?? 0
   }
   
   func updateMatches(_ reader: ScrollViewProxy? = nil) {
@@ -292,7 +299,10 @@ struct PostView: View, Equatable {
       withAnimation {
         inAutoSkipMode = true
         currentMatchIndex = targetIndex + 1
-        reader?.scrollTo(matchMap[currentMatchId] ?? currentMatchId, anchor: .top)
+        
+        let target = matchMap[currentMatchId] ?? currentMatchId
+        updateTopCommentIdx(target)
+        reader?.scrollTo(target, anchor: .top)
       }
     }
   }
@@ -360,7 +370,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topVisibleCommentId: $topVisibleCommentId, previousScrollTarget: $previousScrollTarget, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen,  highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, newCommentsLoaded: newCommentsLoaded, updateVisibleComments: updateVisibleComments)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topCommentIdx: $topCommentIdx, commentIndexMap: $commentIndexMap, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded)
             }
             
             if !ignoreSpecificComment && highlightID != nil {
@@ -574,11 +584,6 @@ struct PostView: View, Equatable {
           handleLiveRefreshTimer()
           updatePost()
         }
-        .onChange(of: comments) { _, val in
-          Task {
-            newCommentsLoaded()
-          }
-        }
         .onChange(of: visibleComments.debounced) { _, val in
           if inAutoSkipMode {
             return
@@ -626,6 +631,12 @@ struct PostView: View, Equatable {
             }
           }
         }
+        .onChange(of: commentUpdate.debounced) { _, val in
+          Task {
+            flattenComments(true)
+            updateMatches()
+          }
+        }
         .onDisappear {
           liveRefreshTimer?.invalidate()
           liveRefreshTimer = nil
@@ -633,6 +644,11 @@ struct PostView: View, Equatable {
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {
             topVisibleCommentId = CommentUtils.shared.topCommentRow(of: anchors, in: geometryReader)
+          }
+        }
+        .onChange(of: topVisibleCommentId) { _, val in
+          if let val {
+            updateTopCommentIdx(val)
           }
         }
         .commentSkipper(
@@ -643,6 +659,7 @@ struct PostView: View, Equatable {
           reader: proxy,
           refresh: refresh,
           openUnseenSkipper : openUnseenSkipper,
+          updateTopCommentIdx : updateTopCommentIdx,
           searchOpen: $searchOpen,
           unseenSkipperOpen: $unseenSkipperOpen
         )

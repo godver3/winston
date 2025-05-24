@@ -19,6 +19,7 @@ struct CommentSkipper: ViewModifier {
   var reader: ScrollViewProxy
   var refresh: () -> Void
   var openUnseenSkipper: (ScrollViewProxy) -> Void
+  var updateTopCommentIdx: (String) -> Void
   @Binding var searchOpen: Bool
   @Binding var unseenSkipperOpen: Bool
     
@@ -129,23 +130,26 @@ struct CommentSkipper: ViewModifier {
   
   private func jumpToNextComment() {
     if topVisibleCommentId == nil, let id = comments.first?.id {
+      updateTopCommentIdx(id)
       reader.scrollTo(id, anchor: .top)
       topVisibleCommentId = id
       return
     }
     
     if let topVisibleCommentId = topVisibleCommentId {
-      let topVisibleCommentIndex = comments.map { $0.id }.firstIndex(of: topVisibleCommentId) ?? 0
+      let topCommentIdx = comments.map { $0.id }.firstIndex(of: topVisibleCommentId) ?? 0
       if topVisibleCommentId == previousScrollTarget {
-        let nextIndex = min(topVisibleCommentIndex + 1, comments.count - 1)
+        let nextIndex = min(topCommentIdx + 1, comments.count - 1)
+        updateTopCommentIdx(comments[nextIndex].id)
         reader.scrollTo(comments[nextIndex].id, anchor: .top)
         previousScrollTarget = nextIndex < comments.count - 1 ? comments[nextIndex + 1].id : nil
       } else {
-        let nextIndex = min(topVisibleCommentIndex + 1, comments.count - 1)
+        let nextIndex = min(topCommentIdx + 1, comments.count - 1)
 //        print(comments.count)
 //        print(comments)
 //        print("------------")
 //        print(nextIndex)
+        updateTopCommentIdx(comments[nextIndex].id)
         reader.scrollTo(comments[nextIndex].id, anchor: .top)
         previousScrollTarget = topVisibleCommentId
       }
@@ -162,6 +166,7 @@ extension View {
     reader: ScrollViewProxy,
     refresh: @escaping () -> Void,
     openUnseenSkipper: @escaping (ScrollViewProxy) -> Void,
+    updateTopCommentIdx: @escaping (String) -> Void,
     searchOpen: Binding<Bool>,
     unseenSkipperOpen: Binding<Bool>
   ) -> some View {
@@ -174,6 +179,7 @@ extension View {
         reader: reader,
         refresh: refresh,
         openUnseenSkipper : openUnseenSkipper,
+        updateTopCommentIdx : updateTopCommentIdx,
         searchOpen: searchOpen,
         unseenSkipperOpen: unseenSkipperOpen
       )

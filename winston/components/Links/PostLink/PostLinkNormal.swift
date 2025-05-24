@@ -124,7 +124,7 @@ struct PostLinkNormal: View, Equatable, Identifiable {
           PostLinkTitle(attrString: winstonData.titleAttr, label: data.formattedTitle(), theme: theme.theme.titleText, size: winstonData.postDimensions.titleSize)
           
           if !(data.selftext?.isEmpty ?? true) && defSettings.showSelfText, let selftext = data.selftext {
-            PostLinkNormalSelftext(selftext: selftext, theme: theme.theme.bodyText)
+            PostLinkNormalSelftext(selftext: MarkdownUtil.cleanupText(selftext, forBody: true), theme: theme.theme.bodyText)
               .lineSpacing(theme.theme.linespacing)
           }
         }
@@ -134,7 +134,9 @@ struct PostLinkNormal: View, Equatable, Identifiable {
         if theme.theme.showDivider && defSettings.dividerPosition == .bottom { SubsNStuffLine() }
         
         HStack {
-          let newCommentsCount = winstonData.seenCommentsCount == nil ? nil : data.num_comments - winstonData.seenCommentsCount!
+          let seenCount = winstonData.getSeenCount()
+          let newCommentsCount = seenCount == nil ? nil : data.num_comments - seenCount!
+          
           BadgeView(avatarRequest: winstonData.avatarImageRequest, showAuthorOnPostLinks: defSettings.showAuthor, saved: data.badgeKit.saved, usernameColor: nil, author: data.badgeKit.author, fullname: data.badgeKit.authorFullname, userFlair: data.badgeKit.userFlair, created: data.badgeKit.created, avatarURL: nil, theme: theme.theme.badge, commentsCount: formatBigNumber(data.num_comments), newCommentsCount: newCommentsCount, votesCount: defSettings.showVotesCluster ? nil : formatBigNumber(data.ups), likes: data.likes, openSub: showSub ? openSubreddit : nil, subName: data.subreddit)
           
           Spacer()
