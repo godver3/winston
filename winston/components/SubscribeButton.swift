@@ -18,7 +18,7 @@ struct SubscribeButton: View {
   @GestureState var pressing = false
   
   var body: some View {
-    let subscribed = subs.contains(where: { $0.name == subreddit.data?.name })
+    let subscribed = subreddit.data?.user_is_subscriber ?? false
     if let _ = subreddit.data {
       HStack {
         Group {

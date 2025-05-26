@@ -145,7 +145,7 @@ struct CommentLink: View, Equatable {
   
   var body: some View {
     if let data = comment.data {
-      let collapsed = data.collapsed ?? false
+      let collapsed = (data.collapsed ?? false) && !comment.containsCurrentMatch(currentMatchId)
       Group {
         Group {
           if let kind = comment.kind, kind == "more" {

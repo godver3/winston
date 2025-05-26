@@ -61,6 +61,7 @@ extension Comment {
         self.childrenWinston = listing.data?.children?.compactMap { x in
           if let innerData = x.data {
             let newComment = Comment(data: innerData, kind: x.kind, parent: self.childrenWinston)
+            newComment.parent = self
             return newComment
           }
           return nil
@@ -159,6 +160,30 @@ extension Comment {
     }
   }
   
+  func getTopLevelParent() -> Comment {
+    guard let parent = self.parent else {
+      return self
+    }
+    
+    return parent.getTopLevelParent()
+  }
+  
+  func containsCurrentMatch(_ currentMatchId: String?) -> Bool {
+    if currentMatchId == nil { return false }
+    
+    if self.id == currentMatchId {
+      return true
+    }
+    
+    for child in self.childrenWinston {
+      if child.containsCurrentMatch(currentMatchId) {
+        return true
+      }
+    }
+    
+    return false
+  }
+  
   static func initMultiple(datas: [ListingChild<T>], parent: [GenericRedditEntity<T, B>]? = nil) -> [Comment] {
     let context = PersistenceController.shared.primaryBGContext
     let fetchRequest = NSFetchRequest<CollapsedComment>(entityName: "CollapsedComment")
@@ -244,7 +269,7 @@ extension Comment {
         //          }
         //        }
         
-        let loadedComments: [Comment] = nestComments(children, parentID: parentID)
+        let loadedComments: [Comment] = nestComments(children, parentID: parentID, parentComment: self.parent)
         
         Task(priority: .background) { [loadedComments] in
           await RedditAPI.shared.updateCommentsWithAvatar(comments: loadedComments, avatarSize: avatarSize)
@@ -254,10 +279,14 @@ extension Comment {
         await MainActor.run { [loadedComments] in
           switch parent {
           case .comment(let comment):
-//            if let index = comment.childrenWinston.firstIndex(where: { $0.id == id }) {
+            let idx = comment.childrenWinston.firstIndex(where: { $0.id == id }) ?? index
             withAnimation {
-                if (self.data?.children?.count ?? 0) <= childrensLimit {
-                comment.childrenWinston.remove(at: index)
+              if (self.data?.children?.count ?? 0) <= childrensLimit {
+                if idx < comment.childrenWinston.count {
+                  comment.childrenWinston.remove(at: idx)
+                } else {
+                  return
+                }
               } else {
                 self.data?.children?.removeFirst(childrensLimit)
                 if let _ = self.data?.count {
@@ -266,7 +295,6 @@ extension Comment {
               }
               comment.childrenWinston.insert(contentsOf: loadedComments, at: index)
             }
-//            }
           case .post(let postArr):
             if let index = postArr.wrappedValue.firstIndex(where: { $0.id == id }) {
               withAnimation {

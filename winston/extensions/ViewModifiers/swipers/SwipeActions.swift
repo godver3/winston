@@ -33,6 +33,7 @@ struct SwipeUI<T: GenericRedditEntityDataType, B: Hashable>: ViewModifier {
   var onTapAction: (() -> Void)?
   var actionsSet: SwipeActionsSet
   weak var entity: GenericRedditEntity<T, B>?
+  var proxy: ScrollViewProxy?
   var disabled: Bool = false
   var skipAnimation: Bool
   
@@ -179,13 +180,13 @@ struct SwipeUI<T: GenericRedditEntityDataType, B: Hashable>: ViewModifier {
             
             switch triggeredAction {
             case .leftFirst:
-              await actionsSet.leftFirst.action(entity!)
+                await actionsSet.leftFirst.action(entity!, proxy: proxy)
             case .leftSecond:
-              await actionsSet.leftSecond.action(entity!)
+              await actionsSet.leftSecond.action(entity!, proxy: proxy)
             case .rightFirst:
-              await actionsSet.rightFirst.action(entity!)
+              await actionsSet.rightFirst.action(entity!, proxy: proxy)
             case .rightSecond:
-              await actionsSet.rightSecond.action(entity!)
+              await actionsSet.rightSecond.action(entity!, proxy: proxy)
             default:
               break
             }
@@ -235,6 +236,7 @@ struct SwipeUIBtn<T: GenericRedditEntityDataType, B: Hashable>: View, Equatable 
   var secondActiveFunc: (GenericRedditEntity<T, B>) -> Bool
   var firstActiveFunc: (GenericRedditEntity<T, B>) -> Bool
   weak var entity: GenericRedditEntity<T, B>?
+    var proxy: ScrollViewProxy? = nil
   
   var body: some View {
     if let info = info {
@@ -260,6 +262,7 @@ extension View {
     onTap: (() -> Void)? = nil,
     actionsSet: SwipeActionsSet,
     entity: GenericRedditEntity<T, B>,
+    proxy: ScrollViewProxy? = nil,
     disabled: Bool = false,
     secondary: Bool = false,
     skipAnimation: Bool = false
@@ -272,6 +275,7 @@ extension View {
       onTapAction: onTap,
       actionsSet: actionsSet,
       entity: entity,
+      proxy: proxy,
       disabled: disabled,
       skipAnimation: skipAnimation))
   }

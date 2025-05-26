@@ -66,6 +66,7 @@
 		CE0EC5D82B1A9E9600C6E210 /* SubredditFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */; };
 		CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5985BD2DA73F75005523D1 /* SavedContainer.swift */; };
 		CE7FD54E2DC7E41500890F14 /* SwiftyGif in Frameworks */ = {isa = PBXBuildFile; productRef = CE7FD54D2DC7E41500890F14 /* SwiftyGif */; };
+		CEA42B2E2DEA815200F43254 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA42B2D2DEA814C00F43254 /* NetworkMonitor.swift */; };
 		CEE627872DE4A84B0095E481 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627862DE4A84B0095E481 /* FirebaseAnalytics */; };
 		CEE627892DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627882DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion */; };
 		CEE6278B2DE4A84B0095E481 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CEE6278A2DE4A84B0095E481 /* FirebaseCrashlytics */; };
@@ -670,6 +671,7 @@
 		BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Winston MD.swift"; path = "winston/components/Markdown Handling/Winston MD.swift"; sourceTree = SOURCE_ROOT; };
 		CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditFilters.swift; sourceTree = "<group>"; };
 		CE5985BD2DA73F75005523D1 /* SavedContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedContainer.swift; sourceTree = "<group>"; };
+		CEA42B2D2DEA814C00F43254 /* NetworkMonitor.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; tabWidth = 2; };
 		CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EC051C2A2ACAEFC500E9D9ED /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
 		EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = themeFileIcon.png; sourceTree = "<group>"; };
@@ -708,7 +710,7 @@
 		EC1906EE2A552A3100A0300E /* CredentialsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialsPanel.swift; sourceTree = "<group>"; };
 		EC1906F02A552A6800A0300E /* BehaviorPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BehaviorPanel.swift; sourceTree = "<group>"; };
 		EC1906F22A55AC6E00A0300E /* fetchMoreReplies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = fetchMoreReplies.swift; sourceTree = "<group>"; };
-		EC1906F42A55B88500A0300E /* nestComments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nestComments.swift; sourceTree = "<group>"; };
+		EC1906F42A55B88500A0300E /* nestComments.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = nestComments.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC1AB2CB2B0EF23100247971 /* CredentialEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialEditView.swift; sourceTree = "<group>"; };
 		EC1AB2CD2B0FE20800247971 /* StringJSONConversions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringJSONConversions.swift; sourceTree = "<group>"; };
 		EC1AC8962B1B6DA600674B31 /* src */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = src; path = "winston-everywhere/src"; sourceTree = SOURCE_ROOT; };
@@ -805,7 +807,7 @@
 		EC3B32402AC64DDE002C1291 /* Waterfall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Waterfall.swift; sourceTree = "<group>"; };
 		EC3B32432AC64F43002C1291 /* SubredditPostsIOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditPostsIOS.swift; sourceTree = "<group>"; };
 		EC3B32452AC64F4C002C1291 /* SubredditPostsIPAD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditPostsIPAD.swift; sourceTree = "<group>"; };
-		EC3BC5EB2ACC21AA0050CA8F /* SwipeRevolution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeRevolution.swift; sourceTree = "<group>"; };
+		EC3BC5EB2ACC21AA0050CA8F /* SwipeRevolution.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SwipeRevolution.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC3BC5ED2ACC22340050CA8F /* Gesturer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gesturer.swift; sourceTree = "<group>"; };
 		EC3D5B792BAD83B50068F0CF /* IAPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IAPManager.swift; sourceTree = "<group>"; };
 		EC3E7B252B05510B004B4F21 /* UserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserView.swift; sourceTree = "<group>"; };
@@ -848,7 +850,7 @@
 		EC4C7CB32B2E17D00007A4DA /* Hap.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Hap.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC4F8F092AE7070500801104 /* getTagsFromTitle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = getTagsFromTitle.swift; sourceTree = "<group>"; };
 		EC50A5A92A9EF59200DE8122 /* EnhancedVideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnhancedVideoPlayer.swift; sourceTree = "<group>"; };
-		EC50B0E32A84563C00AB8F72 /* SwipeAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeAction.swift; sourceTree = "<group>"; };
+		EC50B0E32A84563C00AB8F72 /* SwipeAction.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SwipeAction.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC50B0E52A8460CD00AB8F72 /* replyModalPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = replyModalPresenter.swift; sourceTree = "<group>"; };
 		EC58D4522AC0251700FF5B6B /* getPostContentWidth.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = getPostContentWidth.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC58D4552AC02B6900FF5B6B /* Tag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tag.swift; sourceTree = "<group>"; };
@@ -865,7 +867,7 @@
 		EC593ADB2A4673B3002D6454 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EC593AE02A4673B3002D6454 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		EC593AED2A4796C1002D6454 /* winston.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = winston.entitlements; sourceTree = "<group>"; };
-		EC593AEF2A47ACB0002D6454 /* Tabber.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tabber.swift; sourceTree = "<group>"; };
+		EC593AEF2A47ACB0002D6454 /* Tabber.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Tabber.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC593AF12A47AD97002D6454 /* Subreddits.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Subreddits.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC593AF32A47AE1F002D6454 /* Inbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inbox.swift; sourceTree = "<group>"; };
 		EC593AF52A47AE30002D6454 /* Me.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Me.swift; sourceTree = "<group>"; };
@@ -962,7 +964,7 @@
 		EC8C707A2B4E4EB7004DBA75 /* ImageProcessors+ScaleFixer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ImageProcessors+ScaleFixer.swift"; sourceTree = "<group>"; };
 		EC8EF59B2B606E37009E51D2 /* RedditListingFeed.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = RedditListingFeed.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC8EF5A22B608F63009E51D2 /* ThemeColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeColor.swift; sourceTree = "<group>"; };
-		EC8F34652A6A348F00EB8249 /* SwipeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeActions.swift; sourceTree = "<group>"; };
+		EC8F34652A6A348F00EB8249 /* SwipeActions.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SwipeActions.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC8F34782A6CE79B00EB8249 /* PostInBoxLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostInBoxLink.swift; sourceTree = "<group>"; };
 		EC8F347B2A6CEBD600EB8249 /* winston.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = winston.xcdatamodel; sourceTree = "<group>"; };
 		EC8F348E2A6E61B900EB8249 /* PinchToZoom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinchToZoom.swift; sourceTree = "<group>"; };
@@ -1035,7 +1037,7 @@
 		ECB155112B25A18D0069CA2C /* BigInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigInput.swift; sourceTree = "<group>"; };
 		ECB155132B25A1B60069CA2C /* BigInfoCredential.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BigInfoCredential.swift; sourceTree = "<group>"; };
 		ECB155172B25A1E30069CA2C /* NiceCredentialSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NiceCredentialSection.swift; sourceTree = "<group>"; };
-		ECB155192B2656310069CA2C /* swiftEnvValues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = swiftEnvValues.swift; path = winston/Globals/swiftEnvValues.swift; sourceTree = SOURCE_ROOT; };
+		ECB155192B2656310069CA2C /* swiftEnvValues.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; name = swiftEnvValues.swift; path = winston/Globals/swiftEnvValues.swift; sourceTree = SOURCE_ROOT; tabWidth = 2; };
 		ECB549D42B189392004E9A96 /* cleanEntitiesWithNilCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = cleanEntitiesWithNilCredentials.swift; sourceTree = "<group>"; };
 		ECB549D82B18C3C5004E9A96 /* removeDefaultThemeFromThemes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = removeDefaultThemeFromThemes.swift; sourceTree = "<group>"; };
 		ECB549DE2B1908AF004E9A96 /* queryParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = queryParameters.swift; sourceTree = "<group>"; };
@@ -1744,6 +1746,7 @@
 		EC593B042A47B002002D6454 /* Globals */ = {
 			isa = PBXGroup;
 			children = (
+				CEA42B2D2DEA814C00F43254 /* NetworkMonitor.swift */,
 				EC4C7C8F2B2BF9EB0007A4DA /* Defaults */,
 				ECC2C7B52AAC90A7000E196C /* modelSamples */,
 				ECD2A3762A69C26900EDD02D /* consts.swift */,
@@ -3078,6 +3081,7 @@
 				EC6373612A792B44000A03A3 /* KeyboardAware.swift in Sources */,
 				EC620EEA2B0CD57C00206A66 /* ThemePadding.swift in Sources */,
 				EC30CBF82B226E050037DA86 /* floatingBounceEffect.swift in Sources */,
+				CEA42B2E2DEA815200F43254 /* NetworkMonitor.swift in Sources */,
 				EC4F8F0A2AE7070500801104 /* getTagsFromTitle.swift in Sources */,
 				652012042AC322A3005DD899 /* fetchAllThemes.swift in Sources */,
 				EC3AC9E52AAD1F260078EC78 /* TextsSettings.swift in Sources */,

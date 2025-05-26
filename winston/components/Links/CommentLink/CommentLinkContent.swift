@@ -96,12 +96,15 @@ struct CommentLinkContent: View {
   @State private var offsetX: CGFloat = 0
   @State private var highlight = false
   @State private var showSpoiler = false
+  @State private var loadGif = false
   @State private var commentSwipeActions: SwipeActionsSet = Defaults[.CommentLinkDefSettings].swipeActions
   
   @Default(.CommentLinkDefSettings) private var defSettings
   @Default(.CommentsSectionDefSettings) private var sectionDefSettings
   
   @Environment(\.useTheme) private var selectedTheme
+  @Environment(\.scrollViewProxy) private var proxy
+  @Environment(\.networkMonitor) private var networkMonitor
   
   @State var commentViewLoaded = false
   
@@ -225,6 +228,7 @@ struct CommentLinkContent: View {
             onTap: { withAnimation(spring) { comment.toggleCollapsed(optimistic: true) } },
             actionsSet: commentSwipeActions,
             entity: comment,
+            proxy: proxy,
             skipAnimation: true
           )
         }
@@ -286,10 +290,30 @@ struct CommentLinkContent: View {
                 if let url = winstonData.gifURL {
                   let contentH = winstonData.gifSize != nil ? contentW * (winstonData.gifSize!.height / winstonData.gifSize!.width) : contentW * 9/16
                   
-                  AnimatedGifView(url: url)
+                  if networkMonitor.connectedToWifi || loadGif {
+                    AnimatedGifView(url: url)
+                      .frame(width: contentW, height: contentH)
+                      .clipped()
+                      .id("\(data.id)-gif")
+                      .onAppear {
+                        loadGif = true
+                      }
+                  } else {
+                    HStack{
+                      Text("LOAD GIF")
+                        .foregroundStyle(Color.gray.opacity(0.85))
+                        .fontSize(theme.theme.bodyText.size, .semibold)
+                        .frame(alignment: .center)
+                    }
                     .frame(width: contentW, height: contentH)
+                    .background(Color.gray.opacity(0.3))
                     .clipped()
-                    .id("\(data.id)-gif")
+                    .onTapGesture {
+                      withAnimation {
+                        loadGif = true
+                      }
+                    }
+                  }
                 }
               }
               .offset(x: offsetX)
@@ -300,6 +324,7 @@ struct CommentLinkContent: View {
                 onTap: { if !selectable { withAnimation(spring) { comment.toggleCollapsed(optimistic: true) } } },
                 actionsSet: commentSwipeActions,
                 entity: comment,
+                proxy: proxy,
                 skipAnimation: true
               )
               .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -342,7 +367,7 @@ struct CommentLinkContent: View {
             if action.enabled(comment) {
               Button {
                 Task(priority: .background) {
-                  await action.action(comment)
+                  await action.action(comment, proxy: proxy)
                 }
               } label: {
                 Label(active ? "Undo \(action.label.lowercased())" : action.label, systemImage: active ? action.icon.active : action.icon.normal)

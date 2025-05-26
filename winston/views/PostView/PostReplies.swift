@@ -73,7 +73,7 @@ func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
             
             if let commentWinstonData = comment.winstonData {
               CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, index: i)
-                .id(comment.id)
+                .id("\(comment.id)-\(comment.data?.collapsed)")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(
                     key: CommentUtils.AnchorsKey.self,

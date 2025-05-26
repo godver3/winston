@@ -7,7 +7,7 @@
 
 import Foundation
 
-func nestComments(_ inputComments: [ListingChild<CommentData>], parentID: String) -> [Comment] {
+func nestComments(_ inputComments: [ListingChild<CommentData>], parentID: String, parentComment: Comment?) -> [Comment] {
   var rootComments: [Comment] = []
   var commentsMap: [String:Comment] = [:]
   
@@ -18,12 +18,14 @@ func nestComments(_ inputComments: [ListingChild<CommentData>], parentID: String
       if parentID != commentParentID {
         return newComment
       } else {
+        newComment.parent = parentComment
         rootComments.append(newComment)
       }
     }
     return nil
   }.forEach { x in
     if let data = x.data, let parentName = data.parent_id, let parent = commentsMap[parentName] {
+      x.parent = parent
       parent.childrenWinston.append(x)
     }
   }

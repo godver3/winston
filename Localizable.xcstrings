@@ -1161,6 +1161,9 @@
         }
       }
     },
+    "Download" : {
+
+    },
     "Drag Left" : {
       "localizations" : {
         "de" : {
@@ -2131,6 +2134,9 @@
           }
         }
       }
+    },
+    "LOAD GIF" : {
+
     },
     "Lock Winston With %@" : {
       "localizations" : {
@@ -3770,6 +3776,9 @@
         }
       }
     },
+    "Theme Store" : {
+
+    },
     "Theme Store Tint" : {
       "localizations" : {
         "de" : {
@@ -3838,6 +3847,9 @@
 
     },
     "There was an error" : {
+
+    },
+    "There was an error importing this theme" : {
 
     },
     "They say the stars hide a secret..." : {

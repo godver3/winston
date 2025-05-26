@@ -28,7 +28,7 @@ struct PostLinkContext: View {
       if action.enabled(post) {
         Button {
           Task(priority: .background) {
-            await action.action(post)
+            await action.action(post, proxy: nil)
           }
         } label: {
           Label(active ? "Undo \(action.label.lowercased())" : action.label, systemImage: active ? action.icon.active : action.icon.normal)

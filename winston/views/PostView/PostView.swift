@@ -119,6 +119,11 @@ struct PostView: View, Equatable {
         }
       }
       
+      Task(priority: .high) {
+        flattenComments(true)
+        updateMatches()
+      }
+      
       Task(priority: .background) {
         if let numComments = post.data?.num_comments {
           await post.saveCommentsCount(numComments: numComments)
@@ -371,6 +376,7 @@ struct PostView: View, Equatable {
             
             if !hideElements {
               PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topCommentIdx: $topCommentIdx, commentIndexMap: $commentIndexMap, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded)
+                .environment(\.scrollViewProxy, proxy)
             }
             
             if !ignoreSpecificComment && highlightID != nil {

@@ -16,6 +16,8 @@ struct SwipeRevolution<T: GenericRedditEntityDataType, B: Hashable>: ViewModifie
     lhs.entity?.id == rhs.entity?.id
   }
   
+  @Environment(\.scrollViewProxy) private var proxy
+
   //struct SwipeRevolution: ViewModifier {
   @Default(.BehaviorDefSettings) private var behaviorDefSettings
   //  @State private var pressing: Bool = false
@@ -126,16 +128,15 @@ struct SwipeRevolution<T: GenericRedditEntityDataType, B: Hashable>: ViewModifie
       
       
       Task(priority: .background) { [triggeredAction] in
-        
         switch triggeredAction {
         case .leftFirst:
-          await actionsSet.leftFirst.action(entity)
+          await actionsSet.leftFirst.action(entity, proxy: proxy)
         case .leftSecond:
-          await actionsSet.leftSecond.action(entity)
+          await actionsSet.leftSecond.action(entity, proxy: proxy)
         case .rightFirst:
-          await actionsSet.rightFirst.action(entity)
+          await actionsSet.rightFirst.action(entity, proxy: proxy)
         case .rightSecond:
-          await actionsSet.rightSecond.action(entity)
+          await actionsSet.rightSecond.action(entity, proxy: proxy)
         default:
           break
         }
@@ -176,7 +177,7 @@ struct SwipeRevolution<T: GenericRedditEntityDataType, B: Hashable>: ViewModifie
         ? nil
         : HStack {
           
-          SwipeUIBtn(info: infoRight(), secondActiveFunc: actionsSet.rightSecond.active, firstActiveFunc: actionsSet.rightFirst.active, entity: entity)
+          SwipeUIBtn(info: infoRight(), secondActiveFunc: actionsSet.rightSecond.active, firstActiveFunc: actionsSet.rightFirst.active, entity: entity, proxy: proxy)
           //            .equatable()
             .scaleEffect(triggeredAction == .rightSecond ? 1.25 : triggeredAction == .rightFirst ? 1 : max(0.001, offsetXInterpolate([-0.9, 0.85], false)))
             .opacity(max(0, offsetXInterpolate([-0.9, 1], false)))
@@ -185,7 +186,7 @@ struct SwipeRevolution<T: GenericRedditEntityDataType, B: Hashable>: ViewModifie
           
           Spacer()
           
-          SwipeUIBtn(info: infoLeft(), secondActiveFunc: actionsSet.leftSecond.active, firstActiveFunc: actionsSet.leftFirst.active, entity: entity)
+          SwipeUIBtn(info: infoLeft(), secondActiveFunc: actionsSet.leftSecond.active, firstActiveFunc: actionsSet.leftFirst.active, entity: entity, proxy: proxy)
           //            .equatable()
             .scaleEffect(triggeredAction == .leftSecond ? 1.25 : triggeredAction == .leftFirst ? 1 : max(0.001, offsetXNegativeInterpolate([-0.9, 0.85], false)))
             .opacity(max(0, offsetXNegativeInterpolate([-0.9, 1], false)))

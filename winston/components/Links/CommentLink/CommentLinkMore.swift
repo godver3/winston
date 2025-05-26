@@ -24,6 +24,7 @@ struct CommentLinkMore: View {
   @State var loadMoreLoading = false
   
   @Environment(\.useTheme) private var selectedTheme
+  @Environment(\.networkMonitor) private var networkMonitor
     
   func handleTap () {
     if let postFullname = postFullname, let parentElement = parentElement {
@@ -109,8 +110,8 @@ struct CommentLinkMore: View {
           return
         }
         
-        if let depth = data.depth, depth < 3 {
-          loadMoreTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
+        if networkMonitor.connectedToWifi, let depth = data.depth, depth < 8 {
+          loadMoreTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
             if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
               handleTap()
             }

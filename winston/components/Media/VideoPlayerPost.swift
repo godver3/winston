@@ -71,8 +71,9 @@ struct VideoPlayerPost: View, Equatable {
   @State private var fullscreen = false
   @Default(.VideoDefSettings) private var videoDefSettings
   @Environment(\.scenePhase) private var scenePhase
+  @Environment(\.networkMonitor) private var networkMonitor
   
-  private var autoPlayVideos: Bool { videoDefSettings.autoPlay }
+  private var autoPlayVideos: Bool { videoDefSettings.autoPlay && networkMonitor.connectedToWifi }
   private var loopVideos: Bool { videoDefSettings.loop }
   private var muteVideos: Bool { videoDefSettings.mute }
   private var pauseBackgroundAudioOnFullscreen: Bool { videoDefSettings.pauseBGAudioOnFullscreen }

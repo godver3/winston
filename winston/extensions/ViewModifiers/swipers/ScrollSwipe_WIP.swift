@@ -30,6 +30,7 @@ struct ScrollSwipeModifier<T: GenericRedditEntityDataType, B: Hashable>: ViewMod
   var onTapAction: (() -> Void)?
   var actionsSet: SwipeActionsSet
   weak var entity: GenericRedditEntity<T, B>?
+  var proxy: ScrollViewProxy?
   var disabled: Bool = false
   //  @ViewBuilder var content: (UIViewController?) -> Content
   
@@ -130,13 +131,13 @@ struct ScrollSwipeModifier<T: GenericRedditEntityDataType, B: Hashable>: ViewMod
         
         switch triggeredAction {
         case .leftFirst:
-          await actionsSet.leftFirst.action(entity)
+          await actionsSet.leftFirst.action(entity, proxy: proxy)
         case .leftSecond:
-          await actionsSet.leftSecond.action(entity)
+          await actionsSet.leftSecond.action(entity, proxy: proxy)
         case .rightFirst:
-          await actionsSet.rightFirst.action(entity)
+          await actionsSet.rightFirst.action(entity, proxy: proxy)
         case .rightSecond:
-          await actionsSet.rightSecond.action(entity)
+          await actionsSet.rightSecond.action(entity, proxy: proxy)
         default:
           break
         }
@@ -207,13 +208,13 @@ struct ScrollSwipeModifier<T: GenericRedditEntityDataType, B: Hashable>: ViewMod
             
             switch triggeredAction {
             case .leftFirst:
-              await actionsSet.leftFirst.action(entity)
+              await actionsSet.leftFirst.action(entity, proxy: proxy)
             case .leftSecond:
-              await actionsSet.leftSecond.action(entity)
+              await actionsSet.leftSecond.action(entity, proxy: proxy)
             case .rightFirst:
-              await actionsSet.rightFirst.action(entity)
+              await actionsSet.rightFirst.action(entity, proxy: proxy)
             case .rightSecond:
-              await actionsSet.rightSecond.action(entity)
+              await actionsSet.rightSecond.action(entity, proxy: proxy)
             default:
               break
             }
@@ -263,12 +264,14 @@ extension View {
   func scrollSwipe<T: GenericRedditEntityDataType, B: Hashable>(
     size: CGSize,
     actionsSet: SwipeActionsSet,
-    entity: GenericRedditEntity<T, B>?
+    entity: GenericRedditEntity<T, B>?,
+    proxy: ScrollViewProxy? = nil
   ) -> some View {
     self.modifier(ScrollSwipeModifier(
       size: size,
       actionsSet: actionsSet,
-      entity: entity
+      entity: entity,
+      proxy: proxy
       //      id: entity?.id ?? ""
     ))
     //    self.modifier(SwipeRevolution(size: size))

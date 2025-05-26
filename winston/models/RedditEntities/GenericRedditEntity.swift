@@ -94,6 +94,7 @@ class GenericRedditEntity<T: GenericRedditEntityDataType, B: Hashable>: Identifi
   var anyCancellables: [AnyCancellable]? = nil
   var childrenWinston: [GenericRedditEntity<T, B>] = []
   var parentWinston: [GenericRedditEntity<T, B>]?
+  var parent: GenericRedditEntity<T, B>?
   
   required init(id: String, typePrefix: String?) {
     self._id = id

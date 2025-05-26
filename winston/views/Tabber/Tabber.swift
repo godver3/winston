@@ -23,6 +23,7 @@ struct Tabber: View, Equatable {
     @Default(.AppearanceDefSettings) private var appearanceDefSettings
     
     @State var sharedTheme: ThemeData? = nil
+    @State private var networkMonitor = NetworkMonitor()
     
     func meTabTap() {
         if nav.activeTab == .me {
@@ -56,6 +57,7 @@ struct Tabber: View, Equatable {
             
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 SubredditsStack(router: nav[.posts])
+                  .environment(\.networkMonitor, networkMonitor)
             }
             .measureTabBar(setTabBarHeight)
             .tag(Nav.TabIdentifier.posts)
@@ -63,6 +65,7 @@ struct Tabber: View, Equatable {
             
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 SavedContainer(router: nav[.saved])
+                  .environment(\.networkMonitor, networkMonitor)
             }
             .measureTabBar(setTabBarHeight)
             .tag(Nav.TabIdentifier.saved)
@@ -71,6 +74,7 @@ struct Tabber: View, Equatable {
             
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 Me(router: nav[.me])
+                  .environment(\.networkMonitor, networkMonitor)
             }
             .measureTabBar(setTabBarHeight)
             .tag(Nav.TabIdentifier.me)
@@ -83,6 +87,7 @@ struct Tabber: View, Equatable {
             //
             WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
                 Search(router: nav[.search])
+                  .environment(\.networkMonitor, networkMonitor)
             }
             .measureTabBar(setTabBarHeight)
             .tag(Nav.TabIdentifier.search)
