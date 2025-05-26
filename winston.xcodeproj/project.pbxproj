@@ -66,6 +66,11 @@
 		CE0EC5D82B1A9E9600C6E210 /* SubredditFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */; };
 		CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5985BD2DA73F75005523D1 /* SavedContainer.swift */; };
 		CE7FD54E2DC7E41500890F14 /* SwiftyGif in Frameworks */ = {isa = PBXBuildFile; productRef = CE7FD54D2DC7E41500890F14 /* SwiftyGif */; };
+		CEE627872DE4A84B0095E481 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627862DE4A84B0095E481 /* FirebaseAnalytics */; };
+		CEE627892DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627882DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion */; };
+		CEE6278B2DE4A84B0095E481 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CEE6278A2DE4A84B0095E481 /* FirebaseCrashlytics */; };
+		CEE6278D2DE4A8620095E481 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */; };
+		CEE6278E2DE4A8620095E481 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */; };
 		EC051C472ACAF2DC00E9D9ED /* themeFileIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */; };
 		EC082F252A65FB4300BA2727 /* measure.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F242A65FB4300BA2727 /* measure.swift */; };
 		EC082F272A66132600BA2727 /* CommentLinkMore.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC082F262A66132600BA2727 /* CommentLinkMore.swift */; };
@@ -665,6 +670,7 @@
 		BBD6E9DF2B51B45D00901C1C /* Winston MD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "Winston MD.swift"; path = "winston/components/Markdown Handling/Winston MD.swift"; sourceTree = SOURCE_ROOT; };
 		CE0EC5D72B1A9E9600C6E210 /* SubredditFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubredditFilters.swift; sourceTree = "<group>"; };
 		CE5985BD2DA73F75005523D1 /* SavedContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedContainer.swift; sourceTree = "<group>"; };
+		CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EC051C2A2ACAEFC500E9D9ED /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
 		EC051C462ACAF2DC00E9D9ED /* themeFileIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = themeFileIcon.png; sourceTree = "<group>"; };
 		EC082F242A65FB4300BA2727 /* measure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = measure.swift; sourceTree = "<group>"; };
@@ -1180,6 +1186,7 @@
 				ECE08B8D2AAB44DC00F84DC9 /* SymbolPicker in Frameworks */,
 				EC593B0C2A47B801002D6454 /* Alamofire in Frameworks */,
 				EC593B092A47B42D002D6454 /* KeychainAccess in Frameworks */,
+				CEE627872DE4A84B0095E481 /* FirebaseAnalytics in Frameworks */,
 				ECE285972A4FD6FC009CF9DD /* SwiftDate in Frameworks */,
 				EC7BFE4A2BB46B3E00E375C1 /* CloudStorage in Frameworks */,
 				EC9BB1C62A8B05AA0070CD97 /* NukeVideo in Frameworks */,
@@ -1191,9 +1198,11 @@
 				EC593B002A47AFC1002D6454 /* Defaults in Frameworks */,
 				EC08543D2A4CFE1C00E88389 /* SwiftUIIntrospect in Frameworks */,
 				EC9BB1C02A8B05AA0070CD97 /* Nuke in Frameworks */,
+				CEE627892DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				EC2D72B32AC5335E002601E0 /* CHTCollectionViewWaterfallLayout in Frameworks */,
 				ECDD515F2A748C5800FD9498 /* OpenGraph in Frameworks */,
 				ECB0D46E2B5ED1DE00F90B9B /* SwiftyUI in Frameworks */,
+				CEE6278B2DE4A84B0095E481 /* FirebaseCrashlytics in Frameworks */,
 				EC6650EA2AB7E21E006B83A4 /* Zip in Frameworks */,
 				6514FFEC2AFD01520051D264 /* WhatsNewKit in Frameworks */,
 				EC9269F22A51A732003F33B1 /* HighlightedTextEditor in Frameworks */,
@@ -1679,6 +1688,7 @@
 				ABC2180E2ABA528D00F0DABA /* Biometrics.swift */,
 				EC593AD72A4673B2002D6454 /* winstonApp.swift */,
 				EC593AE02A4673B3002D6454 /* Persistence.swift */,
+				CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */,
 			);
 			path = winston;
 			sourceTree = "<group>";
@@ -2609,6 +2619,7 @@
 				EC593AD12A4673B2002D6454 /* Frameworks */,
 				EC593AD22A4673B2002D6454 /* Resources */,
 				ECAA8B812A75261000D9D636 /* Embed Foundation Extensions */,
+				CEE6278F2DE4A8F50095E481 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -2647,6 +2658,9 @@
 				EC66A2A42BA00530004E20BB /* Pow */,
 				EC7BFE492BB46B3E00E375C1 /* CloudStorage */,
 				CE7FD54D2DC7E41500890F14 /* SwiftyGif */,
+				CEE627862DE4A84B0095E481 /* FirebaseAnalytics */,
+				CEE627882DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion */,
+				CEE6278A2DE4A84B0095E481 /* FirebaseCrashlytics */,
 			);
 			productName = winston;
 			productReference = EC593AD42A4673B2002D6454 /* winston.app */;
@@ -2731,6 +2745,7 @@
 				EC66A2A32BA00530004E20BB /* XCRemoteSwiftPackageReference "Pow" */,
 				EC7BFE482BB46B3E00E375C1 /* XCRemoteSwiftPackageReference "CloudStorage" */,
 				CE7FD54C2DC7E41500890F14 /* XCRemoteSwiftPackageReference "SwiftyGif" */,
+				CEE627852DE4A84B0095E481 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			productRefGroup = EC593AD52A4673B2002D6454 /* Products */;
 			projectDirPath = "";
@@ -2786,6 +2801,7 @@
 				EC13D4452BB06CF300741E39 /* blackhole.ahap in Resources */,
 				ECD77F7D2BAFECE1006382F7 /* supernova.mp4 in Resources */,
 				EC051C472ACAF2DC00E9D9ED /* themeFileIcon.png in Resources */,
+				CEE6278E2DE4A8620095E481 /* GoogleService-Info.plist in Resources */,
 				EC61D8772B4B47E200B236FF /* spinner.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2805,6 +2821,7 @@
 				EC1AC9A32B1FEB0200674B31 /* icon-128.06d7293e.png in Resources */,
 				EC1AC9A12B1FEB0200674B31 /* toolbar-icon-38.f748fbf5.png in Resources */,
 				EC1AC9A82B1FEB0200674B31 /* icon-256.cad47425.png in Resources */,
+				CEE6278D2DE4A8620095E481 /* GoogleService-Info.plist in Resources */,
 				EC1AC9A72B1FEB0200674B31 /* icon-48.71058295.png in Resources */,
 				EC1AC99C2B1FEB0200674B31 /* WinstonApiHelper.5c5223a0.js in Resources */,
 				EC1AC9A02B1FEB0200674B31 /* popup.dc9af302.html in Resources */,
@@ -2826,6 +2843,29 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		CEE6278F2DE4A8F50095E481 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
 		EC2CD98C2B1B447A0040EF85 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 12;
@@ -3510,12 +3550,14 @@
 				CODE_SIGN_ENTITLEMENTS = winston/winston.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)/**";
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = winston/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Winston;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Winston needs access to your documents to save/import themes.";
@@ -3532,6 +3574,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.4;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = lo.cafe.winston;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = NO;
@@ -3560,6 +3603,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = winston/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Winston;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSDocumentsFolderUsageDescription = "Winston needs access to your documents to save/import themes.";
@@ -3576,6 +3620,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.1.4;
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = lo.cafe.winston;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SCAN_ALL_SOURCE_FILES_FOR_INCLUDES = NO;
@@ -3716,6 +3761,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 5.4.5;
+			};
+		};
+		CEE627852DE4A84B0095E481 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.13.0;
 			};
 		};
 		EC08543B2A4CFE1C00E88389 /* XCRemoteSwiftPackageReference "swiftui-introspect" */ = {
@@ -3924,6 +3977,21 @@
 			isa = XCSwiftPackageProductDependency;
 			package = CE7FD54C2DC7E41500890F14 /* XCRemoteSwiftPackageReference "SwiftyGif" */;
 			productName = SwiftyGif;
+		};
+		CEE627862DE4A84B0095E481 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEE627852DE4A84B0095E481 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		CEE627882DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEE627852DE4A84B0095E481 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalyticsOnDeviceConversion;
+		};
+		CEE6278A2DE4A84B0095E481 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEE627852DE4A84B0095E481 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		EC08543C2A4CFE1C00E88389 /* SwiftUIIntrospect */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -12,6 +12,7 @@ import AVKit
 import AVFoundation
 import Nuke
 import CoreHaptics
+import Firebase
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
   static private(set) var instance: AppDelegate! = nil
@@ -26,7 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       setAudioToMixWithOthers()
     }
     
-//    Giphy.configure(apiKey: "FQzGYEadKctSRRGgBRUxdOYUtq0DW2sT")
+    FirebaseApp.configure()
     
     return true
   }

@@ -104,6 +104,11 @@ struct CommentLinkMore: View {
       .allowsHitTesting(!loadMoreLoading)
       .id("\(comment.id)-more")
       .onAppear {
+        if data.depth == 0 {
+          handleTap()
+          return
+        }
+        
         if let depth = data.depth, depth < 3 {
           loadMoreTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: false) { _ in
             if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
