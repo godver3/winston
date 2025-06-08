@@ -82,7 +82,7 @@ struct CommentLinkContent: View {
   var searchQuery: String?
   var isMatch: Bool = false
   var isCurrentMatch: Bool = false
-  var containsCurrentMatch: Bool = false
+  var collapsed: Bool = false
   var highlightCurrentMatch: Bool = false
   
   var parentShowReplies = true
@@ -124,7 +124,6 @@ struct CommentLinkContent: View {
     let contentW = CGFloat.screenW - horPad * 2 - CGFloat(comment.data?.depth ?? 0) * 18
     
     if let data = comment.data {
-      let collapsed = (highlightCurrentMatch ? !containsCurrentMatch : true) && data.collapsed ?? false
       Group {
         HStack(spacing: CommentLinkContent.indentLineContentSpacing) {
           if data.depth != 0 && indentLines != 0 {

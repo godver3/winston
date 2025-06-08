@@ -46,10 +46,24 @@ struct SharedVideo: Equatable {
     self.url = url
     self.id = randomString(length: 12)
     self.size = size
-    let newPlayer = AVPlayer(url: url)
+    
+    let newPlayer = AVPlayer(playerItem: nil)
     newPlayer.volume = 0.0
     newPlayer.isMuted = true
     self.player = newPlayer
+  }
+  
+  func loadIfNeeded(force: Bool = false) {
+    if player.currentItem != nil && !force { return }
+        
+    Task(priority: .high) {
+      let asset = AVURLAsset(url: url)
+      let playerItem = AVPlayerItem(asset: asset)
+      
+      DispatchQueue.main.async {
+        player.replaceCurrentItem(with: playerItem)
+      }
+    }
   }
 }
 
@@ -133,6 +147,7 @@ struct VideoPlayerPost: View, Equatable {
           .contentShape(Rectangle())
           .highPriorityGesture(TapGesture().onEnded({ _ in
             if markAsSeen != nil { Task(priority: .background) { await markAsSeen?() } }
+            sharedVideo.loadIfNeeded()
             withAnimation {
               fullscreen = true
             }
@@ -144,6 +159,7 @@ struct VideoPlayerPost: View, Equatable {
               .contentShape(Rectangle())
               .onTapGesture {
                 if markAsSeen != nil { Task(priority: .background) { await markAsSeen?() } }
+                sharedVideo.loadIfNeeded()
                 withAnimation {
                   fullscreen = true
                 }
@@ -158,7 +174,12 @@ struct VideoPlayerPost: View, Equatable {
           }
           
           if (sharedVideo.player.status == .failed) {
-            resetVideo?(sharedVideo)
+//            resetVideo?(sharedVideo)
+            sharedVideo.loadIfNeeded(force: true)
+          }
+          
+          if networkMonitor.connectedToWifi {
+            sharedVideo.loadIfNeeded()
           }
           
           if autoPlayVideos {
@@ -166,6 +187,11 @@ struct VideoPlayerPost: View, Equatable {
           }
           
           Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) + 1
+        }
+        .onChange(of: networkMonitor.connectedToWifi) {
+          if networkMonitor.connectedToWifi {
+            sharedVideo.loadIfNeeded()
+          }
         }
         .onChange(of: scenePhase) { newPhase in
           if newPhase == .active {
@@ -237,7 +263,8 @@ struct VideoPlayerPost: View, Equatable {
         object: sharedVideo.player.currentItem,
         queue: nil) { notif in
           Task(priority: .background) {
-            resetVideo?(sharedVideo)
+//            resetVideo?(sharedVideo)
+            sharedVideo.loadIfNeeded(force: true)
           }
         }
       

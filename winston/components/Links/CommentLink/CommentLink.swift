@@ -145,7 +145,7 @@ struct CommentLink: View, Equatable {
   
   var body: some View {
     if let data = comment.data {
-      let collapsed = (data.collapsed ?? false) && !comment.containsCurrentMatch(currentMatchId)
+      let collapsed = (data.collapsed ?? false) && (!highlightCurrentMatch || !comment.containsCurrentMatch(currentMatchId))
       Group {
         Group {
           if let kind = comment.kind, kind == "more" {
@@ -157,7 +157,7 @@ struct CommentLink: View, Equatable {
               CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, newCommentsLoaded: newCommentsLoaded, index: index)
             }
           } else {
-            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, containsCurrentMatch: CommentUtils.shared.containsCurrentMatch(comment: comment, currentMatchId: currentMatchId), highlightCurrentMatch: highlightCurrentMatch,parentShowReplies: parentShowReplies, parentArrowKinds: parentArrowKinds, parentIndentLines: parentIndentLines, parentLineLimit: parentLineLimit, parentComment: parentComment, parentAvatarsURL: parentAvatarsURL)
+            CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, collapsed: collapsed, highlightCurrentMatch: highlightCurrentMatch,parentShowReplies: parentShowReplies, parentArrowKinds: parentArrowKinds, parentIndentLines: parentIndentLines, parentLineLimit: parentLineLimit, parentComment: parentComment, parentAvatarsURL: parentAvatarsURL)
           }
         }
         .opacity((fadeSeenComments && seenComments?.contains(data.id) ?? false) ? 0.5 : 1)
