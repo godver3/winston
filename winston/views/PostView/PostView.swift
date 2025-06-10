@@ -23,7 +23,6 @@ struct PostView: View, Equatable {
   @Default(.CommentsSectionDefSettings) var commentsSectionDefSettings
   @Environment(\.useTheme) private var selectedTheme
   @Environment(\.globalLoaderStart) private var globalLoaderStart
-  @Environment(\.networkMonitor) private var networkMonitor
   @State private var ignoreSpecificComment = false
   @State private var hideElements = true
   @State private var sort: CommentSortOption
@@ -658,8 +657,8 @@ struct PostView: View, Equatable {
             updateTopCommentIdx(val)
           }
         }
-        .onChange(of: networkMonitor.connectedToWifi) {
-          if networkMonitor.connectedToWifi && comments.count == 0 {
+        .onChange(of: NetworkMonitor.shared.connectedToWifi) {
+          if NetworkMonitor.shared.connectedToWifi && comments.count == 0 {
             refresh()
           }
         }

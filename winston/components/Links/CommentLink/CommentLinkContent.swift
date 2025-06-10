@@ -104,7 +104,6 @@ struct CommentLinkContent: View {
   
   @Environment(\.useTheme) private var selectedTheme
   @Environment(\.scrollViewProxy) private var proxy
-  @Environment(\.networkMonitor) private var networkMonitor
   
   @State var commentViewLoaded = false
   
@@ -289,7 +288,7 @@ struct CommentLinkContent: View {
                 if let url = winstonData.gifURL {
                   let contentH = winstonData.gifSize != nil ? contentW * (winstonData.gifSize!.height / winstonData.gifSize!.width) : contentW * 9/16
                   
-                  if networkMonitor.connectedToWifi || loadGif {
+                  if NetworkMonitor.shared.connectedToWifi || loadGif {
                     AnimatedGifView(url: url)
                       .frame(width: contentW, height: contentH)
                       .clipped()

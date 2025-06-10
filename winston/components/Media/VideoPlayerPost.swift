@@ -14,28 +14,23 @@ struct SharedVideo: Equatable {
   var url: URL
   var id: String
   var size: CGSize
+  var key: String
   
   static func get(url: URL, size: CGSize, resetCache: Bool = false, prevVideoId: String? = nil) -> SharedVideo {
-    let cacheKey =  SharedVideo.cacheKey(url: url, size: size)
     
     if resetCache {
+      let cacheKey = SharedVideo.cacheKey(url: url, size: size)
       Caches.videos.cache.removeValue(forKey: cacheKey)
     }
     
-    if let sharedVideo = Caches.videos.get(key: cacheKey) {
-      return sharedVideo
-    } else {
-      let sharedVideo = SharedVideo(url: url, size: size)
-      
-      if let prevVideoId {
-        Nav.shared.currVideos[sharedVideo.id] = Nav.shared.currVideos[prevVideoId]
-        Nav.shared.currVideos[prevVideoId] = nil
-      }
-      
-      Caches.videos.addKeyValue(key: cacheKey, data: { sharedVideo }, expires: Date().dateByAdding(1, .day).date)
-      
-      return sharedVideo
+    let sharedVideo = SharedVideo(url: url, size: size)
+    
+    if let prevVideoId {
+      Nav.shared.currVideos[sharedVideo.id] = Nav.shared.currVideos[prevVideoId]
+      Nav.shared.currVideos[prevVideoId] = nil
     }
+    
+    return sharedVideo
   }
 
   static func cacheKey(url: URL, size: CGSize) -> String {
@@ -46,22 +41,46 @@ struct SharedVideo: Equatable {
     self.url = url
     self.id = randomString(length: 12)
     self.size = size
+    self.key = SharedVideo.cacheKey(url: url, size: size)
     
-    let newPlayer = AVPlayer(playerItem: nil)
-    newPlayer.volume = 0.0
-    newPlayer.isMuted = true
-    self.player = newPlayer
+    if let asset = Caches.videos.get(key: self.key) {
+      print("[VID] RETRIEVED FROM CACHE \(url.absoluteString)")
+
+      let playerItem = AVPlayerItem(asset: asset)
+      self.player = AVPlayer(playerItem: playerItem)
+    } else {
+      if NetworkMonitor.shared.connectedToWifi {
+        self.player = AVPlayer(url: url)
+        if let asset = self.player.currentItem?.asset {
+          Caches.videos.addKeyValue(key: self.key, data: { asset }, expires: Date().dateByAdding(1, .day).date)
+        }
+      } else {
+        self.player = AVPlayer(playerItem: nil)
+      }
+    }
+    
+    self.player.volume = 0.0
+    self.player.isMuted = true
   }
   
-  func loadIfNeeded(force: Bool = false) {
-    if player.currentItem != nil && !force { return }
-        
+  func loadIfNeeded() {
+    if player.currentItem != nil { return }
+    
     Task(priority: .high) {
-      let asset = AVURLAsset(url: url)
-      let playerItem = AVPlayerItem(asset: asset)
-      
-      DispatchQueue.main.async {
-        player.replaceCurrentItem(with: playerItem)
+      do {
+        // Wait for asset to load
+        let asset = AVURLAsset(url: self.url)
+        let _ = try await asset.load(.duration, .tracks, .isPlayable)
+        
+        Caches.videos.addKeyValue(key: self.key, data: { asset }, expires: Date().dateByAdding(1, .day).date)
+        
+        let playerItem = AVPlayerItem(asset: asset)
+        
+        await MainActor.run {
+          player.replaceCurrentItem(with: playerItem)
+        }
+      } catch {
+        print("[VID] Failed to load asset: \(error)")
       }
     }
   }
@@ -85,9 +104,8 @@ struct VideoPlayerPost: View, Equatable {
   @State private var fullscreen = false
   @Default(.VideoDefSettings) private var videoDefSettings
   @Environment(\.scenePhase) private var scenePhase
-  @Environment(\.networkMonitor) private var networkMonitor
   
-  private var autoPlayVideos: Bool { videoDefSettings.autoPlay && networkMonitor.connectedToWifi }
+  private var autoPlayVideos: Bool { videoDefSettings.autoPlay }
   private var loopVideos: Bool { videoDefSettings.loop }
   private var muteVideos: Bool { videoDefSettings.mute }
   private var pauseBackgroundAudioOnFullscreen: Bool { videoDefSettings.pauseBGAudioOnFullscreen }
@@ -166,7 +184,7 @@ struct VideoPlayerPost: View, Equatable {
               }
           )
           
-          Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity(autoPlayVideos ? 0 : 1).allowsHitTesting(false)
+          Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity(autoPlayVideos && sharedVideo.player.currentItem != nil ? 0 : 1).allowsHitTesting(false)
         }
         .onAppear {
           if loopVideos {
@@ -174,11 +192,8 @@ struct VideoPlayerPost: View, Equatable {
           }
           
           if (sharedVideo.player.status == .failed) {
-//            resetVideo?(sharedVideo)
-            sharedVideo.loadIfNeeded(force: true)
-          }
-          
-          if networkMonitor.connectedToWifi {
+            resetVideo?(sharedVideo)
+          } else if NetworkMonitor.shared.connectedToWifi {
             sharedVideo.loadIfNeeded()
           }
           
@@ -188,8 +203,8 @@ struct VideoPlayerPost: View, Equatable {
           
           Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) + 1
         }
-        .onChange(of: networkMonitor.connectedToWifi) {
-          if networkMonitor.connectedToWifi {
+        .onChange(of: NetworkMonitor.shared.connectedToWifi) {
+          if NetworkMonitor.shared.connectedToWifi {
             sharedVideo.loadIfNeeded()
           }
         }
@@ -263,8 +278,7 @@ struct VideoPlayerPost: View, Equatable {
         object: sharedVideo.player.currentItem,
         queue: nil) { notif in
           Task(priority: .background) {
-//            resetVideo?(sharedVideo)
-            sharedVideo.loadIfNeeded(force: true)
+            resetVideo?(sharedVideo)
           }
         }
       

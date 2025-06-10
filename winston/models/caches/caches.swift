@@ -9,6 +9,7 @@ import Foundation
 import YouTubePlayerKit
 import NukeUI
 import UIKit
+import AVKit
 
 // WE SHOULD AVOID USING THIS TYPE OF CACHE
 // Don't create any more caches in this format,
@@ -16,6 +17,6 @@ import UIKit
 
 class Caches {
   static let postsAttrStr = BaseCache<AttributedString>(cacheLimit: 100)
-  static let videos = BaseCache<SharedVideo>(cacheLimit: 50)
+  static let videos = BaseCache<AVAsset>(cacheLimit: 100)
   static let streamable = BaseCache<StreamableCached>(cacheLimit: 100)
 }

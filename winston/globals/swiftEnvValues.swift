@@ -61,11 +61,6 @@ private struct ScrollViewProxyKey: EnvironmentKey {
   static let defaultValue: ScrollViewProxy? = nil
 }
 
-private struct NetworkMonitorKey: EnvironmentKey {
-  static let defaultValue: NetworkMonitor = NetworkMonitor(start: false)
-}
-
-
 extension EnvironmentValues {
   var contextPost: Post {
     get { self[ContextPostKey.self] }
@@ -114,10 +109,6 @@ extension EnvironmentValues {
   var scrollViewProxy: ScrollViewProxy? {
     get { self[ScrollViewProxyKey.self] }
     set { self[ScrollViewProxyKey.self] = newValue }
-  }
-  var networkMonitor: NetworkMonitor {
-    get { self[NetworkMonitorKey.self] }
-    set { self[NetworkMonitorKey.self] = newValue }
   }
 }
 

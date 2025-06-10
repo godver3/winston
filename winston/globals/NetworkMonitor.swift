@@ -10,9 +10,11 @@ import Network
 
 @Observable
 final class NetworkMonitor {
-    private let networkMonitor = NWPathMonitor()
-    private let workerQueue = DispatchQueue(label: "Monitor")
-    var connectedToWifi = false
+  static let shared = NetworkMonitor(start: true)
+  
+  private let networkMonitor = NWPathMonitor()
+  private let workerQueue = DispatchQueue(label: "Monitor")
+  var connectedToWifi = false
 
   init(start: Bool = true) {
       networkMonitor.pathUpdateHandler = { path in
@@ -23,4 +25,24 @@ final class NetworkMonitor {
         networkMonitor.start(queue: workerQueue)
       }
     }
+  
+  static func isConnectedToWiFi() -> Bool {
+      let monitor = NWPathMonitor(requiredInterfaceType: .wifi)
+      var isWiFi = false
+      
+      let semaphore = DispatchSemaphore(value: 0)
+      
+      monitor.pathUpdateHandler = { path in
+          isWiFi = path.status == .satisfied
+          semaphore.signal()
+      }
+      
+      let queue = DispatchQueue(label: "WiFiCheck")
+      monitor.start(queue: queue)
+      
+      semaphore.wait()
+      monitor.cancel()
+      
+      return isWiFi
+  }
 }
