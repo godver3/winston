@@ -10,7 +10,7 @@ import Defaults
 struct PostPageDefSettings: Equatable, Hashable, Codable, Defaults.Serializable {
   var blurNSFW: Bool = false
   var preferredSearchSort: SubListingSortOption = .best
-  var perPostSort: Bool = false
+  var perPostSort: Bool = true
   var postSorts: Dictionary<String, CommentSortOption> = .init()
   var collapsedPosts: Dictionary<String, Bool> = .init()
   var showUpVoteRatio: Bool = true

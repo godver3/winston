@@ -82,13 +82,19 @@ extension RedditAPI {
         }
         
         if deleteOthers {
-          var localFavorites = Defaults[.localFavorites]
+          let localFavorites = Defaults[.localFavorites]
           
           // Delete CachedSubs not present in the fetched subs
           let currentSubsSet = Set(subs.compactMap { $0.data?.name })
           results.forEach { cachedSub in
             if !currentSubsSet.contains(cachedSub.name ?? "") && !localFavorites.contains(cachedSub.name ?? "") {
               context.delete(cachedSub)
+            }
+          }
+          
+          localFavorites.forEach { subName in
+            if !results.contains(where: { $0.name == subName }) {
+              Defaults[.localFavorites].remove(at: Defaults[.localFavorites].firstIndex(of: subName) ?? 0)
             }
           }
         }

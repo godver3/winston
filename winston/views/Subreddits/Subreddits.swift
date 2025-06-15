@@ -217,6 +217,9 @@ struct Subreddits: View, Equatable {
           }
         }
       }
+      .onChange(of: localFavorites) {
+        localFavState = localFavorites
+      }
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
           EditButton()

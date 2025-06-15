@@ -23,7 +23,7 @@ struct Tabber: View, Equatable {
     @Default(.AppearanceDefSettings) private var appearanceDefSettings
     
     @State var sharedTheme: ThemeData? = nil
-    @State private var networkMonitor = NetworkMonitor()
+    @State private var tabViewID = UUID()
     
     func meTabTap() {
         if nav.activeTab == .me {
