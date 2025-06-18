@@ -49,7 +49,7 @@ struct FilterButton: View, Equatable {
     .background(alignment: .leading) {
       GeometryReader { geo in
         Circle()
-          .fill(bgColor)
+          .fill(bgColor.opacity(isSelected ? 0.7 : 1))
           .frame(width: geo.size.width, height: geo.size.width, alignment: .leading)
           .scaleEffect(isSelected ? 1 : colorDotSize / geo.size.width)
           .position(x: isSelected ? geo.size.width / 2 : hPadding + (colorDotSize / 2), y: height / 2)
@@ -59,9 +59,9 @@ struct FilterButton: View, Equatable {
       }
       .frame(maxWidth: .infinity)
     }
-    .clipShape(Capsule(style: .continuous))
     .drawingGroup()
-    .floating()
+    .glassEffect(.regular.interactive(), in: .capsule(style: .continuous))
+    .clipShape(Capsule(style: .continuous))
     .scaleEffect(pressingDown ? 0.95 : 1)
     .animation(.bouncy(duration: 0.3, extraBounce: 0.225), value: pressingDown)
     .onTapGesture {

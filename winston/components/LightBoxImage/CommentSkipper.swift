@@ -49,9 +49,9 @@ struct CommentSkipper: ViewModifier {
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
-                    .clipShape(Circle())
                     .drawingGroup()
-                    .floating()
+                    .glassEffect(.regular, in: .circle)
+                    .increaseHitboxOf(buttonSize, by: 1.125, shape: Circle(), disable: false)
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         Nav.shared.activeRouter.goBack()
@@ -59,12 +59,13 @@ struct CommentSkipper: ViewModifier {
                   
                   Image(systemName: "arrow.clockwise")
                     .fontSize(22, .semibold)
+                    .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
-                    .clipShape(Circle())
                     .drawingGroup()
-                    .floating()
+                    .glassEffect(.regular.interactive(), in: .circle)
+                    .increaseHitboxOf(buttonSize, by: 1.125, shape: Circle(), disable: false)
                     .onTapGesture {
                         Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                         refresh()
@@ -73,18 +74,17 @@ struct CommentSkipper: ViewModifier {
                             refreshRotationDegrees += 360
                         }
                     }
-                    .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
                   
                   Image(systemName: "chevron.down")
                     .fontSize(22, .semibold)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
-                    .clipShape(Circle())
                     .drawingGroup()
-                    .floating()
+                    .glassEffect(.regular.interactive(), in: .circle)
                     .scaleEffect(pressingDown ? 0.95 : 1)
                     .animation(.bouncy(duration: 0.3, extraBounce: 0.225), value: pressingDown)
+                    .increaseHitboxOf(buttonSize, by: 1.125, shape: Circle(), disable: false)
                     .onTapGesture {
                       if longPressed {
                         longPressed = false

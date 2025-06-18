@@ -126,34 +126,35 @@ struct FloatingFeedMenu: View, Equatable {
         
           let showBackButton = (!menuOpen || customFilters.count == 0) && selectedFilter == nil
           HStack(spacing: 14) {
-                Image(systemName: "chevron.left")
-                  .fontSize(showBackButton ? 22 : 0, .semibold)
-                  .foregroundStyle(Color.accentColor)
-                  .padding(.horizontal, 14)
-                  .frame(width: showBackButton ? actionsSize : 0, height: showBackButton ? actionsSize : 0)
-                  .clipShape(Circle())
-                  .drawingGroup()
-                  .floating()
-                  .animation(.bouncy.delay(0), value: showBackButton)
-                  .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: !showBackButton)
-                  .onTapGesture {
-                      Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                    
-                    if Nav.shared.activeTab == .saved {
-                      Nav.shared.activeTab = .posts
-                    } else {
-                      Nav.shared.activeRouter.goBack()
-                    }
-                  }
+            Image(systemName: "chevron.left")
+              .fontSize(showBackButton ? 22 : 0, .semibold)
+              .foregroundStyle(Color.accentColor)
+              .padding(.horizontal, 14)
+              .frame(width: actionsSize, height: actionsSize)
+              .drawingGroup()
+              .glassEffect(.regular.interactive(), in: .circle)
+              .animation(.bouncy.delay(0), value: showBackButton)
+              .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: !showBackButton)
+              .onTapGesture {
+                Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                
+                if Nav.shared.activeTab == .saved {
+                  Nav.shared.activeTab = .posts
+                } else {
+                  Nav.shared.activeRouter.goBack()
+                }
+              }
             
             Image(systemName: "arrow.clockwise")
               .fontSize(showBackButton ? 22 : 0, .semibold)
               .foregroundStyle(Color.accentColor)
               .padding(.horizontal, 14)
-              .frame(width: showBackButton ? actionsSize : 0, height: showBackButton ? actionsSize : 0)
-              .clipShape(Circle())
+              .frame(width: actionsSize, height: actionsSize)
+              .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
               .drawingGroup()
-              .floating()
+              .glassEffect(.regular.interactive(), in: .circle)
+              .opacity(showBackButton ? 1 : 0)
+              .allowsHitTesting(showBackButton)
               .animation(.bouncy.delay(0), value: showBackButton)
               .onTapGesture {
                   Hap.shared.play(intensity: 0.75, sharpness: 0.9)
@@ -165,7 +166,6 @@ struct FloatingFeedMenu: View, Equatable {
                       refreshRotationDegrees += 360
                   }
               }
-              .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
             }
             .padding(.trailing, 12)
             .frame(height: mainTriggerSize, alignment: .trailing)
@@ -173,6 +173,9 @@ struct FloatingFeedMenu: View, Equatable {
             .contentShape(Rectangle())
             .scrollClipDisabled()
             .padding(.bottom, screenEdgeMargin)
+            .opacity(showBackButton ? 1 : 0)
+            .allowsHitTesting(showBackButton)
+
         }
         
         // -
@@ -185,7 +188,10 @@ struct FloatingFeedMenu: View, Equatable {
                   .fontSize(22, .bold)
                   .frame(width: actionsSize, height: actionsSize)
                   .foregroundStyle(Color.accentColor)
-                  .floating()
+                  .drawingGroup()
+                  .glassEffect(.regular.interactive(), in: .circle)
+  //                .clipShape(Circle())
+  //                .floating()
                   .transition(.comeFrom(.bottom, index: 1, total: 2))
                   .highPriorityGesture(TapGesture().onEnded({
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
@@ -204,7 +210,10 @@ struct FloatingFeedMenu: View, Equatable {
                 .fontSize(22, .bold)
                 .frame(width: actionsSize, height: actionsSize)
                 .foregroundColor(Color.accentColor)
-                .floating()
+                .drawingGroup()
+                .glassEffect(.regular.interactive(), in: .circle)
+//                .clipShape(Circle())
+//                .floating()
                 .transition(.comeFrom(.bottom, index: 0, total: 2))
                 .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: menuOpen)
                 .highPriorityGesture(TapGesture().onEnded({
@@ -217,7 +226,8 @@ struct FloatingFeedMenu: View, Equatable {
                 .fontSize(22, .bold)
                 .frame(width: actionsSize, height: actionsSize)
                 .foregroundColor(Color.accentColor)
-                .floating()
+                .drawingGroup()
+                .glassEffect(.regular.interactive(), in: .circle)
                 .transition(.comeFrom(.bottom, index: 0, total: 2))
                 .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: menuOpen)
                 .highPriorityGesture(TapGesture().onEnded({
