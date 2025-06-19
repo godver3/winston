@@ -579,8 +579,8 @@ struct PostView: View, Equatable {
           .shadow(color: Color.hex("212326"), radius: 10)
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
-          .padding(.horizontal, 8)
-          .padding([.bottom], 12)
+          .padding(.horizontal, 16)
+          .padding([.bottom], 16)
           .ignoresSafeArea(.keyboard)
           
         }
@@ -706,10 +706,9 @@ private struct Toolbar: ToolbarContent {
     ToolbarItem(id: "postview-search-and-sub", placement: .navigationBarTrailing) {
       HStack {
         Image(systemName: "magnifyingglass")
-          .fontSize(16, .semibold)
+//          .fontSize(16, .semibold)
           .foregroundStyle(Color.white)
-          .padding([.trailing], 4)
-          .opacity(searchOpen ? 0 : 0.8)
+          .opacity(0.8)
           .onTapGesture {
             Hap.shared.play(intensity: 0.75, sharpness: 0.9)
             if !searchOpen {
@@ -732,6 +731,7 @@ private struct Toolbar: ToolbarContent {
         
         if let data = subreddit.data, !feedsAndSuch.contains(subreddit.id) {
           SubredditIcon(subredditIconKit: data.subredditIconKit)
+//            .padding([.leading], 4)
             .onTapGesture { Nav.to(.reddit(.subInfo(subreddit))) }
         }
       }

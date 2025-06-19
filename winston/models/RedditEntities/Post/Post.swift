@@ -88,7 +88,7 @@ extension Post {
       
       self.winstonData?.titleAttr = createTitleTagsAttrString(titleTheme: theme.postLinks.theme.titleText, postData: data, textColor: theme.postLinks.theme.titleText.color.uiColor())
       
-      if let sub {
+      if let sub, (sub.id.toStr() ?? "").starts(with: "t5_")  {
         self.winstonData?.subreddit = sub
       } else {
         self.winstonData?._strongSubreddit = Subreddit(id: data.subreddit)

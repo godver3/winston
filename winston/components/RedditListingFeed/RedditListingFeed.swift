@@ -26,7 +26,36 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   @State private var customFilter: ShallowCachedFilter?
   @State private var currentPostId: String? = nil
   @State private var currentPostAnchor: UnitPoint = .center
-
+  
+  func getSubIcon(_ subId: String) -> String {
+    if subId == "all" {
+      return "signpost.right.and.left.circle.fill"
+    } else if subId == "home" {
+      return "house.circle.fill"
+    } else if subId == savedKeyword {
+      return "bookmark.circle.fill"
+    } else if subId == "popular" {
+      return "chart.line.uptrend.xyaxis.circle.fill"
+    }
+    
+    return "xmark"
+  }
+  
+  func getSubColor(_ subId: String) -> Color {
+    if subId == "all" {
+      return Color.hex("F1A33C")
+    } else if subId == "home" {
+      return  Color.hex("EB5545")
+    } else if subId == savedKeyword {
+      return  Color.hex("67CD67")
+    } else if subId == "popular" {
+      return  Color.hex("3B82F6")
+    }
+    
+    return Color.gray
+  }
+  
+  
   init(feedId: String, showSubInPosts: Bool = false, title: String, theme: ThemeBG, fetch: @escaping FeedItemsManager<S>.ItemsFetchFn, @ViewBuilder header: @escaping () -> Header = { EmptyView() }, @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }, initialSorting: S? = nil, disableSearch: Bool = true, subreddit: Subreddit? = nil, forceRefresh: Binding<Bool>? = nil) where S == SubListingSortOption {
     self.showSubInPosts = showSubInPosts
     self.feedId = feedId
@@ -288,17 +317,27 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                 } label: {
                   Image(systemName: currSort.meta.icon)
                     .foregroundColor(Color.accentColor)
-                    .fontSize(17, .bold)
+//                    .fontSize(17, .bold)
                 }
               }
               //          .disabled(subreddit.id == "saved")
               //        }
+              
+              let _ = print("[SSS] here")
+
               if let sub = subreddit, let data = sub.data {
                 Button {
                   Nav.to(.reddit(.subInfo(sub)))
                 } label: {
                   SubredditIcon(subredditIconKit: data.subredditIconKit)
                 }
+              } else {
+                let subId = subreddit?.id ?? ""
+                let _ = print("[SSS] subId: \(subId)")
+                Image(systemName: getSubIcon(subId))
+                  .symbolRenderingMode(.palette)
+                  .foregroundStyle(.white, getSubColor(subId))
+                  .fontSize(24)
               }
             }
           }
