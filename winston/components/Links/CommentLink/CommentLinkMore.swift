@@ -99,7 +99,7 @@ struct CommentLinkMore: View {
       .background(selectedTheme.comments.theme.bg())
       .contentShape(Rectangle())
       .onTapGesture {
-          handleTap()
+        handleTap()
       }
       .allowsHitTesting(!loadMoreLoading)
       .id("\(comment.id)-more")
@@ -109,17 +109,11 @@ struct CommentLinkMore: View {
           return
         }
         
-        if NetworkMonitor.shared.connectedToWifi, let depth = data.depth, depth < 8 {
-          loadMoreTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false) { _ in
-            if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
-              handleTap()
-            }
+        if NetworkMonitor.shared.connectedToWifi, let count = data.count, count == 1  {
+          if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
+            handleTap()
           }
         }
-      }
-      .onDisappear() {
-        loadMoreTimer?.invalidate()
-        loadMoreTimer = nil
       }
     }
   }

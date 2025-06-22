@@ -9,6 +9,7 @@ import SwiftUI
 import Defaults
 import AVFoundation
 import AlertToast
+import FoundationModels
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
@@ -54,6 +55,9 @@ struct PostView: View, Equatable {
   @FocusState private var searchFocused: Bool
   @State private var liveRefreshTimer: Timer? = nil
   @State private var initialLoading: Bool = true
+  @State private var generatedSummary: String? = nil
+  @State private var generationErrorMessage: String? = nil
+  @State private var summaryLoading: Bool = false
 
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -311,6 +315,91 @@ struct PostView: View, Equatable {
       }
     }
   }
+  
+  func convertCommentsToLLMPrompt(_ comments: [Comment]) -> String {
+    if comments.count == 0 { return "No comments yet" }
+      var result = ""
+      
+      for (index, comment) in comments.enumerated() {
+          result += processCommentNumbered(comment, parentNumber: "\(index + 1)")
+      }
+      
+      return result
+  }
+
+  private func processCommentNumbered(_ comment: Comment, parentNumber: String) -> String {
+      var commentText = "Comment \(parentNumber):\n"
+      commentText += "User: \(comment.data?.author ?? "Unknown")\n"
+      commentText += "Text: \(comment.data?.body ?? "No content")\n"
+      commentText += String(repeating: "-", count: 40) + "\n\n"
+      
+      // Process children with sub-numbering
+      let children = comment.childrenWinston
+      if !children.isEmpty {
+            for (index, child) in children.enumerated() {
+                commentText += processCommentNumbered(child, parentNumber: "\(parentNumber).\(index + 1)")
+            }
+        }
+      
+      return commentText
+  }
+
+  
+  func generateSummary () {
+    DispatchQueue.main.async {
+      withAnimation {
+        generatedSummary = ""
+        generationErrorMessage = nil
+        summaryLoading =  true
+      }
+    }
+    
+    Task {
+      do {
+        let prompt = "Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Respond with a short blurb of at most couple sentences or bullets with the most important or interesting details, including specific quotes from the comments as evidence. Do not use markdown bolding or italics in your response. This response should be in a friendly tone and not include any sensitive content. Do not confirm my requests, instead go straight to answering my exact question. \n\nThe comment thread is included below with numbers to denote the index (e.g., 1.1, is the first response to the first comment):\n\n" + convertCommentsToLLMPrompt(comments)
+              
+        let session = LanguageModelSession()
+        let stream = session.streamResponse(to: prompt)
+      
+        for try await response in stream {
+          DispatchQueue.main.async {
+            withAnimation {
+              generatedSummary = response
+            }
+          }
+        }
+        
+        DispatchQueue.main.async {
+          withAnimation {
+            summaryLoading = false
+          }
+        }
+      } catch {
+        DispatchQueue.main.async {
+          withAnimation {
+            if let genErr = error as? FoundationModels.LanguageModelSession.GenerationError {
+              switch genErr {
+              case .guardrailViolation(let context):
+                generationErrorMessage = context.debugDescription
+              case .exceededContextWindowSize(let context):
+                generationErrorMessage = context.debugDescription
+              case .assetsUnavailable(let context):
+                generationErrorMessage = context.debugDescription
+              case .decodingFailure(let context):
+                generationErrorMessage = context.debugDescription
+              case .unsupportedLanguageOrLocale(let context):
+                generationErrorMessage = context.debugDescription
+              default:
+                generationErrorMessage = "\(error)"
+              }
+            } else {
+              generationErrorMessage = "\(error)"
+            }
+          }
+        }
+      }
+    }
+  }
 
   var body: some View {
     let navtitle: String = post.data?.title ?? "no title"
@@ -327,9 +416,11 @@ struct PostView: View, Equatable {
               //              .equatable()
               
               if selectedTheme.posts.inlineFloatingPill {
-                PostFloatingPill(post: post, subreddit: subreddit, showUpVoteRatio: defSettings.showUpVoteRatio)
+                PostFloatingPill(post: post, subreddit: subreddit, generateSummary: generateSummary, showUpVoteRatio: defSettings.showUpVoteRatio)
                   .padding(-10)
               }
+              
+              GeneratedSummaryView(generatedSummary: $generatedSummary, errorMessage: $generationErrorMessage, loading: $summaryLoading)
               
               HStack (spacing: 6){
                 Text("Comments")
@@ -430,7 +521,7 @@ struct PostView: View, Equatable {
         }
         .overlay(alignment: .bottomTrailing) {
           if !selectedTheme.posts.inlineFloatingPill {
-            PostFloatingPill(post: post, subreddit: subreddit, showUpVoteRatio: defSettings.showUpVoteRatio)
+            PostFloatingPill(post: post, subreddit: subreddit, generateSummary: generateSummary, showUpVoteRatio: defSettings.showUpVoteRatio)
           }
         }
         .overlay(alignment: .bottom) {
@@ -706,7 +797,7 @@ private struct Toolbar: ToolbarContent {
     ToolbarItem(id: "postview-search-and-sub", placement: .navigationBarTrailing) {
       HStack {
         Image(systemName: "magnifyingglass")
-//          .fontSize(16, .semibold)
+//           .fontSize(16, .semibold)
           .foregroundStyle(Color.white)
           .opacity(0.8)
           .onTapGesture {

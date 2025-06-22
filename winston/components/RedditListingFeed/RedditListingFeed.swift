@@ -242,11 +242,11 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                 }
               }
               
-              if itemsManager.displayMode == .endOfFeed {
-                Section {
-                  EndOfFeedView()
-                }
-              }
+//              if itemsManager.displayMode == .endOfFeed {
+//                Section {
+//                  EndOfFeedView()
+//                }
+//              }
               
               if itemsManager.displayMode == .error {
                 Section {
@@ -323,8 +323,6 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
               //          .disabled(subreddit.id == "saved")
               //        }
               
-              let _ = print("[SSS] here")
-
               if let sub = subreddit, let data = sub.data {
                 Button {
                   Nav.to(.reddit(.subInfo(sub)))
@@ -333,7 +331,6 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                 }
               } else {
                 let subId = subreddit?.id ?? ""
-                let _ = print("[SSS] subId: \(subId)")
                 Image(systemName: getSubIcon(subId))
                   .symbolRenderingMode(.palette)
                   .foregroundStyle(.white, getSubColor(subId))

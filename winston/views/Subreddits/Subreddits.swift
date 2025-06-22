@@ -220,11 +220,11 @@ struct Subreddits: View, Equatable {
       .onChange(of: localFavorites) {
         localFavState = localFavorites
       }
-      .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
-          EditButton()
-        }
-      }
+//      .toolbar {
+//        ToolbarItem(placement: .navigationBarTrailing) {
+//          EditButton()
+//        }
+//      }
       .overlay(
         AlphabetJumper(letters: sections.keys.sorted(), searchText: $searchText, proxy: proxy)
           , alignment: .trailing

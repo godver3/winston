@@ -13,6 +13,7 @@ struct PostFloatingPill: View {
   var post: Post
   var subreddit: Subreddit
   var updateComments: (()->())?
+  var generateSummary: (()->())
   var showUpVoteRatio: Bool
   
   @Default(.postsInBox) private var postsInBox
@@ -37,37 +38,37 @@ struct PostFloatingPill: View {
                   }
                   
                   
-                  LightBoxButton(icon: !thisPinnedPost ? "shippingbox" : "shippingbox.and.arrow.backward.fill") {
-                    if thisPinnedPost {
-                      withAnimation(spring) {
-                        postsInBox = postsInBox.filter({ $0.id != post.id })
-                      }
-                      withAnimation(nil){
-                        showRemovedToast.toggle()
-                      }
-                    } else {
-                      var subIcon: String?
-                      if let subData = subreddit.data {
-                        let communityIcon = subData.community_icon?.split(separator: "?") ?? []
-                        subIcon = subData.icon_img == "" || subData.icon_img == nil ? communityIcon.count > 0 ? String(communityIcon[0]) : "" : subData.icon_img
-                      }
-                      let newPostInBox = PostInBox(
-                        id: data.id, fullname: data.name,
-                        title: data.formattedTitle(), body: data.selftext ?? "",
-                        subredditIconURL: subIcon, img: nil,
-                        subredditName: data.subreddit, authorName: data.author,
-                        score: data.ups, commentsCount: data.num_comments,
-                        createdAt: data.created, lastUpdatedAt: Date().timeIntervalSince1970
-                      )
-                      withAnimation(spring){
-                        postsInBox.append(newPostInBox)
-                        
-                      }
-                      withAnimation(nil){
-                        showAddedToast.toggle()
-                      }
-                    }
-                  }
+//                  LightBoxButton(icon: !thisPinnedPost ? "shippingbox" : "shippingbox.and.arrow.backward.fill") {
+//                    if thisPinnedPost {
+//                      withAnimation(spring) {
+//                        postsInBox = postsInBox.filter({ $0.id != post.id })
+//                      }
+//                      withAnimation(nil){
+//                        showRemovedToast.toggle()
+//                      }
+//                    } else {
+//                      var subIcon: String?
+//                      if let subData = subreddit.data {
+//                        let communityIcon = subData.community_icon?.split(separator: "?") ?? []
+//                        subIcon = subData.icon_img == "" || subData.icon_img == nil ? communityIcon.count > 0 ? String(communityIcon[0]) : "" : subData.icon_img
+//                      }
+//                      let newPostInBox = PostInBox(
+//                        id: data.id, fullname: data.name,
+//                        title: data.formattedTitle(), body: data.selftext ?? "",
+//                        subredditIconURL: subIcon, img: nil,
+//                        subredditName: data.subreddit, authorName: data.author,
+//                        score: data.ups, commentsCount: data.num_comments,
+//                        createdAt: data.created, lastUpdatedAt: Date().timeIntervalSince1970
+//                      )
+//                      withAnimation(spring){
+//                        postsInBox.append(newPostInBox)
+//                        
+//                      }
+//                      withAnimation(nil){
+//                        showAddedToast.toggle()
+//                      }
+//                    }
+//                  }
                   //            .toast(isPresenting: $showAddedToast, tapToDismiss: true){
                   //              AlertToast(displayMode: .hud, type: .systemImage("plus.circle", Color.blue), title: "Added to Posts Box!")
                   //            }
@@ -75,6 +76,10 @@ struct PostFloatingPill: View {
                   //              AlertToast(displayMode: .hud, type: .systemImage("trash", Color.blue), title: "Removed from Posts Box!")
                   //            }
                   
+                  LightBoxButton(icon: "apple.intelligence") {
+                    generateSummary()
+                  }
+                    
                   LightBoxButton(icon: "arrowshape.turn.up.left.fill") {
                     withAnimation(spring) {
                       showReplyModal = true
@@ -118,36 +123,39 @@ struct PostFloatingPill: View {
               Spacer()
               
               // LightBoxButton for pinned post
-              LightBoxButton(icon: !thisPinnedPost ? "shippingbox" : "shippingbox.and.arrow.backward.fill") {
-                if thisPinnedPost {
-                  withAnimation(spring) {
-                    postsInBox = postsInBox.filter({ $0.id != post.id })
-                  }
-                  withAnimation(nil){
-                    showRemovedToast.toggle()
-                  }
-                } else {
-                  var subIcon: String?
-                  if let subData = subreddit.data {
-                    let communityIcon = subData.community_icon?.split(separator: "?") ?? []
-                    subIcon = subData.icon_img == "" || subData.icon_img == nil ? communityIcon.count > 0 ? String(communityIcon[0]) : "" : subData.icon_img
-                  }
-                  let newPostInBox = PostInBox(
-                    id: data.id, fullname: data.name,
-                    title: data.formattedTitle(), body: data.selftext ?? "",
-                    subredditIconURL: subIcon, img: nil,
-                    subredditName: data.subreddit, authorName: data.author,
-                    score: data.ups, commentsCount: data.num_comments,
-                    createdAt: data.created, lastUpdatedAt: Date().timeIntervalSince1970
-                  )
-                  withAnimation(spring){
-                    postsInBox.append(newPostInBox)
-                    
-                  }
-                  withAnimation(nil){
-                    showAddedToast.toggle()
-                  }
-                }
+//              LightBoxButton(icon: !thisPinnedPost ? "shippingbox" : "shippingbox.and.arrow.backward.fill") {
+//                if thisPinnedPost {
+//                  withAnimation(spring) {
+//                    postsInBox = postsInBox.filter({ $0.id != post.id })
+//                  }
+//                  withAnimation(nil){
+//                    showRemovedToast.toggle()
+//                  }
+//                } else {
+//                  var subIcon: String?
+//                  if let subData = subreddit.data {
+//                    let communityIcon = subData.community_icon?.split(separator: "?") ?? []
+//                    subIcon = subData.icon_img == "" || subData.icon_img == nil ? communityIcon.count > 0 ? String(communityIcon[0]) : "" : subData.icon_img
+//                  }
+//                  let newPostInBox = PostInBox(
+//                    id: data.id, fullname: data.name,
+//                    title: data.formattedTitle(), body: data.selftext ?? "",
+//                    subredditIconURL: subIcon, img: nil,
+//                    subredditName: data.subreddit, authorName: data.author,
+//                    score: data.ups, commentsCount: data.num_comments,
+//                    createdAt: data.created, lastUpdatedAt: Date().timeIntervalSince1970
+//                  )
+//                  withAnimation(spring){
+//                    postsInBox.append(newPostInBox)
+//                    
+//                  }
+//                  withAnimation(nil){
+//                    showAddedToast.toggle()
+//                  }
+//                }
+//              }
+              LightBoxButton(icon: "apple.intelligence") {
+                generateSummary()
               }
               .padding(.vertical, -2)
               

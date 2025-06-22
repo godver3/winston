@@ -22,7 +22,7 @@ enum WinstonAppIcon: String, CaseIterable, Identifiable, Hashable, Equatable {
   
   var description: String {
     switch self {
-    case .standard: return "Classic winston icon"
+    case .standard: return "iOS 26 Style"
     case .explode: return "One of Winston's heroic moments."
     case .peak: return "Really, anyone?"
     case .side: return "Wow, look at him!"
@@ -35,7 +35,7 @@ enum WinstonAppIcon: String, CaseIterable, Identifiable, Hashable, Equatable {
   
   var label: String {
     switch self {
-    case .standard: return "Default"
+    case .standard: return "Default w/ Highlights"
     case .explode: return "Fantastic!"
     case .peak: return "Anyone?"
     case .side: return "Side view"
@@ -77,7 +77,7 @@ class AppIconManger {
       guard _currentAppIconName != newValue.name,
             UIApplication.shared.supportsAlternateIcons
       else { return }
-      UIApplication.shared.setAlternateIconName(newValue.name) { error in
+      UIApplication.shared.setAlternateIconName(nil) { error in
         if let error = error {
           print("Error setting alternate icon \(newValue.name ?? ""): \(error.localizedDescription)")
         }

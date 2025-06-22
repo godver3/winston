@@ -184,7 +184,7 @@ struct VideoPlayerPost: View, Equatable {
               }
           )
           
-          Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity(autoPlayVideos && sharedVideo.player.currentItem != nil ? 0 : 1).allowsHitTesting(false)
+          Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity((autoPlayVideos && sharedVideo.player.currentItem != nil) || NetworkMonitor.isConnectedToWiFi() ? 0 : 1).allowsHitTesting(false)
         }
         .onAppear {
           if loopVideos {

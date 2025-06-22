@@ -49,7 +49,7 @@ struct FilterButton: View, Equatable {
     .background(alignment: .leading) {
       GeometryReader { geo in
         Circle()
-          .fill(bgColor.opacity(isSelected ? 0.7 : 1))
+          .fill(bgColor)
           .frame(width: geo.size.width, height: geo.size.width, alignment: .leading)
           .scaleEffect(isSelected ? 1 : colorDotSize / geo.size.width)
           .position(x: isSelected ? geo.size.width / 2 : hPadding + (colorDotSize / 2), y: height / 2)
