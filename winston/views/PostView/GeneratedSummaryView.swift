@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MarkdownUI
 
 struct GeneratedSummaryView: View {
     @Binding var generatedSummary: String?
@@ -102,11 +103,10 @@ struct GeneratedSummaryView: View {
                         
                         Spacer()
                         
+                      if (generatedSummary ?? errorMessage ?? "").count > 0 {
                         // Collapse/Expand button
                         Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isCollapsed.toggle()
-                            }
+                          isCollapsed.toggle()
                         }) {
                             Image(systemName: "chevron.down")
                                 .font(.system(size: 12, weight: .bold))
@@ -120,9 +120,10 @@ struct GeneratedSummaryView: View {
                                         )
                                 )
                                 .rotationEffect(.degrees(isCollapsed ? -90 : 0))
-                                .animation(.easeInOut(duration: 0.3), value: isCollapsed)
+//                                .animation(.easeIn(duration: 0.3), value: isCollapsed)
                         }
                         .buttonStyle(PlainButtonStyle())
+                      }
                     }
                 }
                 .padding(.horizontal, 16)
@@ -167,8 +168,7 @@ struct GeneratedSummaryView: View {
                 )
                 
                 // Separator with padding - only show when not collapsed
-                if !isCollapsed {
-                    let linearGradientOffset = gradientOffset / 360
+                if !isCollapsed && (generatedSummary ?? errorMessage ?? "").count > 0 {
                     Rectangle()
                         .fill(
                             LinearGradient(
@@ -184,23 +184,18 @@ struct GeneratedSummaryView: View {
                                     .pink.opacity(0.4),
                                     .purple.opacity(0.4),
                                     .blue.opacity(0.4),
-//                                    .purple.opacity(0.4),
-//                                    .pink.opacity(0.35),
-//                                    .cyan.opacity(0.4),
-//                                    .blue.opacity(0.4)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
                               )
                             )
                         .frame(height: 3)
-//                        .opacity(pulseOpacity) // FIXED: Now uses pulseOpacity
                         .padding(.horizontal, 16)
-//                        .animation(.easeInOut(duration: 10.0).repeatForever(autoreverses: true), value: linearGradientOffset)
+                        .opacity(0.7)
                 }
  
                 // Main content area with inset appearance - only show when not collapsed
-                if !isCollapsed {
+                if !isCollapsed && (generatedSummary ?? errorMessage ?? "").count > 0 {
                     ZStack {
                         // Inset background - darker for black parent
                         RoundedRectangle(cornerRadius: 0)
@@ -247,7 +242,7 @@ struct GeneratedSummaryView: View {
                                         .padding(16)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                 } else if let summary = generatedSummary {
-                                    Text(summary)
+                                    Markdown(summary)
                                         .font(.system(size: 16, design: .monospaced))
                                         .foregroundColor(.white.opacity(0.9))
                                         .multilineTextAlignment(.leading)
@@ -309,9 +304,9 @@ struct GeneratedSummaryView: View {
                                 startAngle: .degrees(gradientOffset * 0.7),
                                 endAngle: .degrees(gradientOffset * 0.7 + 360)
                             ),
-                            lineWidth: 6
+                            lineWidth: 8
                         )
-                        .blur(radius: 7)
+                        .blur(radius: 8)
                         .animation(.linear(duration: 10.0).repeatForever(autoreverses: false), value: gradientOffset)
                     
                     // Inner inset shadow overlay
@@ -350,6 +345,9 @@ struct GeneratedSummaryView: View {
                 
                 // FIXED: Start continuous animations
                 startContinuousAnimations()
+            }
+            .onTapGesture {
+              isCollapsed.toggle()
             }
         }
     }

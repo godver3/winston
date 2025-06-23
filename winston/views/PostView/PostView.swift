@@ -321,28 +321,30 @@ struct PostView: View, Equatable {
       var result = ""
       
       for (index, comment) in comments.enumerated() {
-          result += processCommentNumbered(comment, parentNumber: "\(index + 1)")
+          result += processCommentNumbered(comment, parentNumber: "\(index + 1)") ?? ""
       }
       
       return result
   }
 
-  private func processCommentNumbered(_ comment: Comment, parentNumber: String) -> String {
-      var commentText = "Comment \(parentNumber):\n"
-      commentText += "User: \(comment.data?.author ?? "Unknown")\n"
-      commentText += "Text: \(comment.data?.body ?? "No content")\n"
-      commentText += String(repeating: "-", count: 40) + "\n\n"
+  private func processCommentNumbered(_ comment: Comment, parentNumber: String) -> String? {
+    if comment.kind == "more" { return nil }
+    guard let data = comment.data else { return nil }
+    
+    var commentText = "\(parentNumber)|@\(data.author ?? "Unknown")|\(data.body ?? "No Content")|\(data.ups ?? 0)|||"
       
-      // Process children with sub-numbering
-      let children = comment.childrenWinston
-      if !children.isEmpty {
-            for (index, child) in children.enumerated() {
-                commentText += processCommentNumbered(child, parentNumber: "\(parentNumber).\(index + 1)")
-            }
-        }
-      
-      return commentText
+    // Process children with sub-numbering
+    let children = comment.childrenWinston
+    if !children.isEmpty {
+          for (index, child) in children.enumerated() {
+              commentText += processCommentNumbered(child, parentNumber: "\(parentNumber).\(index + 1)") ?? ""
+          }
+      }
+    
+    return commentText
   }
+  
+  
 
   
   func generateSummary () {
@@ -356,7 +358,9 @@ struct PostView: View, Equatable {
     
     Task {
       do {
-        let prompt = "Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Respond with a short blurb of at most couple sentences or bullets with the most important or interesting details, including specific quotes from the comments as evidence. Do not use markdown bolding or italics in your response. This response should be in a friendly tone and not include any sensitive content. Do not confirm my requests, instead go straight to answering my exact question. \n\nThe comment thread is included below with numbers to denote the index (e.g., 1.1, is the first response to the first comment):\n\n" + convertCommentsToLLMPrompt(comments)
+        let prompt = "Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Respond with a short blurb of at most couple sentences or bullets with the most important or interesting details. Include specific quotes from the comments as evidence, using markdown italics format (e.g _italic text_) for any direct quotes. DO NOT add extra astericks at the end of quotes or after author names in parentheses.  Use markdown bolding (e.g **bold text**) to highlight key points, but do not overuse bolding. When mentioning specific comment authors, DO NOT bold or italicize them, and instead, use backticks(`) to enclose the comment authors (e.g `@author`). This response should be in a friendly tone and not include any sensitive content. DO NOT confirm my requests, instead go straight to answering my exact question. \n\nThe comment thread is included below with each comment in the format |Index|@Author|Comment|Up Votes| and are separated by triple pipes:\n\n" + convertCommentsToLLMPrompt(comments)
+        
+//        print("[LLM] PROMPT: \(prompt)")
               
         let session = LanguageModelSession()
         let stream = session.streamResponse(to: prompt)
@@ -365,6 +369,7 @@ struct PostView: View, Equatable {
           DispatchQueue.main.async {
             withAnimation {
               generatedSummary = response
+//              print("[LLM] RESPONSE: \(response)")
             }
           }
         }
@@ -395,6 +400,8 @@ struct PostView: View, Equatable {
             } else {
               generationErrorMessage = "\(error)"
             }
+            
+            generatedSummary = nil
           }
         }
       }
@@ -613,19 +620,21 @@ struct PostView: View, Equatable {
               
               Spacer()
               
-              Image(systemName: "chevron.down")
-                .opacity(searchFocused ? 1 : 0)
-                .fontSize(16, .semibold)
-                .foregroundStyle(Color(UIColor(hex: "7D7E80")))
-                .padding([.trailing], 4)
-                .onTapGesture {
-                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
-                  DispatchQueue.main.async {
-                    withAnimation {
-                      searchFocused = false
+              if searchFocused {
+                Image(systemName: "chevron.down")
+                  .opacity(searchFocused ? 1 : 0)
+                  .fontSize(16, .semibold)
+                  .foregroundStyle(Color(UIColor(hex: "7D7E80")))
+                  .padding([.trailing], 4)
+                  .onTapGesture {
+                    Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                    DispatchQueue.main.async {
+                      withAnimation {
+                        searchFocused = false
+                      }
                     }
                   }
-                }
+              }
               
               Image(systemName: "xmark")
                 .fontSize(16, .semibold)
@@ -670,8 +679,8 @@ struct PostView: View, Equatable {
           .shadow(color: Color.hex("212326"), radius: 10)
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
-          .padding(.horizontal, 16)
-          .padding([.bottom], 16)
+          .padding(.horizontal, 32)
+          .padding([.bottom], 12)
           .ignoresSafeArea(.keyboard)
           
         }
