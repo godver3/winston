@@ -57,7 +57,7 @@ struct PostView: View, Equatable {
   @State private var initialLoading: Bool = true
   @State private var generatedSummary: String? = nil
   @State private var generationErrorMessage: String? = nil
-  @State private var summaryLoading: Bool = false
+  @State private var summaryStreaming: Bool = false
 
   init(post: Post, subreddit: Subreddit, forceCollapse: Bool = false, highlightID: String? = nil) {
     self.post = post
@@ -347,65 +347,102 @@ struct PostView: View, Equatable {
   
 
   
-  func generateSummary () {
-    DispatchQueue.main.async {
-      withAnimation {
-        generatedSummary = ""
-        generationErrorMessage = nil
-        summaryLoading =  true
+  func generateSummary() {
+      DispatchQueue.main.async {
+          withAnimation(.easeOut(duration: 0.4)) {
+              generatedSummary = ""
+              generationErrorMessage = nil
+              summaryStreaming = true
+          }
       }
-    }
-    
-    Task {
-      do {
-        let prompt = "Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Respond with a short blurb of at most couple sentences or bullets with the most important or interesting details. Include specific quotes from the comments as evidence, using markdown italics format (e.g _italic text_) for any direct quotes. DO NOT add extra astericks at the end of quotes or after author names in parentheses.  Use markdown bolding (e.g **bold text**) to highlight key points, but do not overuse bolding. When mentioning specific comment authors, DO NOT bold or italicize them, and instead, use backticks(`) to enclose the comment authors (e.g `@author`). This response should be in a friendly tone and not include any sensitive content. DO NOT confirm my requests, instead go straight to answering my exact question. \n\nThe comment thread is included below with each comment in the format |Index|@Author|Comment|Up Votes| and are separated by triple pipes:\n\n" + convertCommentsToLLMPrompt(comments)
-        
-//        print("[LLM] PROMPT: \(prompt)")
-              
-        let session = LanguageModelSession()
-        let stream = session.streamResponse(to: prompt)
       
-        for try await response in stream {
-          DispatchQueue.main.async {
-            withAnimation {
-              generatedSummary = response
-//              print("[LLM] RESPONSE: \(response)")
-            }
-          }
-        }
-        
-        DispatchQueue.main.async {
-          withAnimation {
-            summaryLoading = false
-          }
-        }
-      } catch {
-        DispatchQueue.main.async {
-          withAnimation {
-            if let genErr = error as? FoundationModels.LanguageModelSession.GenerationError {
-              switch genErr {
-              case .guardrailViolation(let context):
-                generationErrorMessage = context.debugDescription
-              case .exceededContextWindowSize(let context):
-                generationErrorMessage = context.debugDescription
-              case .assetsUnavailable(let context):
-                generationErrorMessage = context.debugDescription
-              case .decodingFailure(let context):
-                generationErrorMessage = context.debugDescription
-              case .unsupportedLanguageOrLocale(let context):
-                generationErrorMessage = context.debugDescription
-              default:
-                generationErrorMessage = "\(error)"
+      Task {
+          do {
+              let prompt = """
+                Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Write a few key points about the most important, interesting or controversial points commenters are discussing, with each point on a new line.
+
+                When quoting comments, use _underscores for italics_. For emphasis on key themes, use **bold sparingly**. Every time you mention a commenter's username, you must wrap it in backticks like `@username` - this applies to ALL usernames mentions without exception.
+
+                Examples of correct formatting:
+                - `@john_doe` mentioned that _"this is really helpful"_
+                - Several users like `@sarah123` and `@mike_wilson` agreed that **the main issue is cost**
+                - As `@reddit_user` put it: _"completely changed my perspective"_
+
+                Format your response as separate paragraphs or lines for each main point. Include 1-2 direct quotes as evidence. Write in a friendly, conversational tone and do not shy away from sprinkling in a little humor or sarcasm. 
+                DO NOT use formal section headers.
+
+                Comment data: 
+                """ + convertCommentsToLLMPrompt(comments)
+              
+              let session = LanguageModelSession()
+              let stream = session.streamResponse(to: prompt)
+              
+              // Optimized streaming with smooth updates
+              var buffer = ""
+              var lastUpdateTime = Date()
+              let minUpdateInterval: TimeInterval = 0.15 // Minimum 150ms between updates
+              var wordsSinceLastUpdate = 0
+              let wordsPerForceUpdate = 4 // Force update every 4 words regardless of time
+              
+              for try await response in stream {
+                  buffer = response
+                  let currentWords = buffer.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                  let newWordsCount = currentWords.count
+                  
+                  let now = Date()
+                  let timeSinceUpdate = now.timeIntervalSince(lastUpdateTime)
+                  
+                  // Update if enough time has passed OR we have enough new words
+                  if timeSinceUpdate >= minUpdateInterval || newWordsCount - wordsSinceLastUpdate >= wordsPerForceUpdate {
+                      
+                      await MainActor.run {
+                          generatedSummary = buffer
+                      }
+                      
+                      lastUpdateTime = now
+                      wordsSinceLastUpdate = newWordsCount
+                      
+                      // Small breathing room to prevent UI overwhelm
+                      try? await Task.sleep(nanoseconds: 25_000_000) // 25ms
+                  }
               }
-            } else {
-              generationErrorMessage = "\(error)"
-            }
-            
-            generatedSummary = nil
+              
+              // Final update to ensure complete content
+              await MainActor.run {
+                  withAnimation(.easeOut(duration: 0.3)) {
+                      generatedSummary = buffer
+                      summaryStreaming = false
+                  }
+              }
+              
+          } catch {
+              await MainActor.run {
+                  withAnimation(.easeOut(duration: 0.4)) {
+                      if let genErr = error as? FoundationModels.LanguageModelSession.GenerationError {
+                          switch genErr {
+                          case .guardrailViolation(let context):
+                              generationErrorMessage = context.debugDescription
+                          case .exceededContextWindowSize(let context):
+                              generationErrorMessage = context.debugDescription
+                          case .assetsUnavailable(let context):
+                              generationErrorMessage = context.debugDescription
+                          case .decodingFailure(let context):
+                              generationErrorMessage = context.debugDescription
+                          case .unsupportedLanguageOrLocale(let context):
+                              generationErrorMessage = context.debugDescription
+                          default:
+                              generationErrorMessage = "\(error)"
+                          }
+                      } else {
+                          generationErrorMessage = "\(error)"
+                      }
+                      
+                      generatedSummary = nil
+                      summaryStreaming = false
+                  }
+              }
           }
-        }
       }
-    }
   }
 
   var body: some View {
@@ -427,7 +464,7 @@ struct PostView: View, Equatable {
                   .padding(-10)
               }
               
-              GeneratedSummaryView(generatedSummary: $generatedSummary, errorMessage: $generationErrorMessage, loading: $summaryLoading)
+              GeneratedSummaryView(generatedSummary: $generatedSummary, errorMessage: $generationErrorMessage, streaming: $summaryStreaming)
               
               HStack (spacing: 6){
                 Text("Comments")
