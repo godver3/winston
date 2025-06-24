@@ -8,6 +8,68 @@
 import SwiftUI
 import Defaults
 
+// Shared state manager for auto-load queue
+class CommentAutoLoadManager: ObservableObject {
+    static let shared = CommentAutoLoadManager()
+    
+    @Published var currentAutoLoadingCommentId: String? = nil
+    private var queuedComments: [(id: String, index: Int)] = []
+    
+    private init() {}
+    
+    func canStartAutoLoad(for commentId: String, at index: Int) -> Bool {
+        return currentAutoLoadingCommentId == nil
+    }
+    
+    func requestAutoLoadSlot(for commentId: String, at index: Int) {
+        // Add to queue if not already there
+        if !queuedComments.contains(where: { $0.id == commentId }) {
+            queuedComments.append((id: commentId, index: index))
+            // Sort by index to prioritize comments higher up
+            queuedComments.sort { $0.index < $1.index }
+        }
+        
+        // Try to start the next comment if nothing is currently loading
+        processQueue()
+    }
+    
+    private func processQueue() {
+      guard currentAutoLoadingCommentId == nil && !queuedComments.isEmpty else {
+//          print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Cannot process queue - loading: \(currentAutoLoadingCommentId != nil), dragging: \(isDragging), queue empty: \(queuedComments.isEmpty)")
+          return
+      }
+      
+      // Get the comment with the lowest index (highest priority)
+      let nextComment = queuedComments.removeFirst()
+      currentAutoLoadingCommentId = nextComment.id
+
+      // Force UI update
+      DispatchQueue.main.async {
+          self.objectWillChange.send()
+      }
+    }
+    
+    func startAutoLoad(for commentId: String) {
+        currentAutoLoadingCommentId = commentId
+    }
+    
+    func stopAutoLoad(for commentId: String) {
+        if currentAutoLoadingCommentId == commentId {
+            currentAutoLoadingCommentId = nil
+            // Process next in queue immediately
+            processQueue()
+        }
+    }
+    
+    func isCurrentlyAutoLoading(_ commentId: String) -> Bool {
+        return currentAutoLoadingCommentId == commentId
+    }
+    
+    func removeFromQueue(_ commentId: String) {
+        queuedComments.removeAll { $0.id == commentId }
+    }
+}
+
 struct CommentLinkMore: View {
   var arrowKinds: [ArrowKind]
   var comment: Comment
@@ -20,17 +82,19 @@ struct CommentLinkMore: View {
   var newCommentsLoaded: (() -> Void)?
   var index: Int = 0
   
-  @SilentState var loadMoreTimer: Timer? = nil
   @State var loadMoreLoading = false
   @State var autoLoadProgress: Double = 0.0
   @State var autoLoadTimer: Timer? = nil
+  @State var resetProgressTimer: Timer? = nil
+  @State var hasRequestedAutoLoad = false
   
   @Environment(\.useTheme) private var selectedTheme
+  @StateObject private var autoLoadManager = CommentAutoLoadManager.shared
   
   private let timerInterval: TimeInterval = 0.1
   
   private func getAutoLoadDuration() -> TimeInterval {
-    return NetworkMonitor.shared.connectedToWifi ? 2.5 : 4
+    return NetworkMonitor.shared.connectedToWifi ? 1.5 : 3
   }
     
   func handleTap() {
@@ -57,20 +121,26 @@ struct CommentLinkMore: View {
     }
   }
   
-  private func startAutoLoadTimer() {
-    // Don't start timer if already loading or for top-level comments or single child comments
-    if loadMoreLoading { return }
-    
-    guard let data = comment.data else { return }
-    
-    // Skip auto-timer for top-level comments (depth 0) or single child comments
-    if data.depth == 0 { return }
-    if NetworkMonitor.shared.connectedToWifi, let count = data.count, count == 1 {
-      if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
-        return // These will be loaded immediately anyway
-      }
+  private func requestAutoLoadSlot() {
+    guard !hasRequestedAutoLoad else { return }
+    guard let currentIndex = commentIndexMap[comment.id] else {
+//      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] No index found for comment \(comment.id)")
+      return
     }
     
+//    print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Comment \(comment.id) requesting slot at index \(currentIndex)")
+    hasRequestedAutoLoad = true
+    autoLoadManager.requestAutoLoadSlot(for: comment.id, at: currentIndex)
+  }
+  
+  private func startAutoLoadTimer() {
+    // Don't start timer if already loading
+    if loadMoreLoading { return }
+        
+    // Only start if we're the current auto-loading comment
+    guard autoLoadManager.isCurrentlyAutoLoading(comment.id) else { return }
+    
+    print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] TIMER STARTED \(comment.id))")
     // Reset progress
     autoLoadProgress = 0.0
     
@@ -78,12 +148,33 @@ struct CommentLinkMore: View {
     let duration = getAutoLoadDuration()
     autoLoadTimer = Timer.scheduledTimer(withTimeInterval: timerInterval, repeats: true) { timer in
       DispatchQueue.main.async {
+        // Check if we're still allowed to auto-load (not dragging, still our turn)
+        guard autoLoadManager.isCurrentlyAutoLoading(comment.id) else {
+          timer.invalidate()
+          autoLoadTimer = nil
+          autoLoadProgress = 0.0
+          return
+        }
+        
         autoLoadProgress += timerInterval / duration
+        
+        resetProgressTimer?.invalidate()
         
         if autoLoadProgress >= 1.0 {
           timer.invalidate()
           autoLoadTimer = nil
+          resetProgressTimer = nil
           handleTap()
+        } else {
+          resetProgressTimer = Timer.scheduledTimer(withTimeInterval: 2 * timerInterval, repeats: false) { _ in
+            DispatchQueue.main.async {
+              withAnimation(.easeOut(duration: 0.2)) {
+                autoLoadProgress = 0.0
+              }
+            }
+            
+            resetProgressTimer = nil
+          }
         }
       }
     }
@@ -92,9 +183,30 @@ struct CommentLinkMore: View {
   private func cancelAutoLoadTimer() {
     autoLoadTimer?.invalidate()
     autoLoadTimer = nil
+    autoLoadManager.stopAutoLoad(for: comment.id)
+    autoLoadManager.removeFromQueue(comment.id)
+    hasRequestedAutoLoad = false
     withAnimation(.easeOut(duration: 0.2)) {
       autoLoadProgress = 0.0
     }
+  }
+  
+  // Helper to determine if this comment should be prioritized for auto-loading
+  private func shouldPrioritizeAutoLoad() -> Bool {
+    guard let data = comment.data else { return false }
+    guard let currentIndex = commentIndexMap[comment.id] else { return false }
+    
+    // Skip auto-timer for top-level comments (depth 0)
+    if data.depth == 0 { return false }
+    
+    // Skip single child comments on WiFi that are near the top
+    if NetworkMonitor.shared.connectedToWifi, let count = data.count, count == 1 {
+      if currentIndex <= topCommentIdx + 5 {
+        return false // These will be loaded immediately anyway
+      }
+    }
+    
+    return true
   }
   
   var body: some View {
@@ -139,7 +251,7 @@ struct CommentLinkMore: View {
           if autoLoadProgress > 0 && !loadMoreLoading {
             ZStack {
               Circle()
-                .stroke(selectedTheme.comments.theme.loadMoreText.color().opacity(0.3), lineWidth: 1.5)
+                .stroke(selectedTheme.comments.theme.loadMoreText.color().opacity(0.3), lineWidth: 1)
                 .frame(width: 12, height: 12)
               
               Circle()
@@ -177,22 +289,30 @@ struct CommentLinkMore: View {
         }
         
         if NetworkMonitor.shared.connectedToWifi, let count = data.count, count == 1 {
-          if (commentIndexMap[comment.id] ?? 9999) >= topCommentIdx {
-            handleTap()
-            return
-          }
+          handleTap()
+          return
         }
         
-        // Start auto-load timer for other cases
-        startAutoLoadTimer()
+        // Request auto-load slot for other cases
+        if shouldPrioritizeAutoLoad() {
+          requestAutoLoadSlot()
+        }
       }
       .onDisappear {
-        // Cancel timer when view disappears
+        // Cancel timer and remove from queue when view disappears
         cancelAutoLoadTimer()
       }
       .onChange(of: topCommentIdx) {
-        if (commentIndexMap[comment.id] ?? 9999) < topCommentIdx {
+        if let currentIndex = commentIndexMap[comment.id], currentIndex < topCommentIdx {
           cancelAutoLoadTimer()
+        }
+      }
+      .onChange(of: autoLoadManager.isCurrentlyAutoLoading(comment.id)) {
+        if !loadMoreLoading {
+          // It's our turn to auto-load
+          DispatchQueue.main.async {
+            startAutoLoadTimer()
+          }
         }
       }
     }
