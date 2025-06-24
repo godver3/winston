@@ -11,7 +11,7 @@ import Defaults
 struct ThemeStoreDetailsView: View {
   let themeData: ThemeData
   @EnvironmentObject var themeStore: ThemeStoreAPI
-  @StateObject var viewModel = AppDetailViewObject()
+//  @StateObject var viewModel = AppDetailViewObject()
   @Environment(\.useTheme) private var theme
   @Default(.AppearanceDefSettings) var appearanceDefSettings
   var body: some View {
@@ -22,9 +22,9 @@ struct ThemeStoreDetailsView: View {
           Divider()
             .padding(.horizontal)
         
-        AppDetailScreenshots(screenshots: viewModel.previews)
-          .shadow(radius: 1)
-          .padding()
+//        AppDetailScreenshots(screenshots: viewModel.previews)
+//          .shadow(radius: 1)
+//          .padding()
         
         Divider()
           .padding(.horizontal)
@@ -41,36 +41,36 @@ struct ThemeStoreDetailsView: View {
         .padding()
         
       }
-    } onOffsetChange: {
-      viewModel.scrollOffset = $0
-    }
-    .animation(.default, value: viewModel.hasScrolledPastNavigationBar)
+//    } onOffsetChange: {
+//      viewModel.scrollOffset = $0
+//    }
+//    .animation(.default, value: viewModel.hasScrolledPastNavigationBar)
     .toolbarBackground(.visible, for: .tabBar)
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear{
-      Task{
-        let urls = await themeStore.getPreviewImages(id: themeData.file_id ?? "")
-        viewModel.previews = urls?.previews ?? []
-        viewModel.accent = Color(themeData.color?.hex ?? "#0000FF")
-      }
-    }
-    .toolbar{
-      if viewModel.hasScrolledPastNavigationBar {
-        ToolbarItem(placement: .principal){
-          Group {
-            Image(systemName: themeData.icon ?? "xmark")
-              .fontSize(12)
-              .foregroundColor(.white)
-          }
-          .frame(width: 32, height: 32)
-          .background(RR(8, themeData.color?.color() ?? .blue))
-        }
-        
-        ToolbarItem(placement: .navigationBarTrailing){
-          ThemeItemDownloadButton(theme: themeData)
-        }
-      }
-    }
+//    .onAppear{
+//      Task{
+//        let urls = await themeStore.getPreviewImages(id: themeData.file_id ?? "")
+//        viewModel.previews = urls?.previews ?? []
+//        viewModel.accent = Color(themeData.color?.hex ?? "#0000FF")
+//      }
+//    }
+//    .toolbar{
+//      if viewModel.hasScrolledPastNavigationBar {
+//        ToolbarItem(placement: .principal){
+//          Group {
+//            Image(systemName: themeData.icon ?? "xmark")
+//              .fontSize(12)
+//              .foregroundColor(.white)
+//          }
+//          .frame(width: 32, height: 32)
+//          .background(RR(8, themeData.color?.color() ?? .blue))
+//        }
+//        
+//        ToolbarItem(placement: .navigationBarTrailing){
+//          ThemeItemDownloadButton(theme: themeData)
+//        }
+//      }
+//    }
     .if(appearanceDefSettings.themeStoreTint){ view in
       view.background{
         LinearGradient(gradient: Gradient(colors: [Color(uiColor: UIColor(hex: themeData.color!.hex)).opacity(0.3), Color(UIColor.systemBackground)]), startPoint: .topLeading, endPoint: .bottomTrailing)
@@ -84,18 +84,18 @@ struct ThemeStoreDetailsView: View {
     .accentColor(Color(uiColor: UIColor(hex: themeData.color!.hex)))
   }
 }
-
-extension ThemeStoreDetailsView {
-  @MainActor class AppDetailViewObject: ObservableObject {
-    @Published var accent: Color = .blue
-    @Published var hasScrolledPastNavigationBar: Bool = false
-    @Published var previews: [String] = []
-    @Published var scrollOffset: CGFloat = .zero {
-      didSet {
-        hasScrolledPastNavigationBar = scrollOffset < -60
-      }
-    }
-  }
-  
+//
+//extension ThemeStoreDetailsView {
+//  @MainActor class AppDetailViewObject: ObservableObject {
+//    @Published var accent: Color = .blue
+//    @Published var hasScrolledPastNavigationBar: Bool = false
+//    @Published var previews: [String] = []
+//    @Published var scrollOffset: CGFloat = .zero {
+//      didSet {
+//        hasScrolledPastNavigationBar = scrollOffset < -60
+//      }
+//    }
+//  }
+//  
 }
 

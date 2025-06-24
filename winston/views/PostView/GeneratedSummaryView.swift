@@ -57,9 +57,7 @@ struct GeneratedSummaryView: View {
                 startContinuousAnimations()
             }
             .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isCollapsed.toggle()
-                }
+              isCollapsed.toggle()
             }
         }
     }
@@ -139,9 +137,7 @@ struct GeneratedSummaryView: View {
     
     private var collapseButton: some View {
         Button(action: {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                isCollapsed.toggle()
-            }
+          isCollapsed.toggle()
         }) {
             Image(systemName: "chevron.down")
                 .font(.system(size: 12, weight: .bold))

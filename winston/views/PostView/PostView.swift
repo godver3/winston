@@ -35,6 +35,7 @@ struct PostView: View, Equatable {
   @State private var comments: [Comment] = []
   @State private var commentUpdate: Debouncer<Int> = Debouncer(0, delay: 0.25)
   @SilentState private var flattened: [[String:String]] = []
+  @SilentState private var lastFlattenedHash: Int = 0
   @SilentState private var matches: [String] = []
   // Map of comment id to target id to scroll to
   @SilentState private var matchMap: [String: String] = [:]
@@ -209,13 +210,21 @@ struct PostView: View, Equatable {
     }
   }
   
-  func flattenComments(_ update: Bool = false)  {
+  func flattenComments(_ update: Bool = false) {
     if !update && (!flattened.isEmpty || comments.isEmpty) { return }
     
+    // OPTIMIZATION: Cache the result based on comments count to avoid redundant flattening
+    let commentsHash = comments.count
+    if !update && lastFlattenedHash == commentsHash && !flattened.isEmpty {
+      return
+    }
+    
     flattened = CommentUtils.shared.flattenComments(comments)
-    commentIndexMap = flattened.enumerated().reduce(into: [:]) { partial, eo in
+    commentIndexMap = flattened.enumerated().reduce(into: [String: Int]()) { partial, eo in
       partial[eo.element["id"]!] = eo.offset
     }
+    
+    lastFlattenedHash = commentsHash
     
     if let topVisibleCommentId {
       updateTopCommentIdx(topVisibleCommentId)
@@ -236,34 +245,51 @@ struct PostView: View, Equatable {
           totalMatches = 0
         }
       }
-      
       return
     }
     
     flattenComments()
     
-    let matchingComments = searchOpen ? getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) : getUnseenComments()
-    matches = matchingComments.map({ $0["id"]! })
-    
-    matchMap = matchingComments.reduce(into: [:], { partial, comment in
-      if let id = comment["id"] {
-        partial[id] = comment["target"] ?? id
-      }
-    })
-    
-    indexOfFirstMatch = commentIndexMap[matches.first ?? ""] ?? -1
-    
-    DispatchQueue.main.async {
-      withAnimation {
-        totalMatches = matches.count
+    // OPTIMIZATION: Move the heavy filtering work to background thread
+    Task.detached(priority: .background) {
+      let matchingComments = await self.searchOpen ?
+        self.getMatchingComments(query.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)) :
+        self.getUnseenComments()
+      
+      let newMatches = matchingComments.map({ $0["id"]! })
+      let newMatchMap = matchingComments.reduce(into: [String: String](), { partial, comment in
+        if let id = comment["id"] {
+          partial[id] = comment["target"] ?? id
+        }
+      })
+      
+      let newIndexOfFirstMatch = await self.commentIndexMap[newMatches.first ?? ""] ?? -1
+      
+      // Update UI on main thread
+      await MainActor.run {
+        self.matches = newMatches
+        self.matchMap = newMatchMap
+        self.indexOfFirstMatch = newIndexOfFirstMatch
+        
+        withAnimation {
+          self.totalMatches = newMatches.count
+        }
+        
+        // Keep your existing scroll logic
+        self.scrollToNextMatch(true, reader)
       }
     }
-    
-    scrollToNextMatch(true, reader)
   }
   
   func getMatchingComments(_ query: String) -> [[String: String]] {
-    return flattened.filter({ ($0["body"] ?? "").contains(query)})
+    // OPTIMIZATION: Early return for empty query
+    guard !query.isEmpty else { return [] }
+    
+    // OPTIMIZATION: Use localizedCaseInsensitiveContains instead of .contains on lowercased strings
+    // This is faster and handles international characters better
+    return flattened.filter { comment in
+      (comment["body"] ?? "").localizedCaseInsensitiveContains(query)
+    }
   }
   
   func getUnseenComments() -> [[String: String]] {

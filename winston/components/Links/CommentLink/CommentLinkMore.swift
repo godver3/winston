@@ -94,7 +94,7 @@ struct CommentLinkMore: View {
   private let timerInterval: TimeInterval = 0.1
   
   private func getAutoLoadDuration() -> TimeInterval {
-    return NetworkMonitor.shared.connectedToWifi ? 1.5 : 3
+    return NetworkMonitor.shared.connectedToWifi ? 2 : 4
   }
     
   func handleTap() {
@@ -168,9 +168,7 @@ struct CommentLinkMore: View {
         } else {
           resetProgressTimer = Timer.scheduledTimer(withTimeInterval: 2 * timerInterval, repeats: false) { _ in
             DispatchQueue.main.async {
-              withAnimation(.easeOut(duration: 0.2)) {
-                autoLoadProgress = 0.0
-              }
+              autoLoadProgress = 0.0
             }
             
             resetProgressTimer = nil
@@ -189,24 +187,6 @@ struct CommentLinkMore: View {
     withAnimation(.easeOut(duration: 0.2)) {
       autoLoadProgress = 0.0
     }
-  }
-  
-  // Helper to determine if this comment should be prioritized for auto-loading
-  private func shouldPrioritizeAutoLoad() -> Bool {
-    guard let data = comment.data else { return false }
-    guard let currentIndex = commentIndexMap[comment.id] else { return false }
-    
-    // Skip auto-timer for top-level comments (depth 0)
-    if data.depth == 0 { return false }
-    
-    // Skip single child comments on WiFi that are near the top
-    if NetworkMonitor.shared.connectedToWifi, let count = data.count, count == 1 {
-      if currentIndex <= topCommentIdx + 5 {
-        return false // These will be loaded immediately anyway
-      }
-    }
-    
-    return true
   }
   
   var body: some View {
@@ -294,9 +274,7 @@ struct CommentLinkMore: View {
         }
         
         // Request auto-load slot for other cases
-        if shouldPrioritizeAutoLoad() {
-          requestAutoLoadSlot()
-        }
+        requestAutoLoadSlot()
       }
       .onDisappear {
         // Cancel timer and remove from queue when view disappears
