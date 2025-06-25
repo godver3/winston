@@ -22,7 +22,10 @@ struct PostView: View, Equatable {
   var highlightID: String?
   @Default(.PostPageDefSettings) private var defSettings
   @Default(.CommentsSectionDefSettings) var commentsSectionDefSettings
-  @Environment(\.useTheme) private var selectedTheme
+  
+  @State private var themeManager = InMemoryTheme.shared
+  private var selectedTheme: WinstonTheme { themeManager.currentTheme }
+  
   @Environment(\.globalLoaderStart) private var globalLoaderStart
   @State private var ignoreSpecificComment = false
   @State private var hideElements = true
@@ -54,7 +57,7 @@ struct PostView: View, Equatable {
   @SilentState private var lastAppearedIdx: Int = -1
   @SilentState private var scrollDir: Bool = false  
   @FocusState private var searchFocused: Bool
-  @State private var liveRefreshTimer: Timer? = nil
+  @State private var liveRefreshTask: Task<Void, Never>?
   @State private var initialLoading: Bool = true
   @State private var generatedSummary: String? = nil
   @State private var generationErrorMessage: String? = nil
@@ -78,19 +81,52 @@ struct PostView: View, Equatable {
     commentUpdate.value += 1
   }
   
-  func handleLiveRefreshTimer() {
-    if sort != .live {
-      liveRefreshTimer?.invalidate()
-      liveRefreshTimer = nil
-    } else if liveRefreshTimer == nil {
-      liveRefreshTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) {_ in
-        if comments.isEmpty || visibleComments.value.contains("|\(comments.first?.id ?? "")|") {
-          print("[LIVE] REFRESH for \(post.data?.title ?? post.id)")
-          updatePost()
-        }
-      }
-    }
-  }
+  func handleLiveRefresh() {
+     // Cancel any existing refresh task
+     liveRefreshTask?.cancel()
+     liveRefreshTask = nil
+     
+     // Only start live refresh for live sort
+     guard sort == .live else { return }
+     
+     liveRefreshTask = Task { @MainActor in
+       print("[LIVE] Starting live refresh task for \(self.post.data?.title ?? self.post.id)")
+       
+       while !Task.isCancelled && self.sort == .live {
+         do {
+           // Wait 5 seconds before next refresh
+           try await Task.sleep(nanoseconds: 5_000_000_000)
+         } catch {
+           // Task was cancelled during sleep
+           print("[LIVE] Live refresh task cancelled during sleep")
+           break
+         }
+         
+         // Double-check we're still in live mode and not cancelled
+         guard !Task.isCancelled && self.sort == .live else {
+           print("[LIVE] Live refresh task stopping - cancelled or sort changed")
+           break
+         }
+         
+         // Check if we should refresh (same logic as before)
+         let shouldRefresh = self.comments.isEmpty ||
+                            self.visibleComments.value.contains("|\(self.comments.first?.id ?? "")|")
+         
+         if shouldRefresh {
+           print("[LIVE] REFRESH for \(self.post.data?.title ?? self.post.id)")
+           self.updatePost()
+         }
+       }
+       
+       print("[LIVE] Live refresh task ended for \(self.post.data?.title ?? self.post.id)")
+     }
+   }
+   
+   private func stopLiveRefresh() {
+     liveRefreshTask?.cancel()
+     liveRefreshTask = nil
+     print("[LIVE] Live refresh stopped")
+   }
   
   func asyncFetch(_ reloadPost: Bool = false) async {
     var seenCommentsSet = false
@@ -750,7 +786,7 @@ struct PostView: View, Equatable {
         .navigationBarTitle("\(navtitle)", displayMode: .inline)
         .toolbar { Toolbar(title: navtitle, subtitle: subnavtitle, hideElements: hideElements, subreddit: subreddit, post: post, searchOpen: $searchOpen, unseenSkipperOpen: $unseenSkipperOpen, currentMatchIndex: $currentMatchIndex, totalMatches: $totalMatches, searchFocused: _searchFocused) }
         .onChange(of: sort) { _, val in
-          handleLiveRefreshTimer()
+          handleLiveRefresh()
           updatePost()
         }
         .onChange(of: visibleComments.debounced) { _, val in
@@ -774,7 +810,7 @@ struct PostView: View, Equatable {
               let defaultSort = title.contains("game thread") && !title.contains("post game thread") ?
                 CommentSortOption.live : Defaults[.CommentsSectionDefSettings].preferredSort
               sort = Defaults[.PostPageDefSettings].perPostSort ? (Defaults[.PostPageDefSettings].postSorts[post.id] ?? defaultSort) : defaultSort
-              self.handleLiveRefreshTimer()
+              self.handleLiveRefresh()
               
               if let highlightID {
                 doThisAfter(0.5) {
@@ -785,7 +821,7 @@ struct PostView: View, Equatable {
               }
             }
           } else {
-            self.handleLiveRefreshTimer()
+            self.handleLiveRefresh()
           }
           
           Task(priority: .background) {
@@ -807,8 +843,16 @@ struct PostView: View, Equatable {
           }
         }
         .onDisappear {
-          liveRefreshTimer?.invalidate()
-          liveRefreshTimer = nil
+          stopLiveRefresh()
+          
+          Task {
+              // Force cleanup of any remaining references
+              comments = []
+              flattened = []
+              matches = []
+              matchMap = [:]
+              commentIndexMap = [:]
+          }
         }
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {
@@ -823,6 +867,17 @@ struct PostView: View, Equatable {
         .onChange(of: NetworkMonitor.shared.connectedToWifi) {
           if NetworkMonitor.shared.connectedToWifi && comments.count == 0 {
             refresh()
+          }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
+          stopLiveRefresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+          stopLiveRefresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+          if sort == .live {
+            handleLiveRefresh()
           }
         }
         .commentSkipper(

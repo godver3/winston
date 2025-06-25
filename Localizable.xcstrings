@@ -3210,9 +3210,6 @@
         }
       }
     },
-    "Select a tip above" : {
-
-    },
     "SELECTING" : {
       "localizations" : {
         "de" : {
@@ -3748,9 +3745,6 @@
         }
       }
     },
-    "Thanks for supporting the project!" : {
-
-    },
     "That error seems happen randomly. It usually helps if you create another credential in Reddit site and try again." : {
 
     },
@@ -3855,9 +3849,6 @@
     "There was an error importing this theme" : {
 
     },
-    "They say the stars hide a secret..." : {
-
-    },
     "This is not working yet :(" : {
       "localizations" : {
         "de" : {
@@ -3955,10 +3946,8 @@
         }
       }
     },
-    "Tip %@" : {
-
-    },
     "Tip jar" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -4310,9 +4299,6 @@
           }
         }
       }
-    },
-    "x" : {
-
     },
     "Yes" : {
       "localizations" : {

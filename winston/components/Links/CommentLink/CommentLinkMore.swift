@@ -280,11 +280,11 @@ struct CommentLinkMore: View {
         // Cancel timer and remove from queue when view disappears
         cancelAutoLoadTimer()
       }
-      .onChange(of: topCommentIdx) {
-        if let currentIndex = commentIndexMap[comment.id], currentIndex < topCommentIdx {
-          cancelAutoLoadTimer()
-        }
-      }
+//      .onChange(of: topCommentIdx) {
+//        if let currentIndex = commentIndexMap[comment.id], currentIndex < topCommentIdx {
+//          cancelAutoLoadTimer()
+//        }
+//      }
       .onChange(of: autoLoadManager.isCurrentlyAutoLoading(comment.id)) {
         if !loadMoreLoading {
           // It's our turn to auto-load
