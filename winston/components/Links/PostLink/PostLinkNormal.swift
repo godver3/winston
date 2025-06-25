@@ -88,26 +88,6 @@ struct PostLinkNormal: View, Equatable, Identifiable {
       if let extractedMedia = winstonData.extractedMedia {
         MediaPresenter(winstonData: winstonData, controller: controller, postTitle: data.formattedTitle(), badgeKit: data.badgeKit, avatarImageRequest: winstonData.avatarImageRequest, markAsSeen: !defSettings.lightboxReadsPost ? nil : markAsRead, cornerRadius: theme.theme.mediaCornerRadius, blurPostLinkNSFW: defSettings.blurNSFW, media: extractedMedia, over18: over18, compact: false, contentWidth: winstonData.postDimensions.mediaSize?.width ?? 0, maxMediaHeightScreenPercentage: defSettings.maxMediaHeightScreenPercentage, resetVideo: resetVideo)
           .allowsHitTesting(defSettings.isMediaTappable)
-        
-        if case .repost(let repost) = extractedMedia {
-          if let repostWinstonData = repost.winstonData, let repostSub = repostWinstonData.subreddit {
-            PostLink(
-              id: repost.id,
-              controller: controller,
-              theme: theme,
-              showSub: true,
-              secondary: true,
-              compactPerSubreddit: false,
-              contentWidth: contentWidth,
-              defSettings: defSettings
-            )
-            .background(Color.primary.opacity(0.05))
-            .cornerRadius(theme.theme.mediaCornerRadius)
-            .environment(\.contextPost, repost)
-            .environment(\.contextSubreddit, repostSub)
-            .environment(\.contextPostWinstonData, repostWinstonData)
-          }
-        }
       }
     }
   }

@@ -788,7 +788,7 @@
 		EC3188202A92D6D900CB3738 /* MultiPostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiPostsView.swift; sourceTree = "<group>"; };
 		EC3188242A92F42800CB3738 /* MultiLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiLink.swift; sourceTree = "<group>"; };
 		EC31882A2A94439D00CB3738 /* mediaExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mediaExtractor.swift; sourceTree = "<group>"; };
-		EC31882C2A94736E00CB3738 /* MediaPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPresenter.swift; sourceTree = "<group>"; };
+		EC31882C2A94736E00CB3738 /* MediaPresenter.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = MediaPresenter.swift; sourceTree = "<group>"; tabWidth = 2; };
 		EC3188312A94770700CB3738 /* GalleryThumb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GalleryThumb.swift; sourceTree = "<group>"; };
 		EC31DB172B12F0EB00A777ED /* CircleWave.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = CircleWave.metal; sourceTree = "<group>"; };
 		EC31DB192B12F11C00A777ED /* Water.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Water.metal; sourceTree = "<group>"; };

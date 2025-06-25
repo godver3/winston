@@ -57,6 +57,8 @@ struct MediaPresenter: View, Equatable {
   let maxMediaHeightScreenPercentage: CGFloat
   let resetVideo: ((SharedVideo) -> ())?
   
+  @Default(.PostLinkDefSettings) private var defSettings
+  
   var body: some View {
     let mediaSize = (fullPage ? winstonData.postDimensionsForcedNormal : winstonData.postDimensions).mediaSize
     switch media {
@@ -112,6 +114,25 @@ struct MediaPresenter: View, Equatable {
         } else if let sub = postExtractedEntity.subredditID, let postID = postExtractedEntity.postID, let url = URL(string: "https://reddit.com/r/\(sub)/comments/\(postID)") {
           OnlyURL(url: url)
         }
+      }
+    case .repost(let repost):
+      let theme = InMemoryTheme.shared.currentTheme.postLinks
+      if let repostWinstonData = repost.winstonData, let repostSub = repostWinstonData.subreddit {
+        PostLink(
+          id: repost.id,
+          controller: controller,
+          theme: theme,
+          showSub: true,
+          secondary: true,
+          compactPerSubreddit: false,
+          contentWidth: contentWidth,
+          defSettings: defSettings
+        )
+        .background(Color.primary.opacity(0.05))
+        .cornerRadius(theme.theme.mediaCornerRadius)
+        .environment(\.contextPost, repost)
+        .environment(\.contextSubreddit, repostSub)
+        .environment(\.contextPostWinstonData, repostWinstonData)
       }
     case .comment(let commentExtractedEntity):
       if let commentExtractedEntity = commentExtractedEntity {
