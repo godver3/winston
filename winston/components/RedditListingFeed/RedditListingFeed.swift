@@ -38,7 +38,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
       return "chart.line.uptrend.xyaxis.circle.fill"
     }
     
-    return "xmark"
+    return "questionmark.cirlce.fill"
   }
   
   func getSubColor(_ subId: String) -> Color {
@@ -52,7 +52,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
       return  Color.hex("3B82F6")
     }
     
-    return Color.gray
+    return Color.hex("442222")
   }
   
   
