@@ -135,6 +135,18 @@ class FeedItemsManager<S> {
     func elementAppeared(entity: RedditEntityType, index: Int, currentPostId: String?) async {
 //      print("[LIST-APPEARED] idx: \(index) id: \(entity.id)")
       
+      // Add bounds checking
+      guard index >= 0 && index < entities.count else {
+          print("Index out of bounds in elementAppeared: \(index)")
+          return
+      }
+      
+      // Ensure entity matches the one at the index
+      guard entities[safe: index]?.id == entity.id else {
+          print("Entity mismatch in elementAppeared - expected: \(entities[safe: index]?.id ?? "nil"), got: \(entity.id)")
+          return
+      }
+      
       if currentPostId != nil, !scrolling, !lastAppearedId.isEmpty, scrollingDown && (index - lastAppearedIndex) > 3, let scrollProxy {
         scrolling = true
         
@@ -166,58 +178,93 @@ class FeedItemsManager<S> {
           self.currentTask = Task { await fetchCaller(loadingMore: true) }
       }
       
-      let start = index - prefetchRange < 0 ? 0 : index - prefetchRange
-      let end = index + (prefetchRange + 1) > entities.count ? entities.count : index + (prefetchRange + 1)
-      let toPrefetch = start < end ? Array(entities[start..<end]) : []
-      let reqs = getImgReqsFrom(toPrefetch)
+      // Safer prefetching with bounds checking
+      let start = max(0, index - prefetchRange)
+      let end = min(entities.count, index + prefetchRange + 1)
       
-      Post.prefetcher.startPrefetching(with: reqs)
+      guard start < end else { return }
+      
+      let toPrefetch = Array(entities[start..<end])
+      
+      do {
+          let reqs = getImgReqsFrom(toPrefetch)
+          Post.prefetcher.startPrefetching(with: reqs)
+      } catch {
+          print("Error in prefetching: \(error)")
+      }
     }
     
     func elementDisappeared(entity: RedditEntityType, index: Int) async {
-        let reqs = getImgReqsFrom([entity])
-        Post.prefetcher.stopPrefetching(with: reqs)
+        do {
+            let reqs = getImgReqsFrom([entity])
+            Post.prefetcher.stopPrefetching(with: reqs)
+        } catch {
+            print("Error in elementDisappeared prefetching: \(error)")
+        }
     }
     
     private func getImgReqsFrom(_ entities: [RedditEntityType]) -> [ImageRequest] {
-        entities.reduce([] as [ImageRequest]) { partialResult, entity in
-            var newPartial = partialResult
-            switch entity {
-            case .post(let post):
-                if let avatarImgReq = post.winstonData?.avatarImageRequest {
-                    newPartial.append(avatarImgReq)
-                }
-                if let extractedMedia = post.winstonData?.extractedMedia {
+        // Create a copy to avoid concurrent modification issues
+        let entitiesCopy = entities
+        var imageRequests: [ImageRequest] = []
+        
+        for entity in entitiesCopy {
+            do {
+                switch entity {
+                case .post(let post):
+                    // Handle avatar image request
+                    if let avatarImgReq = post.winstonData?.avatarImageRequest {
+                        imageRequests.append(avatarImgReq)
+                    }
+                    
+                    // Handle extracted media with individual error handling
+                    guard let extractedMedia = post.winstonData?.extractedMedia else { continue }
+                    
                     switch extractedMedia {
-                    case .comment(let comment):
+                    case .comment(_):
                         break
                     case .imgs(let imgsExtracted):
-                        newPartial = newPartial + imgsExtracted.map { $0.request }
+                        for imgExtracted in imgsExtracted {
+                            do {
+                                let request = imgExtracted.request
+                                imageRequests.append(request)
+                            } catch {
+                                print("Failed to create image request for imgExtracted: \(error)")
+                                continue
+                            }
+                        }
                     case .link(let link):
                         if let imgReq = link.imageReq {
-                            newPartial.append(imgReq)
+                            imageRequests.append(imgReq)
                         }
-                        break
-                    case .video(let video):
+                    case .video(_):
                         break
                     case .yt(let video):
-                        newPartial.append(video.thumbnailRequest)
-                    case .streamable(_):
-                        break
-                    case .repost(_):
-                        break
-                    case .post(_):
-                        break
-                    case .subreddit(_):
-                        break
-                    case .user(_):
+                        do {
+                            let thumbnailReq = video.thumbnailRequest
+                            imageRequests.append(thumbnailReq)
+                        } catch {
+                            print("Failed to create YouTube thumbnail request: \(error)")
+                        }
+                    case .streamable(_), .repost(_), .post(_), .subreddit(_), .user(_):
                         break
                     }
+                default:
+                    break
                 }
-                break
-            default: break
+            } catch {
+                print("Error processing entity \(entity.id): \(error)")
+                continue
             }
-            return newPartial
         }
+        
+        return imageRequests
+    }
+}
+
+// Extension for safe array access
+extension Array {
+    subscript(safe index: Int) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }
