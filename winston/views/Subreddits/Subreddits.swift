@@ -31,8 +31,6 @@ struct Subreddits: View, Equatable {
     self.loaded = loaded
     self._subreddits = FetchRequest<CachedSub>(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)], predicate: NSPredicate(format: "winstonCredentialID == %@", currentCredentialID as CVarArg), animation: .default)
     self._multis = FetchRequest<CachedMulti>(sortDescriptors: [NSSortDescriptor(key: "display_name", ascending: true)], predicate: NSPredicate(format: "winstonCredentialID == %@", currentCredentialID as CVarArg), animation: .default)
-    
-    _localFavState = State(initialValue: localFavorites)
   }
   
   @FetchRequest private var subreddits: FetchedResults<CachedSub>
@@ -83,24 +81,9 @@ struct Subreddits: View, Equatable {
           .listRowSeparator(.hidden)
           .listRowBackground(Color.clear)
           .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-          
-          //          Section{
-          //            UpsellCard(upsellName: "themesUpsell_01", {
-          //                Text("Tired of Winstons current look? Try the theme editor in settings now!")
-          //                .winstonShiny()
-          //              .fontWeight(.semibold)
-          //              .font(.system(size: 15))
-          //            })
-          //            .padding()
-          //          }
-          //          .listRowSeparator(.hidden)
-          ////            .listRowBackground(Color.clear)
-          //          .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-          
-          PostsInBoxView()
-            .scrollIndicators(.hidden)
-          //            .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-            .listRowBackground(Color.clear)
+          .onAppear {
+            localFavState = localFavorites
+          }
           
           if multis.count > 0 {
             Section("Multis") {
