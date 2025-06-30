@@ -19,13 +19,10 @@ class AVPlayerPool {
   
   func resetVideo(post: Post, video: SharedVideo) {
     if hasBeenReset.contains(video.id) {
-      print("[VID] HAS BEEN RESET, SKIPPING \(video.url)")
       return
     }
     
     hasBeenReset.append(video.id)
-    print("[VID] RESET \(video.url)")
-    
     
     DispatchQueue.main.async {
       let newVideo: MediaExtractedType = .video(SharedVideo.get(url: video.url, size: video.size, resetCache: true, prevVideoId: video.id))
@@ -183,8 +180,7 @@ struct SharedVideo: Equatable {
           // Ensure audio settings are maintained after item replacement
           player.volume = 0.0
           player.isMuted = true
-          
-          // For ambient videos, don't interfere with now playing
+//          print("[VID] Asset loaded and player item set for: \(self.url)")
         }
         
       } catch {
@@ -245,6 +241,10 @@ struct VideoPlayerPost: View, Equatable {
   @State private var fullscreen = false
   @State private var hasAppeared = false
   @State private var observersAdded = false
+  
+  @State private var cancellables = Set<AnyCancellable>()
+  @State private var hasAutoPlayed = false
+  
   @Default(.VideoDefSettings) private var videoDefSettings
   @Environment(\.scenePhase) private var scenePhase
   
@@ -345,82 +345,172 @@ struct VideoPlayerPost: View, Equatable {
   }
   
   private func handleOnAppear() {
-    guard let sharedVideo = sharedVideo, !hasAppeared else { return }
-    hasAppeared = true
-    
-    DispatchQueue.main.async {
-      if loopVideos && !observersAdded {
-        addObserver()
-      }
+      guard let sharedVideo = sharedVideo, !hasAppeared else { return }
+      hasAppeared = true
       
-      if (sharedVideo.player.status == .failed) {
-        resetVideo?(sharedVideo)
-      } else if NetworkMonitor.shared.connectedToWifi {
-        sharedVideo.loadIfNeeded()
+      DispatchQueue.main.async {
+          if loopVideos && !observersAdded {
+              addObserver()
+          }
+          
+          if (sharedVideo.player.status == .failed) {
+              resetVideo?(sharedVideo)
+          } else if NetworkMonitor.shared.connectedToWifi {
+              sharedVideo.loadIfNeeded()
+          }
+          
+          // Set up status observers for autoplay
+          setupAutoplayObservers()
+          
+          // Try immediate autoplay if ready
+          attemptAutoplay()
+          
+          Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) + 1
       }
-      
-      if autoPlayVideos {
-        sharedVideo.player.play()
-      }
-      
-      Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) + 1
-    }
   }
-  
-  private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-    guard let sharedVideo = sharedVideo, hasAppeared else { return }
-    
-    DispatchQueue.main.async {
-      if newPhase == .active {
-        
-        // Reactivate audio session if needed
-        do {
-          try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-          print("[VID] Failed to reactivate audio session: \(error)")
-        }
-        
-        // Check for failed players and reset if needed
-        if (sharedVideo.player.status == .failed ||
-            sharedVideo.player.currentItem?.status == .failed) {
-          print("[VID] Player failed or stuck, resetting video")
-          resetVideo?(sharedVideo)
-        } else if autoPlayVideos && !fullscreen {
-          // Only auto-play if not in fullscreen (user controls playback in fullscreen)
+
+  // Add this new method to set up status observers using Combine
+  private func setupAutoplayObservers() {
+      guard let sharedVideo = sharedVideo, autoPlayVideos else { return }
+      
+      // Clean up any existing observers first
+      cleanupAutoplayObservers()
+      
+      let videoUrl = sharedVideo.url // Capture URL for logging
+      
+      // Observe player status changes
+      sharedVideo.player.publisher(for: \.status)
+          .receive(on: DispatchQueue.main)
+          .sink { [self] status in
+//              print("[VID] Player status changed to: \(status.rawValue) for \(videoUrl)")
+              attemptAutoplay()
+          }
+          .store(in: &cancellables)
+      
+      // Observe current item changes
+      sharedVideo.player.publisher(for: \.currentItem)
+          .receive(on: DispatchQueue.main)
+          .sink { [self] item in
+//              print("[VID] Current item changed: \(item != nil) for \(videoUrl)")
+              observeCurrentItemStatus()
+              attemptAutoplay()
+          }
+          .store(in: &cancellables)
+      
+      // Set up initial item observer if item already exists
+      observeCurrentItemStatus()
+  }
+
+  // Helper method to observe the current item's status
+  private func observeCurrentItemStatus() {
+      guard let sharedVideo = sharedVideo else { return }
+      
+      if let currentItem = sharedVideo.player.currentItem {
+          currentItem.publisher(for: \.status)
+              .receive(on: DispatchQueue.main)
+              .sink { [self] status in
+//                  print("[VID] Player item status changed to: \(status.rawValue) for \(sharedVideo.url)")
+                  attemptAutoplay()
+              }
+              .store(in: &cancellables)
+      }
+  }
+
+  // Remove the static method and Nav extension as they're no longer needed
+
+  // Enhanced autoplay attempt method that can access state
+  private func attemptAutoplay() {
+      guard let sharedVideo = sharedVideo else { return }
+      
+      // Check all conditions
+      let shouldAutoplay = autoPlayVideos
+      let notAlreadyPlayed = !hasAutoPlayed
+      let hasAppearedCheck = hasAppeared
+      let notFullscreen = !fullscreen
+      let hasCurrentItem = sharedVideo.player.currentItem != nil
+      let playerReady = sharedVideo.player.status == .readyToPlay
+      let itemReady = sharedVideo.player.currentItem?.status == .readyToPlay
+      
+//      print("[VID] Autoplay check - shouldAutoplay: \(shouldAutoplay), notAlreadyPlayed: \(notAlreadyPlayed), hasAppeared: \(hasAppearedCheck), notFullscreen: \(notFullscreen), hasCurrentItem: \(hasCurrentItem), playerReady: \(playerReady), itemReady: \(itemReady ?? false)")
+      
+      guard shouldAutoplay && notAlreadyPlayed && hasAppearedCheck && notFullscreen else {
+          return
+      }
+      
+      if hasCurrentItem && playerReady && (itemReady == true) {
+//          print("[VID] ✅ Starting autoplay for: \(sharedVideo.url)")
+          hasAutoPlayed = true
           sharedVideo.player.play()
-        }
-      } else if newPhase == .inactive || newPhase == .background {
-        sharedVideo.player.pause()
-        
-        // Deactivate audio session when going to background
-        do {
-          try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-        } catch {
-          print("[VID] Failed to deactivate audio session: \(error)")
-        }
+          
+          // Clean up observers once we've successfully autoplayed
+          cleanupAutoplayObservers()
+      } else {
+//          print("[VID] ⏳ Not ready for autoplay yet")
       }
-    }
   }
-  
-  
+
+  // Helper method to clean up autoplay observers
+  private func cleanupAutoplayObservers() {
+      cancellables.removeAll()
+  }
+
+  // Update the handleOnDisappear method
   private func handleOnDisappear() {
-    guard let sharedVideo = sharedVideo, hasAppeared else { return }
-    hasAppeared = false
-    
-    // Clean up observers first
-    removeObserver()
-    
-    // Handle video cleanup
-    if (Nav.shared.currVideos[sharedVideo.id] ?? 0) <= 1 {
-      Task(priority: .background) {
-        await MainActor.run {
-          sharedVideo.player.seek(to: .zero)
-          sharedVideo.player.pause()
-        }
+      guard let sharedVideo = sharedVideo, hasAppeared else { return }
+      hasAppeared = false
+      hasAutoPlayed = false // Reset for next appearance
+      
+      // Clean up all observers
+      removeObserver()
+      cleanupAutoplayObservers()
+      
+      // Handle video cleanup
+      if (Nav.shared.currVideos[sharedVideo.id] ?? 0) <= 1 {
+          Task(priority: .background) {
+              await MainActor.run {
+                  sharedVideo.player.seek(to: .zero)
+                  sharedVideo.player.pause()
+              }
+          }
       }
-    }
-    
-    Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) > 1 ? Nav.shared.currVideos[sharedVideo.id]! - 1 : nil
+      
+      Nav.shared.currVideos[sharedVideo.id] = (Nav.shared.currVideos[sharedVideo.id] ?? 0) > 1 ? Nav.shared.currVideos[sharedVideo.id]! - 1 : nil
+  }
+
+  // Update the handleScenePhaseChange method to reset autoplay on reactivation
+  private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+      guard let sharedVideo = sharedVideo, hasAppeared else { return }
+      
+      DispatchQueue.main.async {
+          if newPhase == .active {
+              // Reactivate audio session if needed
+              do {
+                  try AVAudioSession.sharedInstance().setActive(true)
+              } catch {
+                  print("[VID] Failed to reactivate audio session: \(error)")
+              }
+              
+              // Check for failed players and reset if needed
+              if (sharedVideo.player.status == .failed ||
+                  sharedVideo.player.currentItem?.status == .failed) {
+                  print("[VID] Player failed or stuck, resetting video")
+                  resetVideo?(sharedVideo)
+              } else if autoPlayVideos && !fullscreen && !hasAutoPlayed {
+                  // Reset autoplay observers and try again
+                  setupAutoplayObservers()
+                  attemptAutoplay()
+              }
+          } else if newPhase == .inactive || newPhase == .background {
+              sharedVideo.player.pause()
+              
+              // Deactivate audio session when going to background
+              do {
+                  try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+              } catch {
+                  print("[VID] Failed to deactivate audio session: \(error)")
+              }
+          }
+      }
   }
   
   private func handleFullscreenChange(_ val: Bool) {
@@ -604,7 +694,7 @@ struct FullScreenVP: View {
     
     guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
     windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
-
+    
     if let rootViewController = windowScene.windows.first?.rootViewController {
       rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
     }
