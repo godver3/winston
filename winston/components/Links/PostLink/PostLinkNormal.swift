@@ -60,13 +60,8 @@ struct PostLinkNormal: View, Equatable, Identifiable {
     }
   }
   
-  func resetVideo(video: SharedVideo) {
-    print("[VID] RESET \(video.url)")
-    DispatchQueue.main.async {
-      let newVideo: MediaExtractedType = .video(SharedVideo.get(url: video.url, size: video.size, resetCache: true, prevVideoId: video.id))
-      post.winstonData?.extractedMedia = newVideo
-      post.winstonData?.extractedMediaForcedNormal = newVideo
-    }
+  func resetVideo(video: SharedVideo) {    
+    AVPlayerPool.shared.resetVideo(post: post, video: video)
   }
   
   func onDisappear() {

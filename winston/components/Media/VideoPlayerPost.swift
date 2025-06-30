@@ -4,10 +4,104 @@ import CoreMedia
 import AVKit
 import AVFoundation
 import Combine
+import MediaPlayer
+
+// MARK: - AVPlayer Pool Manager
+class AVPlayerPool {
+  static let shared = AVPlayerPool()
+  private let maxPoolSize = 3
+  private var availablePlayers: [AVPlayer] = []
+  private var inUsePlayers: [String: AVPlayer] = [:] // Changed to dictionary for better tracking
+  private let queue = DispatchQueue(label: "com.app.avplayerpool")
+  private var hasBeenReset: [String] = []
+  
+  private init() {}
+  
+  func resetVideo(post: Post, video: SharedVideo) {
+    if hasBeenReset.contains(video.id) {
+      print("[VID] HAS BEEN RESET, SKIPPING \(video.url)")
+      return
+    }
+    
+    hasBeenReset.append(video.id)
+    print("[VID] RESET \(video.url)")
+    
+    
+    DispatchQueue.main.async {
+      let newVideo: MediaExtractedType = .video(SharedVideo.get(url: video.url, size: video.size, resetCache: true, prevVideoId: video.id))
+      post.winstonData?.extractedMedia = newVideo
+      post.winstonData?.extractedMediaForcedNormal = newVideo
+    }
+  }
+  
+  func getPlayer(for id: String) -> AVPlayer {
+    return queue.sync {
+      // Check if player already exists for this ID
+      if let existingPlayer = inUsePlayers[id] {
+        return existingPlayer
+      }
+      
+      // Try to reuse an available player
+      if !availablePlayers.isEmpty {
+        let player = availablePlayers.removeFirst()
+        inUsePlayers[id] = player
+        return player
+      }
+      
+      // Create new player
+      let newPlayer = AVPlayer()
+      newPlayer.volume = 0.0
+      newPlayer.isMuted = true
+      newPlayer.automaticallyWaitsToMinimizeStalling = false
+      newPlayer.actionAtItemEnd = .pause
+      
+      // Prevent Now Playing info
+      newPlayer.allowsExternalPlayback = false
+      newPlayer.preventsDisplaySleepDuringVideoPlayback = false
+      
+      inUsePlayers[id] = newPlayer
+      return newPlayer
+    }
+  }
+  
+  func returnPlayer(for id: String) {
+    queue.sync {
+      guard let player = inUsePlayers[id] else { return }
+      
+      // Reset player state on main thread to avoid crashes
+      DispatchQueue.main.async { [weak player] in
+        guard let player = player else { return }
+        player.pause()
+        player.seek(to: .zero)
+        player.replaceCurrentItem(with: nil)
+      }
+      
+      inUsePlayers.removeValue(forKey: id)
+      
+      // Only keep up to maxPoolSize players
+      if availablePlayers.count < maxPoolSize {
+        availablePlayers.append(player)
+      }
+    }
+  }
+  
+  func drain() {
+    queue.sync {
+      // Pause all players on main thread
+      let allPlayers = Array(inUsePlayers.values) + availablePlayers
+      DispatchQueue.main.async {
+        allPlayers.forEach { $0.pause() }
+      }
+      
+      availablePlayers.removeAll()
+      inUsePlayers.removeAll()
+    }
+  }
+}
 
 struct SharedVideo: Equatable {
   static func == (lhs: SharedVideo, rhs: SharedVideo) -> Bool {
-    lhs.url == rhs.url && lhs.id == rhs.id && lhs.player.currentItem == rhs.player.currentItem
+    lhs.url == rhs.url && lhs.id == rhs.id
   }
   
   var player: AVPlayer
@@ -18,7 +112,6 @@ struct SharedVideo: Equatable {
   private var isCleanedUp = false
   
   static func get(url: URL, size: CGSize, resetCache: Bool = false, prevVideoId: String? = nil) -> SharedVideo {
-    
     if resetCache {
       let cacheKey = SharedVideo.cacheKey(url: url, size: size)
       Caches.videos.cache.removeValue(forKey: cacheKey)
@@ -33,9 +126,9 @@ struct SharedVideo: Equatable {
     
     return sharedVideo
   }
-
+  
   static func cacheKey(url: URL, size: CGSize) -> String {
-    return "\(url.absoluteString):\(size.width)x\(size.height)"
+    return "\(url.absoluteString):\(Int(size.width))x\(Int(size.height))"
   }
   
   init(url: URL, size: CGSize) {
@@ -45,8 +138,6 @@ struct SharedVideo: Equatable {
     self.key = SharedVideo.cacheKey(url: url, size: size)
     
     if let asset = Caches.videos.get(key: self.key) {
-      print("[VID] RETRIEVED FROM CACHE \(url.absoluteString)")
-
       let playerItem = AVPlayerItem(asset: asset)
       self.player = AVPlayer(playerItem: playerItem)
     } else {
@@ -56,44 +147,83 @@ struct SharedVideo: Equatable {
           Caches.videos.addKeyValue(key: self.key, data: { asset }, expires: Date().dateByAdding(1, .day).date)
         }
       } else {
-        self.player = AVPlayer(playerItem: nil)
+        self.player = AVPlayer()
       }
     }
     
+    // Configure player to not interfere with background audio
     self.player.volume = 0.0
     self.player.isMuted = true
+    self.player.automaticallyWaitsToMinimizeStalling = true
+    self.player.preventsDisplaySleepDuringVideoPlayback = false
+    
+    // Ensure player doesn't take over audio session
+    self.player.allowsExternalPlayback = false
+    
+    // For ambient videos, we shouldn't interfere with now playing at all
   }
   
   func loadIfNeeded() {
-    guard !isCleanedUp else { return }
-    if player.currentItem != nil { return }
+    guard !isCleanedUp, player.currentItem == nil else { return }
     
     Task(priority: .high) {
       do {
-        // Wait for asset to load
         let asset = AVURLAsset(url: self.url)
         let _ = try await asset.load(.duration, .tracks, .isPlayable)
         
         Caches.videos.addKeyValue(key: self.key, data: { asset }, expires: Date().dateByAdding(1, .day).date)
         
         let playerItem = AVPlayerItem(asset: asset)
+        playerItem.preferredForwardBufferDuration = 5.0
         
         await MainActor.run {
           guard !self.isCleanedUp else { return }
           player.replaceCurrentItem(with: playerItem)
+          
+          // Ensure audio settings are maintained after item replacement
+          player.volume = 0.0
+          player.isMuted = true
+          
+          // For ambient videos, don't interfere with now playing
         }
+        
       } catch {
         print("[VID] Failed to load asset: \(error)")
       }
     }
   }
   
+  func safeCleanup() {
+    guard !isCleanedUp else { return }
+    
+    Task { @MainActor in
+      // Don't interfere with user's background audio/now playing
+      
+      // Pause and reset player before cleanup
+      player.pause()
+      await player.seek(to: .zero)
+      
+      // Small delay to ensure operations complete
+      try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+      
+      // Replace with nil item to properly release resources
+      player.replaceCurrentItem(with: nil)
+    }
+  }
+  
   mutating func cleanup() {
     guard !isCleanedUp else { return }
     isCleanedUp = true
-    
-    // Don't immediately clean up the player - let the system handle it naturally
-    // This prevents black screen issues when sharing players between views
+    safeCleanup()
+  }
+  
+  private func clearNowPlayingInfo() {
+    // Only clear if we actually set any now playing info
+    // For silent/ambient videos, we shouldn't be setting any info anyway
+    // So this should be safe, but let's be extra cautious
+    if MPNowPlayingInfoCenter.default().nowPlayingInfo?[MPMediaItemPropertyTitle] as? String == "Video" {
+      MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+    }
   }
 }
 
@@ -137,7 +267,6 @@ struct VideoPlayerPost: View, Equatable {
   
   var safe: Double { getSafeArea().top + getSafeArea().bottom }
   
-  
   var body: some View {
     let maxHeight: CGFloat = (maxMediaHeightScreenPercentage / 100) * (.screenH)
     let sourceWidth = size.width
@@ -146,68 +275,56 @@ struct VideoPlayerPost: View, Equatable {
     let finalHeight = maxMediaHeightScreenPercentage != 110 ? Double(min(maxHeight, propHeight)) : Double(propHeight)
     
     if let sharedVideo = sharedVideo {
-      let hasAudio = sharedVideo.player.currentItem?.tracks.contains(where: {$0.assetTrack?.mediaType == AVMediaType.audio})
-      if let controller = controller {
-        AVPlayerRepresentable(fullscreen: $fullscreen, autoPlayVideos: autoPlayVideos, player: sharedVideo.player, aspect: .resizeAspectFill, controller: controller)
-          .frame(width: compact ? scaledCompactModeThumbSize() : contentWidth, height: compact ? scaledCompactModeThumbSize() : CGFloat(finalHeight))
-          .mask(RR(12, Color.black))
-          .allowsHitTesting(false)
-          .contentShape(Rectangle())
-          .onTapGesture {
-            handleVideoTap()
+      ZStack {
+        Group {
+          if !fullscreen {
+            VideoPlayer(player: sharedVideo.player)
+              .scaledToFill()
+              .ignoresSafeArea()
+          } else {
+            Color.black
           }
-      } else {
-        ZStack {
-          Group {
-            if !fullscreen {
-              VideoPlayer(player: sharedVideo.player) // Use the original VideoPlayer instead of SafeVideoPlayer
-                .scaledToFill()
-                .ignoresSafeArea()
-            } else {
-              Color.clear
+        }
+        .frame(width: compact ? scaledCompactModeThumbSize() : contentWidth, height: compact ? scaledCompactModeThumbSize() : CGFloat(finalHeight))
+        .clipped()
+        .fixedSize()
+        .mask(RR(12, Color.black))
+        .allowsHitTesting(false)
+        .contentShape(Rectangle())
+        .highPriorityGesture(TapGesture().onEnded({ _ in
+          handleVideoTap()
+        }))
+        .allowsHitTesting(false)
+        .mask(RR(12, Color.black))
+        .overlay(
+          Color.clear
+            .contentShape(Rectangle())
+            .onTapGesture {
+              handleVideoTap()
             }
-          }
-          .frame(width: compact ? scaledCompactModeThumbSize() : contentWidth, height: compact ? scaledCompactModeThumbSize() : CGFloat(finalHeight))
-          .clipped()
-          .fixedSize()
-          .mask(RR(12, Color.black))
-          .allowsHitTesting(false)
-          .contentShape(Rectangle())
-          .highPriorityGesture(TapGesture().onEnded({ _ in
-            handleVideoTap()
-          }))
-          .allowsHitTesting(false)
-          .mask(RR(12, Color.black))
-          .overlay(
-            Color.clear
-              .contentShape(Rectangle())
-              .onTapGesture {
-                handleVideoTap()
-              }
-          )
-          
-          Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity((autoPlayVideos && sharedVideo.player.currentItem != nil) || NetworkMonitor.isConnectedToWiFi() ? 0 : 1).allowsHitTesting(false)
+        )
+        
+        Image(systemName: "play.fill").foregroundColor(.white.opacity(0.75)).fontSize(32).shadow(color: .black.opacity(0.45), radius: 12, y: 8).opacity((autoPlayVideos && sharedVideo.player.currentItem != nil) || NetworkMonitor.isConnectedToWiFi() ? 0 : 1).allowsHitTesting(false)
+      }
+      .onAppear {
+        handleOnAppear()
+      }
+      .onChange(of: NetworkMonitor.shared.connectedToWifi) {
+        if NetworkMonitor.shared.connectedToWifi {
+          sharedVideo.loadIfNeeded()
         }
-        .onAppear {
-          handleOnAppear()
-        }
-        .onChange(of: NetworkMonitor.shared.connectedToWifi) {
-          if NetworkMonitor.shared.connectedToWifi {
-            sharedVideo.loadIfNeeded()
-          }
-        }
-        .onChange(of: scenePhase) { newPhase in
-          handleScenePhaseChange(newPhase)
-        }
-        .onDisappear() {
-          handleOnDisappear()
-        }
-        .onChange(of: fullscreen) { val in
-          handleFullscreenChange(val)
-        }
-        .fullScreenCover(isPresented: $fullscreen) {
-          FullScreenVP(sharedVideo: sharedVideo) // Use original FullScreenVP
-        }
+      }
+      .onChange(of: scenePhase) { _, newPhase in
+        handleScenePhaseChange(newPhase)
+      }
+      .onDisappear() {
+        handleOnDisappear()
+      }
+      .onChange(of: fullscreen) { _, val in
+        handleFullscreenChange(val)
+      }
+      .fullScreenCover(isPresented: $fullscreen) {
+        FullScreenVP(sharedVideo: sharedVideo)
       }
     }
   }
@@ -255,18 +372,36 @@ struct VideoPlayerPost: View, Equatable {
     
     DispatchQueue.main.async {
       if newPhase == .active {
-        if (sharedVideo.player.status == .failed) {
-          resetVideo?(sharedVideo)
+        
+        // Reactivate audio session if needed
+        do {
+          try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+          print("[VID] Failed to reactivate audio session: \(error)")
         }
         
-        if autoPlayVideos {
+        // Check for failed players and reset if needed
+        if (sharedVideo.player.status == .failed ||
+            sharedVideo.player.currentItem?.status == .failed) {
+          print("[VID] Player failed or stuck, resetting video")
+          resetVideo?(sharedVideo)
+        } else if autoPlayVideos && !fullscreen {
+          // Only auto-play if not in fullscreen (user controls playback in fullscreen)
           sharedVideo.player.play()
         }
       } else if newPhase == .inactive || newPhase == .background {
         sharedVideo.player.pause()
+        
+        // Deactivate audio session when going to background
+        do {
+          try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+          print("[VID] Failed to deactivate audio session: \(error)")
+        }
       }
     }
   }
+  
   
   private func handleOnDisappear() {
     guard let sharedVideo = sharedVideo, hasAppeared else { return }
@@ -298,15 +433,29 @@ struct VideoPlayerPost: View, Equatable {
         sharedVideo.player.play()
       }
       
-      if !val && !autoPlayVideos {
-        sharedVideo.player.seek(to: .zero)
-        sharedVideo.player.pause()
-        firstFullscreen = false
+      if !val {
+        // Exiting fullscreen - ensure video layer refreshes properly
+        if !autoPlayVideos {
+          sharedVideo.player.seek(to: .zero)
+          sharedVideo.player.pause()
+          firstFullscreen = false
+        } else {
+          // Force a brief pause/play to refresh the video layer
+          let currentTime = sharedVideo.player.currentTime()
+          sharedVideo.player.pause()
+          
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            sharedVideo.player.play()
+            // Ensure we return to the correct position
+            sharedVideo.player.seek(to: currentTime)
+          }
+        }
       }
       
       sharedVideo.player.volume = val ? 1.0 : 0.0
     }
   }
+  
   
   // MARK: - Observer Management
   
@@ -350,412 +499,147 @@ struct VideoPlayerPost: View, Equatable {
   }
 }
 
-// MARK: - Safe Video Player Wrapper
-
-struct SafeVideoPlayer: View {
-  let player: AVPlayer
-  @State private var playerController: AVPlayerViewController?
-  
-  var body: some View {
-    SafeVideoPlayerRepresentable(player: player, playerController: $playerController)
-      .onDisappear {
-        // Don't clean up the player here - let the parent handle it
-      }
-  }
-}
-
-struct SafeVideoPlayerRepresentable: UIViewControllerRepresentable {
-  let player: AVPlayer
-  @Binding var playerController: AVPlayerViewController?
-  
-  func makeUIViewController(context: Context) -> AVPlayerViewController {
-    let controller = AVPlayerViewController()
-    controller.player = player
-    controller.showsPlaybackControls = false
-    controller.allowsVideoFrameAnalysis = false
-    controller.videoGravity = .resizeAspect // Changed back to resizeAspect for proper video display
-    
-    DispatchQueue.main.async {
-      playerController = controller
-    }
-    
-    return controller
-  }
-  
-  func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
-    // Only update if player has changed to avoid black screen
-    if uiViewController.player !== player {
-      uiViewController.player = player
-    }
-  }
-  
-  static func dismantleUIViewController(_ uiViewController: AVPlayerViewController, coordinator: ()) {
-    // Minimal cleanup to avoid black screen issues
-  }
-}
-
-// MARK: - Original Full Screen Video Player (restored with landscape support)
-
 struct FullScreenVP: View {
-    var sharedVideo: SharedVideo
-    @Environment(\.dismiss) private var dismiss
-    @State private var cancelDrag: Bool?
-    @State private var isPinching: Bool = false
-    @State private var drag: CGSize = .zero
-    @State private var scale: CGFloat = 1.0
-    @State private var anchor: UnitPoint = .zero
-    @State private var offset: CGSize = .zero
-    @State private var altSize: CGSize = .zero
-    @State private var orientation = UIDeviceOrientation.unknown
-    @State private var isDismissing = false
-    
-    var body: some View {
-        let interpolate = interpolatorBuilder([0, 100], value: abs(drag.height))
-        
-        GeometryReader { geometry in
-            VideoPlayer(player: sharedVideo.player)
-                .frame(
-                    width: geometry.size.width,
-                    height: geometry.size.height
-                )
-                .background(
-                    sharedVideo.size != .zero
-                    ? nil
-                    : GeometryReader { geo in
-                        Color.clear
-                            .onAppear { altSize = geo.size }
-                            .onChange(of: geo.size) { newValue in altSize = newValue }
-                    }
-                )
-                .scaleEffect(interpolate([1, 0.9], true))
-                .offset(cancelDrag ?? false ? .zero : drag)
-                .gesture(
-                    scale != 1.0
-                    ? nil
-                    : DragGesture(minimumDistance: 10)
-                        .onChanged { val in
-                            if cancelDrag == nil { cancelDrag = abs(val.translation.width) > abs(val.translation.height) }
-                            if cancelDrag == nil || cancelDrag! { return }
-                            var transaction = Transaction()
-                            transaction.isContinuous = true
-                            transaction.animation = .interpolatingSpring(stiffness: 1000, damping: 100, initialVelocity: 0)
-                            
-                            let endPos = val.translation
-                            withTransaction(transaction) {
-                                drag = endPos
-                            }
-                        }
-                        .onEnded { val in
-                            let prevCancelDrag = cancelDrag
-                            cancelDrag = nil
-                            if prevCancelDrag == nil || prevCancelDrag! { return }
-                            let shouldClose = abs(val.translation.width) > 100 || abs(val.translation.height) > 100
-                            
-                            if shouldClose {
-                                performDismissal()
-                            } else {
-                                withAnimation(.interpolatingSpring(stiffness: 200, damping: 20, initialVelocity: 0)) {
-                                    drag = .zero
-                                }
-                            }
-                        }
-                )
-        }
-        .ignoresSafeArea()
-        .background(Color.black)
-        .statusBarHidden()
-        .supportedOrientations(.all)
-        .onAppear {
-            // Enable rotation for this view
-            AppDelegate.orientationLock = UIInterfaceOrientationMask.all
-            
-            // Start monitoring device orientation
-            NotificationCenter.default.addObserver(
-                forName: UIDevice.orientationDidChangeNotification,
-                object: nil,
-                queue: .main
-            ) { _ in
-                orientation = UIDevice.current.orientation
-            }
-        }
-        .onDisappear {
-            if !isDismissing {
-                resetToPortrait()
-            }
-        }
-    }
-    
-    private func performDismissal() {
-        isDismissing = true
-        
-        // First, reset orientation to portrait before dismissing
-        resetToPortrait()
-        
-        // Small delay to ensure orientation change is processed
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(.interpolatingSpring(stiffness: 200, damping: 20, initialVelocity: 0)) {
-                drag = .zero
-                dismiss()
-            }
-        }
-    }
-    
-    private func resetToPortrait() {
-        // Lock back to portrait
-        AppDelegate.orientationLock = UIInterfaceOrientationMask.portrait
-        
-        // Force rotation back to portrait immediately
-        if #available(iOS 16.0, *) {
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
-            
-            // Also update the view controller if available
-            if let rootViewController = windowScene.windows.first?.rootViewController {
-                rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
-            }
-        } else {
-            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
-        }
-        
-        // Remove orientation observer
-        NotificationCenter.default.removeObserver(
-            self,
-            name: UIDevice.orientationDidChangeNotification,
-            object: nil
-        )
-    }
-}
-
-
-// MARK: - AppDelegate Extension for Orientation Management
-
-extension View {
-  func supportedOrientations(_ orientations: UIInterfaceOrientationMask) -> some View {
-    self.onAppear {
-      AppDelegate.orientationLock = orientations
-    }
-  }
-}
-
-// Add this to your AppDelegate class or create a separate AppDelegate extension
-extension AppDelegate {
-  static var orientationLock = UIInterfaceOrientationMask.portrait
-  
-  func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
-    return AppDelegate.orientationLock
-  }
-}
-
-struct AVPlayerRepresentable: UIViewRepresentable {
-  @Binding var fullscreen: Bool
-  var autoPlayVideos: Bool
-  let player: AVPlayer
-  let aspect: AVLayerVideoGravity
-  var controller: UIViewController
-
-  func makeUIView(context: Context) -> UIView {
-    let view = UIView()
-    let playerController = SafeNiceAVPlayer(fullscreen: $fullscreen, autoPlayVideos: autoPlayVideos)
-    playerController.allowsVideoFrameAnalysis = false
-    playerController.player = player
-    playerController.videoGravity = aspect
-
-    context.coordinator.controller = playerController
-    
-    DispatchQueue.main.async {
-      controller.addChild(playerController)
-      playerController.view.frame = view.bounds
-      view.addSubview(playerController.view)
-      playerController.didMove(toParent: controller)
-      view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-    }
-    
-    return view
-  }
-
-  func updateUIView(_ view: UIView, context: Context) {
-    DispatchQueue.main.async {
-      if let playerController = context.coordinator.controller, playerController.autoPlayVideos != autoPlayVideos {
-        playerController.autoPlayVideos = autoPlayVideos
-      }
-      if fullscreen {
-        context.coordinator.controller?.enterFullScreen(animated: true)
-      }
-    }
-  }
-
-  func makeCoordinator() -> Coordinator {
-    Coordinator()
-  }
-  
-  static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
-    // Minimal cleanup to prevent issues with shared players
-    coordinator.controller?.showsPlaybackControls = false
-    coordinator.controller = nil
-  }
-
-  class Coordinator: NSObject {
-    var controller: SafeNiceAVPlayer?
-    
-    deinit {
-      // Minimal cleanup
-      controller = nil
-    }
-  }
-}
-
-class SafeNiceAVPlayer: AVPlayerViewController, AVPlayerViewControllerDelegate {
-  @Binding var fullscreen: Bool
-  var autoPlayVideos: Bool
-  var ida = UUID().uuidString
-  var gone = true
-  private var hasCleanedUp = false
+  var sharedVideo: SharedVideo
+  @Environment(\.dismiss) private var dismiss
+  @Environment(\.scenePhase) private var scenePhase // Add scene phase monitoring
+  @State private var cancelDrag: Bool?
+  @State private var drag: CGSize = .zero
+  @State private var isDismissing = false
+  @State private var isActive = true // Track if view is active
   @Default(.VideoDefSettings) private var videoDefSettings
   
-  override open var prefersStatusBarHidden: Bool {
-    return true
-  }
-
-  init(fullscreen: Binding<Bool>, autoPlayVideos: Bool) {
-    self._fullscreen = fullscreen
-    self.autoPlayVideos = autoPlayVideos
-    super.init(nibName: nil, bundle: nil)
-    self.delegate = self
-    showsPlaybackControls = false
-  }
-
-  required init?(coder aDecoder: NSCoder) {
-    self.autoPlayVideos = false
-    self._fullscreen = Binding(get: { true }, set: { _, _ in return })
-    super.init(coder: aDecoder)
+  var body: some View {
+    let interpolate = interpolatorBuilder([0, 100], value: abs(drag.height))
+    
+    GeometryReader { geometry in
+      VideoPlayer(player: sharedVideo.player)
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        .scaleEffect(interpolate([1, 0.9], true))
+        .offset(cancelDrag ?? false ? .zero : drag)
+        .gesture(
+          DragGesture(minimumDistance: 10)
+            .onChanged { val in
+              guard isActive else { return } // Only allow drag when active
+              
+              if cancelDrag == nil {
+                cancelDrag = abs(val.translation.width) > abs(val.translation.height)
+              }
+              if cancelDrag == nil || cancelDrag! { return }
+              
+              var transaction = Transaction()
+              transaction.isContinuous = true
+              transaction.animation = .interpolatingSpring(stiffness: 1000, damping: 100, initialVelocity: 0)
+              
+              withTransaction(transaction) {
+                drag = val.translation
+              }
+            }
+            .onEnded { val in
+              guard isActive else { return }
+              
+              let prevCancelDrag = cancelDrag
+              cancelDrag = nil
+              if prevCancelDrag == nil || prevCancelDrag! { return }
+              
+              let shouldClose = abs(val.translation.width) > 100 || abs(val.translation.height) > 100
+              
+              if shouldClose {
+                performDismissal()
+              } else {
+                withAnimation(.interpolatingSpring(stiffness: 200, damping: 20, initialVelocity: 0)) {
+                  drag = .zero
+                }
+              }
+            }
+        )
+    }
+    .ignoresSafeArea()
+    .background(Color.black)
+    .statusBarHidden()
+    .onAppear {
+      isActive = true
+      setupFullscreenPlayback()
+    }
+    .onDisappear {
+      if !isDismissing {
+        resetToPortrait()
+      }
+    }
+    .onChange(of: scenePhase) { _, newPhase in
+      handleScenePhaseChange(newPhase)
+    }
   }
   
-  deinit {
-    safeCleanup()
+  private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+    switch newPhase {
+    case .active:
+      isActive = true
+      
+      // Only reset drag position if there was an actual drag issue
+      // Don't force any layout changes that would affect fullscreen presentation
+      if abs(drag.height) > 10 || abs(drag.width) > 10 {
+        withAnimation(.easeInOut(duration: 0.3)) {
+          drag = .zero
+        }
+      }
+      
+      // Resume playback if it was playing and user wants audio
+      if !isDismissing {
+        sharedVideo.player.play()
+      }
+      
+    case .inactive, .background:
+      isActive = false
+      // Pause but maintain fullscreen state
+      sharedVideo.player.pause()
+      
+    @unknown default:
+      break
+    }
   }
   
-  func safeCleanup() {
-    guard !hasCleanedUp else { return }
-    hasCleanedUp = true
+  private func setupFullscreenPlayback() {
+    AppDelegate.orientationLock = UIInterfaceOrientationMask.all
     
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else { return }
-      
-      // Remove all observers
-      if let player = self.player {
-        NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: player.currentItem)
-        player.pause()
-      }
-      
-      // Clear player reference
-      self.player = nil
-    }
-  }
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+    windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .all))
 
-  override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    guard !hasCleanedUp else { return }
+    if let rootViewController = windowScene.windows.first?.rootViewController {
+      rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
+    }
     
-    if videoDefSettings.loop, let player = self.player {
-      NotificationCenter.default.addObserver(
-        forName: .AVPlayerItemDidPlayToEndTime,
-        object: player.currentItem,
-        queue: .main) { [weak self, player] notif in
-          guard let self = self, !self.hasCleanedUp else { return }
-          player.seek(to: .zero)
-          player.play()
-        }
-    }
-    if autoPlayVideos && gone && !hasCleanedUp {
-      self.player?.play()
-      gone = false
-    }
+    sharedVideo.player.isMuted = videoDefSettings.mute
+    sharedVideo.player.volume = videoDefSettings.mute ? 0.0 : 1.0
+    sharedVideo.player.play()
   }
-
-  override func viewDidDisappear(_ animated: Bool) {
-    super.viewDidDisappear(animated)
+  
+  private func performDismissal() {
+    isDismissing = true
+    isActive = false
     
-    if let player = self.player {
-      NotificationCenter.default.removeObserver(
-        self,
-        name: .AVPlayerItemDidPlayToEndTime,
-        object: player.currentItem)
-    }
-    if !showsPlaybackControls && !hasCleanedUp {
-      player?.pause()
-      gone = true
-    }
-  }
-
-  @objc private func didTapView() {
-    guard !hasCleanedUp else { return }
-    enterFullScreen(animated: true)
-    showsPlaybackControls = true
-  }
-
-  func enterFullScreen(animated: Bool) {
-    guard !hasCleanedUp else { return }
-    let selector = NSSelectorFromString("enterFullScreenAnimated:completionHandler:")
+    // Reset player audio settings
+    sharedVideo.player.volume = 0.0
+    sharedVideo.player.isMuted = true
     
-    if self.responds(to: selector) {
-      self.perform(selector, with: animated, with: nil)
-    }
-  }
-
-  func exitFullScreen(animated: Bool) {
-    guard !hasCleanedUp else { return }
-    let selector = NSSelectorFromString("exitFullScreenAnimated:completionHandler:")
+    resetToPortrait()
     
-    if self.responds(to: selector) {
-      self.perform(selector, with: animated, with: nil)
-    }
-  }
-
-  func playerViewController(
-    _ playerViewController: AVPlayerViewController,
-    willBeginFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator
-  ) {
-    guard !hasCleanedUp else { return }
-    coordinator.animate(alongsideTransition: nil) { [weak self] context in
-      guard let self = self, !self.hasCleanedUp else { return }
-      if context.isCancelled {
-        // Still embedded inline
-      } else {
-        // Presented full screen
-        // Take strong reference to playerViewController if needed
-        self.player?.volume = 1.0
-        self.player?.play()
-        self.showsPlaybackControls = true
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+      withAnimation(.interpolatingSpring(stiffness: 200, damping: 20, initialVelocity: 0)) {
+        drag = .zero
+        dismiss()
       }
     }
   }
-
-  func playerViewController(
-    _ playerViewController: AVPlayerViewController,
-    willEndFullScreenPresentationWithAnimationCoordinator coordinator: UIViewControllerTransitionCoordinator
-  ) {
-    guard !hasCleanedUp else { return }
-    let isPlaying = self.player?.isPlaying ?? false
-    coordinator.animate(alongsideTransition: nil) { [weak self] context in
-      guard let self = self, !self.hasCleanedUp else { return }
-      if context.isCancelled {
-        // Still full screen
-      } else {
-        // Embedded inline
-        // Remove strong reference to playerViewController if held
-        self.fullscreen = false
-        doThisAfter(0.0) {
-          if !self.hasCleanedUp {
-            self.player?.volume = 0.0
-          }
-        }
-        self.showsPlaybackControls = false
-        if !self.autoPlayVideos {
-          self.player?.pause()
-        } else if isPlaying {
-          self.player?.play()
-        }
-      }
+  
+  private func resetToPortrait() {
+    AppDelegate.orientationLock = UIInterfaceOrientationMask.portrait
+    
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+    windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+    
+    if let rootViewController = windowScene.windows.first?.rootViewController {
+      rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
     }
   }
 }
@@ -764,33 +648,4 @@ extension AVPlayer {
   var isVideoPlaying: Bool {
     return rate != 0 && error == nil
   }
-}
-
-// Add this extension to handle orientation changes more smoothly
-extension UIViewController {
-    func setOrientation(_ orientation: UIInterfaceOrientationMask) {
-        if #available(iOS 16.0, *) {
-            guard let windowScene = view.window?.windowScene else { return }
-            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
-        } else {
-            UIDevice.current.setValue(orientation.toUIInterfaceOrientation.rawValue, forKey: "orientation")
-        }
-    }
-}
-
-extension UIInterfaceOrientationMask {
-    var toUIInterfaceOrientation: UIInterfaceOrientation {
-        switch self {
-        case .portrait:
-            return .portrait
-        case .landscapeLeft:
-            return .landscapeLeft
-        case .landscapeRight:
-            return .landscapeRight
-        case .portraitUpsideDown:
-            return .portraitUpsideDown
-        default:
-            return .portrait
-        }
-    }
 }

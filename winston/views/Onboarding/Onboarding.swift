@@ -20,7 +20,7 @@ struct Onboarding: View {
   @State var twisted = false
   @State var appID = ""
   @State var appSecret = ""
-  @Environment (\.colorScheme) var colorScheme: ColorScheme
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
   
   @State var tryingToDismiss = false
   
@@ -164,7 +164,7 @@ struct Star: View {
   @State var size = CGFloat.rand(10...25)
   @State private var timer = Timer.publish(every: 1, on: .current, in: .common).autoconnect()
   @State private var offset = CGFloat.rand(8...16) * ([-1, 1].randomElement())!
-  @Environment (\.colorScheme) var colorScheme: ColorScheme
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
   
   func move() {
     

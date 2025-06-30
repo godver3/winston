@@ -20,7 +20,7 @@ struct SpaceAdventure: View {
   @Binding private var shotComets: Int
   var totalWidth: CGFloat
   var comets: Int
-  @Environment (\.colorScheme) private var colorScheme: ColorScheme
+  @Environment(\.colorScheme) private var colorScheme: ColorScheme
   @Default(.TipJarSettings) private var tipJarSettings
   @State private var phase: Phase = .stars
   @State private var stars: [ChildStarProps]

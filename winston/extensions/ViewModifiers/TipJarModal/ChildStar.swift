@@ -38,7 +38,7 @@ struct ChildStar: View {
   @State private var offset = CGFloat.random(in: 8...16) * ([-1, 1].randomElement())!
   @State private var timer = Timer.publish(every: 10, on: .current, in: .common).autoconnect()
   @State private var dead = false
-  @Environment (\.colorScheme) var colorScheme: ColorScheme
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
   
   init(shootComet: @escaping () -> Bool, star: ChildStarProps, contentWidth: Double) {
     self.shootComet = shootComet

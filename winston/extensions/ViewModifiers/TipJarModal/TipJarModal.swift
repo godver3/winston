@@ -15,7 +15,7 @@
 //
 //struct TipJarModal: View {
 //    var closeTipJar: () -> ()
-//    @Environment (\.colorScheme) private var colorScheme: ColorScheme
+//    @Environment(\.colorScheme) private var colorScheme: ColorScheme
 //    @Default(.TipJarSettings) private var tipJarSettings
 //    @CloudStorage(IAPManager.iCloudCometsKeyName) var comets: Int = 0
 //    @State private var selectedIAPProduct: IAPManager.IAPProduct? = nil

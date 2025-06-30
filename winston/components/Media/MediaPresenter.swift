@@ -55,7 +55,7 @@ struct MediaPresenter: View, Equatable {
   let compact: Bool
   let contentWidth: CGFloat
   let maxMediaHeightScreenPercentage: CGFloat
-  let resetVideo: ((SharedVideo) -> ())?
+  let resetVideo: ((SharedVideo) -> ())
   
   @Default(.PostLinkDefSettings) private var defSettings
   

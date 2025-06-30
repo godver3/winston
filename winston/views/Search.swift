@@ -211,8 +211,8 @@ struct Search: View {
       .refreshable { fetch() }
       .onSubmit(of: .search) { fetch() }
       .navigationTitle("Search")
-      .onChange(of: searchType) { _ in fetch() }
-      .onChange(of: searchQuery.debounced) { val in
+      .onChange(of: searchType) { _, _ in fetch() }
+      .onChange(of: searchQuery.debounced) { _, val in
         if val == "" {
           resultsSubs = []
           resultsUsers = []
@@ -220,7 +220,7 @@ struct Search: View {
         }
         fetch()
       }
-      .onChange(of: sort) { val in
+      .onChange(of: sort) { _, val in
         resultsSubs = []
         resultsUsers = []
         resultPosts = []

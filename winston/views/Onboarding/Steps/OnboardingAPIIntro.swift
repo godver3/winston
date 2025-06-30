@@ -11,7 +11,7 @@ private struct Feature: View {
   var icon: String
   var title: String
   var description: String
-  @Environment (\.colorScheme) var colorScheme: ColorScheme
+  @Environment(\.colorScheme) var colorScheme: ColorScheme
   var body: some View {
     HStack(spacing: 12) {
       Image(systemName: icon)
