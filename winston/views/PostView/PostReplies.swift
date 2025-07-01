@@ -19,9 +19,6 @@ struct PostReplies: View {
   var geometryReader: GeometryProxy
   @Environment(\.useTheme) private var selectedTheme
   
-  @Binding var topCommentIdx: Int
-  @Binding var commentIndexMap: [String: Int]
-  
   @Binding var comments: [Comment]
   @Binding var matchMap: [String: String]
   @Binding var seenComments: String?
@@ -72,7 +69,7 @@ func asyncFetch(_ full: Bool, _ altIgnoreSpecificComment: Bool? = nil) async {
               .id("\(comment.id)-top-decoration")
             
             if let commentWinstonData = comment.winstonData {
-              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, index: i)
+              CommentLink(highlightID: ignoreSpecificComment ? nil : highlightID, post: post, subreddit: subreddit, postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .post($comments), comment: comment, commentWinstonData: commentWinstonData, children: comment.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[comment.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, index: i)
                 .id("\(comment.id)-\(comment.data?.collapsed)")
                 .if(comments.firstIndex(of: comment) != nil) { view in
                   view.anchorPreference(

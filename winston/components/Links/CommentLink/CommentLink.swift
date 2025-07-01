@@ -93,8 +93,6 @@ struct CommentLink: View, Equatable {
     lhs.searchQuery == rhs.searchQuery &&
     lhs.isMatch == rhs.isMatch &&
     lhs.matchMap == rhs.matchMap &&
-    lhs.commentIndexMap == rhs.commentIndexMap &&
-    lhs.topCommentIdx == rhs.topCommentIdx &&
     lhs.currentMatchId == rhs.currentMatchId &&
     lhs.highlightCurrentMatch == rhs.highlightCurrentMatch &&
     lhs.fadeSeenComments == rhs.fadeSeenComments &&
@@ -126,9 +124,6 @@ struct CommentLink: View, Equatable {
   
   var currentMatchId: String? = nil
   
-  var topCommentIdx: Int = 0
-  var commentIndexMap: [String: Int] = [:]
-  
   var highlightCurrentMatch: Bool = false
   var updateVisibleComments: ((String, Bool) -> Void)?
   var newCommentsLoaded: (() -> Void)?
@@ -154,7 +149,7 @@ struct CommentLink: View, Equatable {
                 CommentLinkFull(post: post, arrowKinds: arrowKinds, comment: comment, indentLines: indentLines)
               }
             } else {
-              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, newCommentsLoaded: newCommentsLoaded, index: index)
+              CommentLinkMore(arrowKinds: arrowKinds, comment: comment, post: post, postFullname: postFullname, parentElement: parentElement, indentLines: indentLines, newCommentsLoaded: newCommentsLoaded, index: index)
             }
           } else {
             CommentLinkContent(highlightID: highlightID, seenComments: seenComments, showReplies: showReplies, arrowKinds: arrowKinds, indentLines: indentLines, lineLimit: lineLimit, post: post, comment: comment, winstonData: commentWinstonData, avatarsURL: avatarsURL, searchQuery: searchQuery, isMatch: isMatch, isCurrentMatch: comment.id == currentMatchId, collapsed: collapsed, highlightCurrentMatch: highlightCurrentMatch,parentShowReplies: parentShowReplies, parentArrowKinds: parentArrowKinds, parentIndentLines: parentIndentLines, parentLineLimit: parentLineLimit, parentComment: parentComment, parentAvatarsURL: parentAvatarsURL)
@@ -171,7 +166,7 @@ struct CommentLink: View, Equatable {
           ForEach(Array(children.enumerated()), id: \.element.id) { index, commentChild in
             let childrenCount = children.count
             if let childCommentWinstonData = commentChild.winstonData {
-              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, topCommentIdx: topCommentIdx, commentIndexMap: commentIndexMap, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, parentShowReplies: showReplies, parentArrowKinds: arrowKinds, parentIndentLines: indentLines, parentLineLimit: lineLimit, parentComment: comment, parentAvatarsURL: avatarsURL, index: index)
+              CommentLink(post: post, arrowKinds: arrowKinds.map { $0.child } + [(childrenCount - 1 == index ? ArrowKind.curve : ArrowKind.straightCurve)], postFullname: postFullname, seenComments: seenComments, fadeSeenComments: fadeSeenComments, parentElement: .comment(comment), comment: commentChild, commentWinstonData: childCommentWinstonData, children: commentChild.childrenWinston, searchQuery: searchQuery, matchMap: matchMap, isMatch: matchMap[commentChild.id] != nil, currentMatchId: currentMatchId, highlightCurrentMatch: highlightCurrentMatch, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded, parentShowReplies: showReplies, parentArrowKinds: arrowKinds, parentIndentLines: indentLines, parentLineLimit: lineLimit, parentComment: comment, parentAvatarsURL: avatarsURL, index: index)
                 .id("\(commentChild.id)-\(childrenCount)")
             }
           }

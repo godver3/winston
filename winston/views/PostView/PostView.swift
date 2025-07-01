@@ -260,6 +260,8 @@ struct PostView: View, Equatable {
       partial[eo.element["id"]!] = eo.offset
     }
     
+    CommentAutoLoadManager.shared.processIndexMapUpdate(commentIndexMap)
+    
     lastFlattenedHash = commentsHash
     
     if let topVisibleCommentId {
@@ -269,6 +271,7 @@ struct PostView: View, Equatable {
   
   func updateTopCommentIdx(_ id: String) {
     topCommentIdx = commentIndexMap[id] ?? 0
+    CommentAutoLoadManager.shared.handleTopCommentIndexChange(topCommentIdx)
   }
   
   func updateMatches(_ reader: ScrollViewProxy? = nil) {
@@ -572,7 +575,7 @@ struct PostView: View, Equatable {
             .listRowBackground(Color.clear)
             
             if !hideElements {
-              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, topCommentIdx: $topCommentIdx, commentIndexMap: $commentIndexMap, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded)
+              PostReplies(update: update, post: post, subreddit: subreddit, ignoreSpecificComment: ignoreSpecificComment, highlightID: highlightID, sort: sort, proxy: proxy, geometryReader: geometryReader, comments: $comments, matchMap: $matchMap, seenComments: $seenComments, fadeSeenComments: $unseenSkipperOpen, highlightCurrentMatch: $inAutoSkipMode,initialLoading: $initialLoading, searchQuery: searchQuery.debounced, currentMatchId: currentMatchId, updateVisibleComments: updateVisibleComments, newCommentsLoaded: newCommentsLoaded)
                 .environment(\.scrollViewProxy, proxy)
             }
             

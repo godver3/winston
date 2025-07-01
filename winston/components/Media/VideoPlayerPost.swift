@@ -243,7 +243,6 @@ struct VideoPlayerPost: View, Equatable {
   @State private var observersAdded = false
   
   @State private var cancellables = Set<AnyCancellable>()
-  @State private var hasAutoPlayed = false
   
   @Default(.VideoDefSettings) private var videoDefSettings
   @Environment(\.scenePhase) private var scenePhase
@@ -322,6 +321,15 @@ struct VideoPlayerPost: View, Equatable {
       }
       .onChange(of: fullscreen) { _, val in
         handleFullscreenChange(val)
+      }
+      .onChange(of: sharedVideo) { _, _ in
+        // After video reset, autoplay again
+        
+        // Set up status observers for autoplay
+        setupAutoplayObservers()
+        
+        // Try immediate autoplay if ready
+        attemptAutoplay()
       }
       .fullScreenCover(isPresented: $fullscreen) {
         FullScreenVP(sharedVideo: sharedVideo)
@@ -424,7 +432,6 @@ struct VideoPlayerPost: View, Equatable {
       
       // Check all conditions
       let shouldAutoplay = autoPlayVideos
-      let notAlreadyPlayed = !hasAutoPlayed
       let hasAppearedCheck = hasAppeared
       let notFullscreen = !fullscreen
       let hasCurrentItem = sharedVideo.player.currentItem != nil
@@ -433,19 +440,14 @@ struct VideoPlayerPost: View, Equatable {
       
 //      print("[VID] Autoplay check - shouldAutoplay: \(shouldAutoplay), notAlreadyPlayed: \(notAlreadyPlayed), hasAppeared: \(hasAppearedCheck), notFullscreen: \(notFullscreen), hasCurrentItem: \(hasCurrentItem), playerReady: \(playerReady), itemReady: \(itemReady ?? false)")
       
-      guard shouldAutoplay && notAlreadyPlayed && hasAppearedCheck && notFullscreen else {
+      guard shouldAutoplay && hasAppearedCheck && notFullscreen else {
           return
       }
       
       if hasCurrentItem && playerReady && (itemReady == true) {
 //          print("[VID] ✅ Starting autoplay for: \(sharedVideo.url)")
-          hasAutoPlayed = true
-          sharedVideo.player.play()
-          
-          // Clean up observers once we've successfully autoplayed
-          cleanupAutoplayObservers()
-      } else {
-//          print("[VID] ⏳ Not ready for autoplay yet")
+        sharedVideo.player.play()
+        cleanupAutoplayObservers()
       }
   }
 
@@ -458,7 +460,6 @@ struct VideoPlayerPost: View, Equatable {
   private func handleOnDisappear() {
       guard let sharedVideo = sharedVideo, hasAppeared else { return }
       hasAppeared = false
-      hasAutoPlayed = false // Reset for next appearance
       
       // Clean up all observers
       removeObserver()
@@ -495,7 +496,7 @@ struct VideoPlayerPost: View, Equatable {
                   sharedVideo.player.currentItem?.status == .failed) {
                   print("[VID] Player failed or stuck, resetting video")
                   resetVideo?(sharedVideo)
-              } else if autoPlayVideos && !fullscreen && !hasAutoPlayed {
+              } else if autoPlayVideos && !fullscreen {
                   // Reset autoplay observers and try again
                   setupAutoplayObservers()
                   attemptAutoplay()

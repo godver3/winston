@@ -10,184 +10,160 @@ import Defaults
 
 // Shared state manager for auto-load queue
 class CommentAutoLoadManager: ObservableObject {
-    static let shared = CommentAutoLoadManager()
-    
-    @Published var currentAutoLoadingCommentId: String? = nil
-    private var currentAutoLoadingIndex: Int? = nil // Track the index of currently loading comment
-    private var queuedComments: [(id: String, index: Int)] = []
-    private var visibleComments: Set<String> = [] // Track visible CommentLinkMore items
-    private var pendingComments: Set<String> = [] // Track pending CommentLinkMore items
-    private var currentTopCommentIdx: Int = 0
-    
-    private init() {}
-    
-    func canStartAutoLoad(for commentId: String, at index: Int) -> Bool {
-        return currentAutoLoadingCommentId == nil
-    }
-    
-    func requestAutoLoadSlot(for commentId: String, at index: Int) {
-        // Add to visible comments when requesting slot
-        visibleComments.insert(commentId)
-        
-        // Add to queue if not already there
-        if !queuedComments.contains(where: { $0.id == commentId }) {
-            queuedComments.append((id: commentId, index: index))
-            // Sort by index to prioritize comments higher up
-            queuedComments.sort { $0.index < $1.index }
-        }
-        
-        // Check if we should interrupt the current loading comment with a higher priority one
-        // But only if both comments are in the valid range (>= topCommentIdx)
-        if let currentLoadingId = currentAutoLoadingCommentId,
-           let currentLoadingIdx = currentAutoLoadingIndex,
-           index < currentLoadingIdx {
-            // New comment has higher priority, stop current and start new one immediately
-            print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Interrupting comment \(currentLoadingId) at index \(currentLoadingIdx) for higher priority comment \(commentId) at index \(index)")
-            stopAutoLoad(for: currentLoadingId)
-            startAutoLoad(for: commentId, at: index)
-        } else {
-            // Try to start the next comment if nothing is currently loading
-            processQueue()
-        }
-    }
-    
-    // New method for comments that appear but don't have an index yet
-    func markCommentVisiblePending(_ commentId: String) {
-        pendingComments.insert(commentId)
-    }
-    
-  func processIndexMapUpdate(_ commentIndexMap: [String: Int]) {
-      let pendingToProcess = Array(pendingComments)
-      
-      for commentId in pendingToProcess {
-          if let index = commentIndexMap[commentId] {
-              // Found index for pending comment, process it
-              pendingComments.remove(commentId)
-              
-              // Only process if it's >= currentTopCommentIdx
-              if index >= currentTopCommentIdx {
-                  // Add to visible comments and queue
-                  visibleComments.insert(commentId)
-                  
-                  // Add to queue if not already there
-                  if !queuedComments.contains(where: { $0.id == commentId }) {
-                      queuedComments.append((id: commentId, index: index))
-                  }
-              }
-          }
-      }
-      
-      // IMPORTANT: Re-sort the entire queue after adding new comments
-      queuedComments.sort { $0.index < $1.index }
-      
-      // Only process queue if nothing is currently loading
-      if currentAutoLoadingCommentId == nil {
-          processQueue()
-      }
+  static let shared = CommentAutoLoadManager()
+  
+  @Published var currentAutoLoadingCommentId: String? = nil
+  private var currentAutoLoadingIndex: Int? = nil // Track the index of currently loading comment
+  private var requestedComments: Set<String> = [] // Just track which comments have requested auto-load
+  private var currentTopCommentIdx: Int = 0
+  private var currentCommentIndexMap: [String: Int] = [:]
+  
+  private init() {}
+  
+  func canStartAutoLoad(for commentId: String, at index: Int) -> Bool {
+    return currentAutoLoadingCommentId == nil
   }
-
+  
+  func requestAutoLoadSlot(for commentId: String) {
+    // Simply add to requested comments
+    requestedComments.insert(commentId)
     
+    // Check if we should interrupt the current loading comment with a higher priority one
+    if let currentLoadingId = currentAutoLoadingCommentId,
+       let currentLoadingIdx = currentAutoLoadingIndex,
+       let requestedIndex = currentCommentIndexMap[commentId],
+       requestedIndex >= currentTopCommentIdx,
+       requestedIndex < currentLoadingIdx {
+      // New comment has higher priority, stop current and start new one immediately
+//      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Interrupting comment \(currentLoadingId) at index \(currentLoadingIdx) for higher priority comment \(commentId) at index \(requestedIndex)")
+      stopAutoLoad(for: currentLoadingId)
+      startAutoLoad(for: commentId, at: requestedIndex)
+    } else {
+      // Try to start the next comment if nothing is currently loading
+      processQueue()
+    }
+  }
+  
+  func processIndexMapUpdate(_ commentIndexMap: [String: Int]) {
+    if currentCommentIndexMap == commentIndexMap { return }    
+    currentCommentIndexMap = commentIndexMap
+    
+    // Check if the currently loading comment is still the best one to load
+    if let currentLoadingId = currentAutoLoadingCommentId,
+       let currentLoadingIdx = currentAutoLoadingIndex {
+      
+      // Find if there's a better comment to load (lower index)
+      var betterCommentId: String? = nil
+      var betterIndex: Int = currentLoadingIdx
+      
+      for commentId in requestedComments {
+        if commentId != currentLoadingId,
+           let index = commentIndexMap[commentId],
+           index >= currentTopCommentIdx,
+           index < betterIndex {
+          betterCommentId = commentId
+          betterIndex = index
+        }
+      }
+      
+      // If we found a better comment, interrupt current and start the better one
+      if let betterComment = betterCommentId {
+//        print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Index map update: Interrupting comment \(currentLoadingId) at index \(currentLoadingIdx) for higher priority comment \(betterComment) at index \(betterIndex)")
+        stopAutoLoad(for: currentLoadingId)
+        startAutoLoad(for: betterComment, at: betterIndex)
+      }
+    } else {
+      // Only process queue if nothing is currently loading
+      processQueue()
+    }
+  }
+  
   private func processQueue() {
-    guard currentAutoLoadingCommentId == nil && !queuedComments.isEmpty else {
-        return
+    guard currentAutoLoadingCommentId == nil else {
+      return
     }
     
-    // Get the comment with the lowest index (highest priority)
-    let nextComment = queuedComments.removeFirst()
-    startAutoLoad(for: nextComment.id, at: nextComment.index)
+    // Find the comment with the lowest index that's >= currentTopCommentIdx
+    var bestCommentId: String? = nil
+    var bestIndex: Int = Int.max
+    
+    for commentId in requestedComments {
+      if let index = currentCommentIndexMap[commentId],
+         index >= currentTopCommentIdx,
+         index < bestIndex {
+        bestCommentId = commentId
+        bestIndex = index
+      }
+    }
+    
+    // Start auto-load for the best candidate
+    if let commentId = bestCommentId {
+      startAutoLoad(for: commentId, at: bestIndex)
+    }
   }
   
   func startAutoLoad(for commentId: String, at index: Int) {
-      currentAutoLoadingCommentId = commentId
-      currentAutoLoadingIndex = index
-      // Force UI update
-      DispatchQueue.main.async {
-          self.objectWillChange.send()
-      }
+    currentAutoLoadingCommentId = commentId
+    currentAutoLoadingIndex = index
+    // Force UI update
+    DispatchQueue.main.async {
+      self.objectWillChange.send()
+    }
   }
   
   func startAutoLoad(for commentId: String) {
-      // Legacy method - try to find index from queue
-      if let queueItem = queuedComments.first(where: { $0.id == commentId }) {
-          startAutoLoad(for: commentId, at: queueItem.index)
-      } else {
-          currentAutoLoadingCommentId = commentId
-          currentAutoLoadingIndex = nil
-          DispatchQueue.main.async {
-              self.objectWillChange.send()
-          }
+    // Legacy method - try to find index from map
+    if let index = currentCommentIndexMap[commentId] {
+      startAutoLoad(for: commentId, at: index)
+    } else {
+      currentAutoLoadingCommentId = commentId
+      currentAutoLoadingIndex = nil
+      DispatchQueue.main.async {
+        self.objectWillChange.send()
       }
+    }
   }
   
   func stopAutoLoad(for commentId: String) {
-      if currentAutoLoadingCommentId == commentId {
-          currentAutoLoadingCommentId = nil
-          currentAutoLoadingIndex = nil
-          // Process next in queue immediately
-          DispatchQueue.main.async {
-              self.processQueue()
-          }
+    if currentAutoLoadingCommentId == commentId {
+      currentAutoLoadingCommentId = nil
+      currentAutoLoadingIndex = nil
+      // Process next in queue immediately
+      DispatchQueue.main.async {
+        self.processQueue()
       }
+    }
   }
   
   func isCurrentlyAutoLoading(_ commentId: String) -> Bool {
-      return currentAutoLoadingCommentId == commentId
+    return currentAutoLoadingCommentId == commentId
   }
   
   func removeFromQueue(_ commentId: String) {
-      queuedComments.removeAll { $0.id == commentId }
-  }
-  
-  func markCommentInvisible(_ commentId: String) {
-      visibleComments.remove(commentId)
-      pendingComments.remove(commentId)
-  }
-  
-  func markCommentCancelled(_ commentId: String) {
-      // Remove from all tracking when manually cancelled
-      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Comment \(commentId) CANCELLED - removing from all tracking")
-      visibleComments.remove(commentId)
-      pendingComments.remove(commentId)
-      removeFromQueue(commentId)
+    requestedComments.remove(commentId)
   }
   
   func isCommentVisible(_ commentId: String) -> Bool {
-      return visibleComments.contains(commentId) || pendingComments.contains(commentId)
+    return requestedComments.contains(commentId)
   }
+  
+  // New method to handle topCommentIdx changes
+  func handleTopCommentIndexChange(_ topCommentIdx: Int) {
+    if topCommentIdx == currentTopCommentIdx { return }
     
-    // New method to handle topCommentIdx changes
-  func handleTopCommentIndexChange(_ topCommentIdx: Int, commentIndexMap: [String: Int]) {
-      currentTopCommentIdx = topCommentIdx
-      
-      // Remove comments that are above the visible area from the queue
-      let commentsToRemove = queuedComments.filter { queueItem in
-          queueItem.index < topCommentIdx
-      }
-      
-      for comment in commentsToRemove {
-          removeFromQueue(comment.id)
-          // If this was the currently loading comment, stop it
-          if currentAutoLoadingCommentId == comment.id {
-              stopAutoLoad(for: comment.id)
-          }
-      }
-      
-      // Re-add visible comments that are now back in the visible range and not already in queue
-      for commentId in visibleComments {
-          if let commentIndex = commentIndexMap[commentId],
-             commentIndex >= topCommentIdx,
-             !queuedComments.contains(where: { $0.id == commentId }) {
-              queuedComments.append((id: commentId, index: commentIndex))
-          }
-      }
-      
-      // IMPORTANT: Re-sort the entire queue after modifications
-      queuedComments.sort { $0.index < $1.index }
-      
-      // Only process queue if nothing is currently loading
-      if currentAutoLoadingCommentId == nil {
-          processQueue()
-      }
+    currentTopCommentIdx = topCommentIdx
+    
+    // If the currently loading comment is now above the visible area, stop it
+    if let currentLoadingId = currentAutoLoadingCommentId,
+       let currentLoadingIdx = currentAutoLoadingIndex,
+       currentLoadingIdx < topCommentIdx {
+      stopAutoLoad(for: currentLoadingId)
+    }
+    
+    // Only process queue if nothing is currently loading
+    if currentAutoLoadingCommentId == nil {
+      processQueue()
+    }
   }
 }
 
@@ -198,8 +174,6 @@ struct CommentLinkMore: View {
   var postFullname: String?
   var parentElement: CommentParentElement?
   var indentLines: Int?
-  var topCommentIdx: Int
-  var commentIndexMap: [String: Int]
   var newCommentsLoaded: (() -> Void)?
   var index: Int = 0
   
@@ -217,7 +191,7 @@ struct CommentLinkMore: View {
   private func getAutoLoadDuration() -> TimeInterval {
     return NetworkMonitor.shared.connectedToWifi ? 1.5 : 3
   }
-    
+  
   func handleTap() {
     // Cancel auto-load timer when manually tapped
     cancelAutoLoadTimer()
@@ -229,15 +203,15 @@ struct CommentLinkMore: View {
       Task(priority: .background) {
         await comment.loadChildren(parent: parentElement, postFullname: postFullname, avatarSize: selectedTheme.comments.theme.badge.avatar.size, post: post, index: index)
         
-          await MainActor.run {
-            doThisAfter(0.5) {
-              withAnimation(spring) {
-                loadMoreLoading = false
-              }
+        await MainActor.run {
+          doThisAfter(0.5) {
+            withAnimation(spring) {
+              loadMoreLoading = false
             }
           }
-          
-          newCommentsLoaded?()
+        }
+        
+        newCommentsLoaded?()
       }
     }
   }
@@ -245,39 +219,17 @@ struct CommentLinkMore: View {
   private func requestAutoLoadSlot() {
     guard !hasRequestedAutoLoad else { return }
     
-    if let currentIndex = commentIndexMap[comment.id] {
-      // We have an index, proceed normally
-      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Comment \(comment.id) requesting slot at index \(currentIndex)")
-      hasRequestedAutoLoad = true
-      autoLoadManager.requestAutoLoadSlot(for: comment.id, at: currentIndex)
-    } else {
-      // No index yet, mark as pending
-      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Comment \(comment.id) marked as pending (no index yet)")
-      autoLoadManager.markCommentVisiblePending(comment.id)
-      // Don't set hasRequestedAutoLoad = true here, so we can try again when index map updates
-    }
-  }
-  
-  // Add this new method to handle when index becomes available
-  private func handleIndexMapUpdate() {
-    // If we haven't requested auto load yet and now have an index, request it
-    // But only if we're still visible (not cancelled)
-    if !hasRequestedAutoLoad,
-       commentIndexMap[comment.id] != nil,
-       autoLoadManager.isCommentVisible(comment.id) {
-      print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] Comment \(comment.id) retrying auto-load request after index update")
-      requestAutoLoadSlot()
-    }
+    hasRequestedAutoLoad = true
+    autoLoadManager.requestAutoLoadSlot(for: comment.id)
   }
   
   private func startAutoLoadTimer() {
     // Don't start timer if already loading
     if loadMoreLoading { return }
-        
+    
     // Only start if we're the current auto-loading comment
     guard autoLoadManager.isCurrentlyAutoLoading(comment.id) else { return }
     
-    print("[AUTO-LOAD \(Date().timeIntervalSinceReferenceDate)] TIMER STARTED \(comment.id))")
     // Reset progress
     withAnimation(.easeOut(duration: 0.1)) {
       autoLoadProgress = 0.0
@@ -326,9 +278,10 @@ struct CommentLinkMore: View {
     autoLoadTimer = nil
     resetProgressTimer?.invalidate()
     resetProgressTimer = nil
+    
     autoLoadManager.stopAutoLoad(for: comment.id)
-    // Use the new method to properly remove from all tracking
-    autoLoadManager.markCommentCancelled(comment.id)
+    autoLoadManager.removeFromQueue(comment.id)
+    
     hasRequestedAutoLoad = false
     withAnimation(.easeOut(duration: 0.2)) {
       autoLoadProgress = 0.0
@@ -446,8 +399,6 @@ struct CommentLinkMore: View {
       .allowsHitTesting(!loadMoreLoading)
       .id("\(comment.id)-more")
       .onAppear {
-        print("[DEBUG] CommentLinkMore \(comment.id) appeared - depth: \(data.depth), topCommentIdx: \(topCommentIdx), hasIndex: \(commentIndexMap[comment.id] != nil)")
-        
         if data.depth == 0 {
           handleTap()
           return
@@ -462,20 +413,8 @@ struct CommentLinkMore: View {
         requestAutoLoadSlot()
       }
       .onDisappear {
-        // Mark as invisible when view disappears
-        autoLoadManager.markCommentInvisible(comment.id)
         // Cancel timer and remove from queue when view disappears
         cancelAutoLoadTimer()
-      }
-      .onChange(of: topCommentIdx) {
-        // Use the new centralized handler instead of individual comment logic
-        autoLoadManager.handleTopCommentIndexChange(topCommentIdx, commentIndexMap: commentIndexMap)
-      }
-      .onChange(of: commentIndexMap) {
-        // Process any pending comments when index map updates
-        autoLoadManager.processIndexMapUpdate(commentIndexMap)
-        // Also check if this specific comment can now request auto-load
-        handleIndexMapUpdate()
       }
       .onChange(of: autoLoadManager.isCurrentlyAutoLoading(comment.id)) {
         if !loadMoreLoading {
