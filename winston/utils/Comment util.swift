@@ -42,7 +42,7 @@ class CommentUtils {
   }
     
   func flattenComments(_ comments: [Comment]) -> [[String: String]] {
-l    var savedMoreCalcs: [String: Int] = .init()
+    var savedMoreCalcs: [String: Int] = .init()
     return flattenCommentsIncludingMore(comments, savedMoreCalcs: &savedMoreCalcs)
       //.filter({ $0["target"] != nil}) // Filter out kind = "more" messages
   }

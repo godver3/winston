@@ -212,6 +212,9 @@
         }
       }
     },
+    "%@\n" : {
+
+    },
     "%@ karma" : {
       "localizations" : {
         "de" : {
@@ -380,9 +383,6 @@
         }
       }
     },
-    "a\na" : {
-
-    },
     "aA" : {
       "localizations" : {
         "de" : {
@@ -398,6 +398,9 @@
           }
         }
       }
+    },
+    "Aa\n" : {
+
     },
     "About" : {
       "localizations" : {
@@ -1163,9 +1166,6 @@
           }
         }
       }
-    },
-    "Download" : {
-
     },
     "Drag Left" : {
       "localizations" : {
@@ -3773,9 +3773,6 @@
         }
       }
     },
-    "Theme Store" : {
-
-    },
     "Theme Store Tint" : {
       "localizations" : {
         "de" : {
@@ -3844,9 +3841,6 @@
 
     },
     "There was an error" : {
-
-    },
-    "There was an error importing this theme" : {
 
     },
     "This is not working yet :(" : {

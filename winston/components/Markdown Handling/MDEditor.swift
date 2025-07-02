@@ -29,31 +29,35 @@ struct MDEditor: View {
   @FocusState.Binding var editorFocused: Bool
   @State var placeholder: String = placeholders.randomElement()!
 
-    var body: some View {
-      ZStack(alignment: .topLeading) {
-        if text.isEmpty {
-          Text(placeholder)
-            .opacity(0.35)
-            .padding(.top, 8)
-            .padding(.leading, 5)
-        }
-        
-        Text("a\na").opacity(0).padding(.all, 8)
-        Text(text).opacity(0).padding(.all, 8)
-        
-        TextEditor(text: $text)
-          .focused($editorFocused)
-          .fixedSize(horizontal: false, vertical: true)
+  var body: some View {
+    ZStack(alignment: .topLeading) {
+      // Invisible sizing
+      Text(text.isEmpty ? "Aa\n" : "\(text)\n")
+        .opacity(0)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+      
+      // TextEditor
+      TextEditor(text: $text)
+        .focused($editorFocused)
+        .scrollContentBackground(.hidden)
+        .background(.clear)
+        .scrollDisabled(true)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 8)
+      
+      // Placeholder positioned to match TextEditor exactly
+      if text.isEmpty {
+        TextEditor(text: .constant(placeholder))
+          .opacity(0.35)
           .scrollContentBackground(.hidden)
           .background(.clear)
-        
-        // The HighlightedTextEditor package currently does not integrate well with iOS 17's predictive text. It will be disabled until that issue is remedied.
-        // HighlightedTextEditor(text: $text, highlightRules: winstonMDEditorPreset)
-//          .introspect { editor in
-//            editor.textView.backgroundColor = .clear
-//          }
+          .scrollDisabled(true)
+          .allowsHitTesting(false) // Prevent interaction
+          .padding(.horizontal, 8)
+          .padding(.vertical, 8)
       }
-      .animation(nil, value: text.isEmpty)
     }
+    .animation(nil, value: text.isEmpty)
+  }
 }
-

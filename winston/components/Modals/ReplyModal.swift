@@ -11,16 +11,16 @@ import Defaults
 import NukeUI
 
 class TextFieldObserver : ObservableObject {
-  @Published var debouncedTeplyText: String
+  @Published var debouncedReplyText: String
   @Published var replyText: String
   
   init(delay: DispatchQueue.SchedulerTimeType.Stride, text: String? = nil) {
     let initial = ""
-    debouncedTeplyText = text ?? initial
+    debouncedReplyText = text ?? initial
     replyText = text ?? initial
     $replyText
       .debounce(for: delay, scheduler: DispatchQueue.main)
-      .assign(to: &$debouncedTeplyText)
+      .assign(to: &$debouncedReplyText)
   }
 }
 
@@ -181,7 +181,7 @@ struct ReplyModal<Content: View>: View {
             sheetHeight = newHeight + 48
         }
       }
-      .onChange(of: textWrapper.debouncedTeplyText, perform: { val in
+      .onChange(of: textWrapper.debouncedReplyText, perform: { val in
         currentDraft?.replyText = val
         Task {
           await viewContext.perform(schedule: .enqueued) {
