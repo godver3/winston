@@ -847,15 +847,6 @@ struct PostView: View, Equatable {
         }
         .onDisappear {
           stopLiveRefresh()
-          
-          Task {
-              // Force cleanup of any remaining references
-              comments = []
-              flattened = []
-              matches = []
-              matchMap = [:]
-              commentIndexMap = [:]
-          }
         }
         .onPreferenceChange(CommentUtils.AnchorsKey.self) { anchors in
           Task(priority: .background) {

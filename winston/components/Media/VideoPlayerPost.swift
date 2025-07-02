@@ -192,7 +192,7 @@ struct SharedVideo: Equatable {
   func safeCleanup() {
     guard !isCleanedUp else { return }
     
-    Task { @MainActor in
+    Task {
       // Don't interfere with user's background audio/now playing
       
       // Pause and reset player before cleanup

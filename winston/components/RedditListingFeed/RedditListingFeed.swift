@@ -52,7 +52,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
       return  Color.hex("3B82F6")
     }
     
-    return Color.hex("442222")
+    return Color.accentColor
   }
   
   

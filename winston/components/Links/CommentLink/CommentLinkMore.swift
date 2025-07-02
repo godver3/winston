@@ -45,7 +45,7 @@ class CommentAutoLoadManager: ObservableObject {
   }
   
   func processIndexMapUpdate(_ commentIndexMap: [String: Int]) {
-    if currentCommentIndexMap == commentIndexMap { return }    
+    if currentCommentIndexMap == commentIndexMap { return }
     currentCommentIndexMap = commentIndexMap
     
     // Check if the currently loading comment is still the best one to load
@@ -189,7 +189,7 @@ struct CommentLinkMore: View {
   private let timerInterval: TimeInterval = 0.1
   
   private func getAutoLoadDuration() -> TimeInterval {
-    return NetworkMonitor.shared.connectedToWifi ? 1.5 : 3
+    return NetworkMonitor.shared.connectedToWifi ? 1.25 : 3
   }
   
   func handleTap() {
