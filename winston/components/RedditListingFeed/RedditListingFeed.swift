@@ -22,6 +22,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   var forceRefresh: Binding<Bool>?
   @Default(.SubredditFeedDefSettings) private var subredditFeedDefSettings
   @Default(.GeneralDefSettings) private var generalDefSettings
+  @Default(.localHideSeen) private var localHideSeen
 
   @State private var customFilter: ShallowCachedFilter?
   @State private var currentPostId: String? = nil
@@ -66,7 +67,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
     self.subreddit = subreddit
     self.disableSearch = disableSearch
     self.forceRefresh = forceRefresh // Assign the optional forceRefresh Binding
-    self._itemsManager = .init(initialValue: FeedItemsManager(sorting: initialSorting, fetchFn: fetch))
+    self._itemsManager = .init(initialValue: FeedItemsManager(sorting: initialSorting, fetchFn: fetch, subId: subreddit?.id ?? ""))
     self._searchEnabled = .init(initialValue: disableSearch)
     self._filters = FetchRequest<CachedFilter>(sortDescriptors: [NSSortDescriptor(key: "text", ascending: true)], predicate: NSPredicate(format: "subID == %@", (subreddit?.data?.display_name ?? feedId) as CVarArg), animation: .default)
   }
@@ -94,7 +95,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
       //        withAnimation { itemsManager.loadingPinned = false }
       //      }
       //    }
-      await itemsManager.fetchCaller(loadingMore: false, force: force)
+    await itemsManager.fetchCaller(loadingMore: false, force: force, hideRead: localHideSeen.contains(subreddit?.id ?? ""))
 //        if let subreddit, !fetchedFilters {
 //            Task { await subreddit.fetchAndCacheFlairs() }
 //            fetchedFilters = true
@@ -194,6 +195,11 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                           .environment(\.contextSubreddit, sub)
                           .environment(\.contextPostWinstonData, winstonData)
                           .listRowInsets(EdgeInsets(top: paddingV, leading: paddingH, bottom: paddingV, trailing: paddingH))
+                          .onAppear {
+                            if !(subreddit?.data?.over18 ?? false) {
+                              SeenSubredditManager.shared.postSeen(subId: subreddit?.id ?? "", postId: post.id)
+                            }
+                          }
                         
                         if isThereDivider /*&& (i != (itemsManager.entities.count - 1))*/ {
                           NiceDivider(divider: selectedTheme.postLinks.divider)
@@ -257,7 +263,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                       withAnimation {
                         itemsManager.displayMode = .items
                       }
-                      Task { await itemsManager.fetchCaller(loadingMore: true) }
+                      Task { await itemsManager.fetchCaller(loadingMore: true, hideRead: localHideSeen.contains(subreddit?.id ?? "")) }
                     }
                     .buttonStyle(.actionSecondary)
                   }

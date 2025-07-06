@@ -57,6 +57,8 @@ extension View {
             BehaviorPanel()
           case .appearance:
             AppearancePanel()
+          case .seenPosts:
+              SeenPostsPanel()
           case .credentials:
             CredentialsPanel()
           case .about:

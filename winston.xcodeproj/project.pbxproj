@@ -68,6 +68,8 @@
 		CE5985BE2DA73F81005523D1 /* SavedContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5985BD2DA73F75005523D1 /* SavedContainer.swift */; };
 		CE5C10242E04E46600FE2167 /* winston-icon.icon in Resources */ = {isa = PBXBuildFile; fileRef = CE5C10232E04E46600FE2167 /* winston-icon.icon */; };
 		CE7FD54E2DC7E41500890F14 /* SwiftyGif in Frameworks */ = {isa = PBXBuildFile; productRef = CE7FD54D2DC7E41500890F14 /* SwiftyGif */; };
+		CE9537802E18485D00691099 /* SeenSubreddit.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE95377F2E18485000691099 /* SeenSubreddit.swift */; };
+		CE9537832E1ABFCB00691099 /* SeenPostsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE9537822E1ABFCB00691099 /* SeenPostsPanel.swift */; };
 		CEA42B2E2DEA815200F43254 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEA42B2D2DEA814C00F43254 /* NetworkMonitor.swift */; };
 		CEE627872DE4A84B0095E481 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627862DE4A84B0095E481 /* FirebaseAnalytics */; };
 		CEE627892DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = CEE627882DE4A84B0095E481 /* FirebaseAnalyticsOnDeviceConversion */; };
@@ -675,6 +677,8 @@
 		CE4C201A2E088018002E06CB /* GeneratedSummaryView.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = GeneratedSummaryView.swift; sourceTree = "<group>"; tabWidth = 2; };
 		CE5985BD2DA73F75005523D1 /* SavedContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedContainer.swift; sourceTree = "<group>"; };
 		CE5C10232E04E46600FE2167 /* winston-icon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "winston-icon.icon"; sourceTree = "<group>"; };
+		CE95377F2E18485000691099 /* SeenSubreddit.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = SeenSubreddit.swift; sourceTree = "<group>"; tabWidth = 2; };
+		CE9537822E1ABFCB00691099 /* SeenPostsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeenPostsPanel.swift; sourceTree = "<group>"; };
 		CEA42B2D2DEA814C00F43254 /* NetworkMonitor.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; tabWidth = 2; };
 		CEE6278C2DE4A8620095E481 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		EC051C2A2ACAEFC500E9D9ED /* QuickLookThumbnailing.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLookThumbnailing.framework; path = System/Library/Frameworks/QuickLookThumbnailing.framework; sourceTree = SDKROOT; };
@@ -1339,6 +1343,7 @@
 		EC1906EB2A55291F00A0300E /* views */ = {
 			isa = PBXGroup;
 			children = (
+				CE9537822E1ABFCB00691099 /* SeenPostsPanel.swift */,
 				EC1AB2CA2B0EF17600247971 /* Credentials */,
 				ECE08B6E2AA9F5B000F84DC9 /* Theming */,
 				EC1906EC2A55293500A0300E /* AppearancePanel.swift */,
@@ -1876,6 +1881,7 @@
 				EC6495A32A999C4A00B1852C /* CachedSub+CoreDataProperties.swift */,
 				EC6495A42A999C4A00B1852C /* CachedMulti+CoreDataClass.swift */,
 				EC6495A52A999C4A00B1852C /* CachedMulti+CoreDataProperties.swift */,
+				CE95377F2E18485000691099 /* SeenSubreddit.swift */,
 			);
 			path = managed;
 			sourceTree = "<group>";
@@ -3068,6 +3074,7 @@
 				ECD5EE932B11D564002CA158 /* AccountSwitcherGradientBackground.swift in Sources */,
 				659F68022A84E32300989300 /* VotesCluster.swift in Sources */,
 				EC7FBE312B411FD60082FA44 /* checkForOnboardingStatus.swift in Sources */,
+				CE9537802E18485D00691099 /* SeenSubreddit.swift in Sources */,
 				EC9D2A002BCB843500D5795E /* CustomList.swift in Sources */,
 				ECA86A812AB94DA200C31EC6 /* SubredditsStack.swift in Sources */,
 				EC63734D2A79133E000A03A3 /* Onboarding1OpeningSettings.swift in Sources */,
@@ -3317,6 +3324,7 @@
 				EC4C7C912B2BFA080007A4DA /* PostLinkDefSettings.swift in Sources */,
 				EC31DB182B12F0EB00A777ED /* CircleWave.metal in Sources */,
 				EC2760832B2ADFD100ADCE26 /* ConcurrentRunner.swift in Sources */,
+				CE9537832E1ABFCB00691099 /* SeenPostsPanel.swift in Sources */,
 				ECCB11812B5E19B7009881BE /* SilentState.swift in Sources */,
 				ECE08B682AA9E62900F84DC9 /* AvatarTheme.swift in Sources */,
 				EC08541B2A4BFEB300E88389 /* User.swift in Sources */,

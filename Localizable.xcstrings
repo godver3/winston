@@ -451,6 +451,9 @@
         }
       }
     },
+    "Actions" : {
+
+    },
     "Add a new credential" : {
 
     },
@@ -737,6 +740,21 @@
           }
         }
       }
+    },
+    "Clean Up Old Posts" : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear All" : {
+
+    },
+    "Clear All Seen Posts" : {
+
+    },
+    "Clear Seen Posts" : {
+
     },
     "Click the button and follow the video" : {
 
@@ -1166,6 +1184,9 @@
           }
         }
       }
+    },
+    "Done" : {
+
     },
     "Drag Left" : {
       "localizations" : {
@@ -2510,6 +2531,15 @@
     "No credential" : {
 
     },
+    "No posts" : {
+
+    },
+    "No posts found matching '%@'" : {
+
+    },
+    "No seen posts yet" : {
+
+    },
     "Nothing around here :(" : {
 
     },
@@ -2580,6 +2610,12 @@
           }
         }
       }
+    },
+    "Old" : {
+
+    },
+    "Old Posts (>7 days)" : {
+
     },
     "Omg, no credentials!" : {
 
@@ -3028,6 +3064,9 @@
     "Refresh access token" : {
 
     },
+    "Remove" : {
+
+    },
     "Repeat tutorial" : {
 
     },
@@ -3161,6 +3200,9 @@
         }
       }
     },
+    "Search post IDs" : {
+
+    },
     "Search r/%@" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -3209,6 +3251,12 @@
           }
         }
       }
+    },
+    "Seen Posts" : {
+
+    },
+    "Seen Posts (%lld)" : {
+
     },
     "SELECTING" : {
       "localizations" : {
@@ -3505,6 +3553,9 @@
         }
       }
     },
+    "Statistics" : {
+
+    },
     "Status:" : {
       "localizations" : {
         "de" : {
@@ -3568,6 +3619,9 @@
           }
         }
       }
+    },
+    "Subreddits (%lld)" : {
+
     },
     "Subs" : {
       "localizations" : {
@@ -3908,6 +3962,19 @@
         }
       }
     },
+    "This will permanently clear all %lld seen posts for r/%@. This action cannot be undone." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will permanently clear all %1$lld seen posts for r/%2$@. This action cannot be undone."
+          }
+        }
+      }
+    },
+    "This will permanently clear all seen posts for all subreddits. This action cannot be undone." : {
+
+    },
     "Thumbnail Position" : {
       "localizations" : {
         "de" : {
@@ -4009,6 +4076,12 @@
           }
         }
       }
+    },
+    "Total Seen Posts" : {
+
+    },
+    "Total Subreddits" : {
+
     },
     "u/%@" : {
       "localizations" : {

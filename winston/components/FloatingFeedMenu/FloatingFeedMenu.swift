@@ -16,6 +16,7 @@ struct FloatingFeedMenu: View, Equatable {
   
   @Default(.subredditFilters) var subredditFilters
   @Default(.localFavorites) var localFavorites
+  @Default(.localHideSeen) var localHideSeen
   
   var subId: String
   var subName: String?
@@ -183,6 +184,29 @@ struct FloatingFeedMenu: View, Equatable {
         VStack(spacing: itemsSpacingDownscaled) {
           VStack(spacing: itemsSpacing) {
             if menuOpen {
+              Image(systemName: localHideSeen.contains(subId) ? "eye.slash.fill" : "eye.slash")
+                .fontSize(22, .bold)
+                .frame(width: actionsSize, height: actionsSize)
+                .foregroundStyle(Color.accentColor)
+                .drawingGroup()
+                .glassEffect(.regular.interactive(), in: .circle)
+                .transition(.comeFrom(.bottom, index: 1, total: 2))
+                .highPriorityGesture(TapGesture().onEnded({
+                  Hap.shared.play(intensity: 0.75, sharpness: 0.9)
+                  
+                  withAnimation {
+                    if localHideSeen.contains(subId) {
+                      localHideSeen = localHideSeen.filter{ $0 != subId }
+                    } else {
+                      localHideSeen.append(subId)
+                    }
+                    
+                    Task {
+                      await refresh()
+                    }
+                  }
+                }))
+              
               if let subName {
                 Image(systemName: localFavorites.contains(subName) ? "star.fill" : "star")
                   .fontSize(22, .bold)

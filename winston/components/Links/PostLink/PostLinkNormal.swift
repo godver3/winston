@@ -32,6 +32,7 @@ struct PostLinkNormal: View, Equatable, Identifiable {
   @Environment(\.contextPost) var post
   @Environment(\.contextSubreddit) var sub
   @Environment(\.contextPostWinstonData) var winstonData
+  
   var id: String
   weak var controller: UIViewController?
   var theme: SubPostsListTheme
@@ -66,9 +67,6 @@ struct PostLinkNormal: View, Equatable, Identifiable {
   
   func onDisappear() {
     Task(priority: .background) {
-      if defSettings.readOnScroll {
-        await post.toggleSeen(true, optimistic: true)
-      }
       if defSettings.hideOnRead {
         await post.hide(true)
       }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="23605" systemVersion="24D81" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24233.11" systemVersion="24F74" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
     <entity name="CachedFilter" representedClassName="CachedFilter" syncable="YES">
         <attribute name="bgColor" optional="YES" attributeType="String"/>
         <attribute name="label" optional="YES" attributeType="String"/>
@@ -70,5 +70,9 @@
         <attribute name="numComments" optional="YES" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="postID" optional="YES" attributeType="String"/>
         <attribute name="seenComments" optional="YES" attributeType="String"/>
+    </entity>
+    <entity name="SeenSubreddit" representedClassName="SeenSubreddit" syncable="YES">
+        <attribute name="postIdsWithDates" optional="YES" attributeType="Transformable" customClassName="[String:Date]"/>
+        <attribute name="subId" attributeType="String" defaultValueString=""/>
     </entity>
 </model>

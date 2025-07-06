@@ -54,6 +54,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     FirebaseApp.configure()
     
+    Task {
+      performSeenPostCleanup()
+    }
+    
     return true
   }
     
@@ -89,6 +93,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
          break
      }
  }
+  
+  func performSeenPostCleanup() {
+      SeenSubredditManager.shared.cleanupOldPosts()
+      getCleanupStatistics()
+  }
+  
+  /// Get cleanup statistics
+  func getCleanupStatistics() {
+      let stats = SeenSubredditManager.shared.getSeenPostsStatistics()
+      print("Seen posts statistics:")
+      print("- Total subreddits: \(stats.totalSubreddits)")
+      print("- Total posts: \(stats.totalPosts)")
+      print("- Old posts (>7 days): \(stats.oldPosts)")
+  }
     
 }
 
