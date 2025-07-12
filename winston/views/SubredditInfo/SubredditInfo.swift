@@ -29,7 +29,8 @@ struct SubredditInfo: View {
   @Default(.localFavorites) var localFavorites
   @Environment(\.useTheme) private var theme
   var body: some View {
-      let isliked = localFavorites.contains(subreddit.id)
+      let subName = subreddit.data?.name ?? ""
+      let isliked = localFavorites.contains(subName)
       
     List {
       Group {
@@ -66,9 +67,13 @@ struct SubredditInfo: View {
           .toolbar{
             ToolbarItem(){
               Button{
-                Task{
-                    subreddit.localFavoriteToggle()
-                }
+                  withAnimation {
+                    if localFavorites.contains(subName) {
+                      localFavorites = localFavorites.filter{ $0 != subName }
+                    } else {
+                      localFavorites.append(subName)
+                    }
+                  }
               } label: {
                 Label("Favorites", systemImage: isliked ? "star.fill" : "star")
                   .foregroundColor(.blue)

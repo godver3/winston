@@ -9,12 +9,17 @@ import SwiftUI
 import Defaults
 import Nuke
 
+struct LoadingProgress {
+  var currentCall: Int = 0
+  var isActive: Bool = false
+}
+
 @Observable
 class FeedItemsManager<S> {
   typealias ItemsFetchFn = (_ lastElementId: String?, _ sorting: S?, _ searchQuery: String?, _ flair: String?) async -> (entities: [RedditEntityType]?, after: String?)?
   
   enum DisplayMode: String { case loading, empty, items, endOfFeed, error }
-    
+  
   private var currentTask: Task<(), Never>? = nil
   var displayMode: DisplayMode = .loading
   var loadingPinned = false
@@ -51,6 +56,8 @@ class FeedItemsManager<S> {
   
   private var previousId: String? = nil
   
+  var loadingProgress: LoadingProgress = LoadingProgress()
+  
   init(sorting: S?, fetchFn: @escaping ItemsFetchFn, subId: String) {
     self.sorting = sorting
     self.fetchFn = fetchFn
@@ -58,7 +65,14 @@ class FeedItemsManager<S> {
     self.subId = subId
   }
   
-  func fetchCaller(loadingMore: Bool, force: Bool = false, hideRead: Bool = false, newEntities: [RedditEntityType]? = nil, newLoadedEntitiesIds: Set<String>? = nil) async {
+  func fetchCaller(loadingMore: Bool, force: Bool = false, hideRead: Bool = false, newEntities: [RedditEntityType]? = nil, newLoadedEntitiesIds: Set<String>? = nil, callCount: Int = 0) async {
+    
+    // Update progress at the start of each call
+    await MainActor.run {
+      loadingProgress.currentCall = callCount + 1
+      loadingProgress.isActive = true
+    }
+    
     if !loadingMore, let currentTask, !currentTask.isCancelled {
       currentTask.cancel()
     }
@@ -69,16 +83,6 @@ class FeedItemsManager<S> {
     let noSearchQuery = searchQuery == nil || searchQuery == ""
     let sort = noSearchQuery ? sorting : (SubListingSortOption.new as? S)
     
-//    if noSearchQuery && self.lastNoSearchEntitites.count > 0 && !force && !loadingMore && (sort as? SubListingSortOption) == self.lastSort {
-//      await MainActor.run {
-//        withAnimation {
-//          self.displayMode = self.lastNoSearchDisplayMode
-//          self.entities = self.lastNoSearchEntitites
-//          self.lastElementId = self.lastNoSearchLastElementId
-//          self.loadedEntitiesIds = self.lastNoSearchLoadedEntitiesIds
-//        }
-//      }
-//    } else
     if let (fetchedEntities, after) = await fetchFn(lastElementId, sort, searchQuery, filter), let fetchedEntities {
       var newEntities = newEntities ?? []
       var newLoadedEntitiesIds = newLoadedEntitiesIds ?? []
@@ -107,79 +111,78 @@ class FeedItemsManager<S> {
       }
       
       self.lastElementId = after
-
+      
       if newEntities.count >= self.chunkSize || fetchedEntities.count < self.chunkSize {
         await MainActor.run { [newEntities, newLoadedEntitiesIds] in
           withAnimation {
             self.entities = loadingMore ? (entities + newEntities) : newEntities
             self.loadedEntitiesIds = loadingMore ? (loadedEntitiesIds.union(newLoadedEntitiesIds)) : newLoadedEntitiesIds
             self.displayMode = fetchedEntities.count < self.chunkSize ? .endOfFeed : .items
+            
+            // Reset progress when done
+            self.loadingProgress.isActive = false
+            self.loadingProgress.currentCall = 0
           }
         }
       } else {
-        await fetchCaller(loadingMore: loadingMore, hideRead: hideRead, newEntities: newEntities, newLoadedEntitiesIds: newLoadedEntitiesIds)
+        await fetchCaller(loadingMore: loadingMore, hideRead: hideRead, newEntities: newEntities, newLoadedEntitiesIds: newLoadedEntitiesIds, callCount: callCount + 1)
         return
       }
-      
-//      if noSearchQuery && (initialLoadingMore ?? loadingMore) {
-//        self.lastNoSearchDisplayMode = self.displayMode
-//        self.lastNoSearchEntitites = self.entities
-//        self.lastNoSearchLastElementId = self.lastElementId
-//        self.lastNoSearchLoadedEntitiesIds = self.loadedEntitiesIds
-//        self.lastSort = sort as? SubListingSortOption
-//      }
     } else {
-      withAnimation { displayMode = .error }
+      await MainActor.run {
+        withAnimation {
+          displayMode = .error
+          loadingProgress.isActive = false
+        }
+      }
     }
     
     self.currentTask = nil
   }
   
   func elementAppeared(entity: RedditEntityType, index: Int, currentPostId: String?) async {
-    //      print("[LIST-APPEARED] idx: \(index) id: \(entity.id)")
-    
-    // Add bounds checking
-    guard index >= 0 && index < entities.count else {
-      print("Index out of bounds in elementAppeared: \(index)")
-      return
-    }
-    
-    // Ensure entity matches the one at the index
-    guard entities[safe: index]?.id == entity.id else {
-      print("Entity mismatch in elementAppeared - expected: \(entities[safe: index]?.id ?? "nil"), got: \(entity.id)")
-      return
-    }
-    
-    if currentPostId != nil, !scrolling, !lastAppearedId.isEmpty, scrollingDown && (index - lastAppearedIndex) > 3, let scrollProxy {
-      scrolling = true
-      
-      print("[LIST-WARN] Skipped \(abs(lastAppearedIndex - index)) posts. Scrolling back to \(lastAppearedId)")
-      scrollProxy.scrollTo(lastAppearedId, anchor: .center)
-      lastAppearedId = ""
-      
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        self.scrolling = false
+    await MainActor.run {
+      // Move all property modifications here
+      guard index >= 0 && index < entities.count else {
+        print("Index out of bounds in elementAppeared: \(index)")
+        return
       }
       
-      return
+      guard entities[safe: index]?.id == entity.id else {
+        print("Entity mismatch in elementAppeared")
+        return
+      }
+      
+      if currentPostId != nil, !scrolling, !lastAppearedId.isEmpty, scrollingDown && (index - lastAppearedIndex) > 3, let scrollProxy {
+        scrolling = true
+        print("[LIST-WARN] Skipped \(abs(lastAppearedIndex - index)) posts. Scrolling back to \(lastAppearedId)")
+        scrollProxy.scrollTo(lastAppearedId, anchor: .center)
+        lastAppearedId = ""
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          self.scrolling = false
+        }
+        return
+      }
+      
+      scrollingDown = index > lastAppearedIndex
+      
+      // Set lastAppearedId safely
+      switch entity {
+      case .post(let post):
+        lastAppearedId = post.id + (post.winstonData?.uniqueId ?? "")
+      default:
+        lastAppearedId = entity.id
+      }
+      
+      lastAppearedIndex = index
     }
     
-    scrollingDown = index > lastAppearedIndex
-    
-    switch entity {
-    case .post(let post):
-      lastAppearedId = post.id + (post.winstonData?.uniqueId ?? "")
-      break
-    default:
-      lastAppearedId = entity.id
-      break
-    }
-    
-    lastAppearedIndex = index
-    
+    // Keep the rest of the logic outside if it doesn't need main thread
     if displayMode != .endOfFeed, entities.count > 0, index >= entities.count - 2, currentTask == nil {
       self.currentTask = Task { await fetchCaller(loadingMore: true) }
     }
+    
     
     // Safer prefetching with bounds checking
     let start = max(0, index - prefetchRange)

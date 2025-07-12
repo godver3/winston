@@ -44,7 +44,7 @@ extension Post {
     if let data = data ?? self.data {
       let compact = Defaults[.SubredditFeedDefSettings].compactPerSubreddit[sub?.id ?? data.subreddit_id ?? ""] ?? Defaults[.PostLinkDefSettings].compactMode.enabled
       if self.winstonData == nil { self.winstonData = .init() }
-        self.winstonData?.uniqueId = randomString(length: 10)
+      self.winstonData?.uniqueId = randomString(length: 10)
       
       self.winstonData?.permaURL = URL(string: "https://reddit.com\(data.permalink.urlEncoded)")
       

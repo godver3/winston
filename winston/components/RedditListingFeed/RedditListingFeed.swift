@@ -23,10 +23,13 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   @Default(.SubredditFeedDefSettings) private var subredditFeedDefSettings
   @Default(.GeneralDefSettings) private var generalDefSettings
   @Default(.localHideSeen) private var localHideSeen
-
+  
   @State private var customFilter: ShallowCachedFilter?
   @State private var currentPostId: String? = nil
   @State private var currentPostAnchor: UnitPoint = .center
+  
+  @SilentState private var appearedPosts: [String] = []
+  @SilentState private var disappearedPosts: [String] = []
   
   func getSubIcon(_ subId: String) -> String {
     if subId == "all" {
@@ -86,33 +89,33 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   @Default(.SubredditFeedDefSettings) private var feedDefSettings
   
   func refetch(_ force: Bool = false) async {
-      //    if let subreddit, !feedsAndSuch.contains(subreddit.id) {
-      //      Task {
-      //        withAnimation { itemsManager.loadingPinned = true }
-      //        if let pinnedPosts = await subreddit.fetchPinnedPosts() {
-      //          itemsManager.pinnedPosts = pinnedPosts
-      //        }
-      //        withAnimation { itemsManager.loadingPinned = false }
-      //      }
-      //    }
+    //    if let subreddit, !feedsAndSuch.contains(subreddit.id) {
+    //      Task {
+    //        withAnimation { itemsManager.loadingPinned = true }
+    //        if let pinnedPosts = await subreddit.fetchPinnedPosts() {
+    //          itemsManager.pinnedPosts = pinnedPosts
+    //        }
+    //        withAnimation { itemsManager.loadingPinned = false }
+    //      }
+    //    }
     await itemsManager.fetchCaller(loadingMore: false, force: force, hideRead: localHideSeen.contains(subreddit?.id ?? ""))
-//        if let subreddit, !fetchedFilters {
-//            Task { await subreddit.fetchAndCacheFlairs() }
-//            fetchedFilters = true
-//        }
+    //        if let subreddit, !fetchedFilters {
+    //            Task { await subreddit.fetchAndCacheFlairs() }
+    //            fetchedFilters = true
+    //        }
   }
   
   func refresh() async {
     await refetch(true)
   }
-
+  
   func setCurrentOpenPost(post: Post) {
     currentPostId = post.id + (post.winstonData?.uniqueId ?? "")
-//      if let currentVideo = post.winstonData?.media as? SharedVideo {
-//        Nav.shared.currVideoId = currentVideo.id
-//      } else {
-//        Nav.shared.currVideoId = nil
-//      }
+    //      if let currentVideo = post.winstonData?.media as? SharedVideo {
+    //        Nav.shared.currVideoId = currentVideo.id
+    //      } else {
+    //        Nav.shared.currVideoId = nil
+    //      }
     
     if let height = post.winstonData?.postDimensions.size.height, height > 640 {
       currentPostAnchor = .top
@@ -120,7 +123,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
       currentPostAnchor = .center
     }
   }
-    
+  
   func sortUpdated(opt: S) {
     itemsManager.sorting = opt
     feedDefSettings.subredditSorts[self.subreddit?.id ?? ""] = opt as? SubListingSortOption
@@ -128,33 +131,33 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   
   @ViewBuilder
   func getPinnedSection() -> some View {
-      if itemsManager.displayMode != .loading, itemsManager.pinnedPosts.count > 0 || itemsManager.loadingPinned {
-          let isThereDivider = selectedTheme.postLinks.divider.style != .no
-          let paddingH = selectedTheme.postLinks.theme.outerHPadding
-          let paddingV = selectedTheme.postLinks.spacing / (isThereDivider ? 4 : 2)
-          Section("Pinned") {
-              if itemsManager.loadingPinned {
-                  ProgressView().frame(maxWidth:.infinity, minHeight: 100)
-              } else {
-                  ScrollView(.horizontal) {
-                      LazyHStack(spacing: paddingV * 2) {
-                          ForEach(itemsManager.pinnedPosts) { post in
-                              StickiedPostLink(post: post)
-                          }
-                      }
-                      .scrollTargetLayout()
-                      .padding(.horizontal, paddingH)
-                      .padding(.bottom, paddingV)
-                  }
-                  .scrollTargetBehavior(.viewAligned)
-                  .listRowInsets(.zero)
-                  .scrollIndicators(.hidden)
+    if itemsManager.displayMode != .loading, itemsManager.pinnedPosts.count > 0 || itemsManager.loadingPinned {
+      let isThereDivider = selectedTheme.postLinks.divider.style != .no
+      let paddingH = selectedTheme.postLinks.theme.outerHPadding
+      let paddingV = selectedTheme.postLinks.spacing / (isThereDivider ? 4 : 2)
+      Section("Pinned") {
+        if itemsManager.loadingPinned {
+          ProgressView().frame(maxWidth:.infinity, minHeight: 100)
+        } else {
+          ScrollView(.horizontal) {
+            LazyHStack(spacing: paddingV * 2) {
+              ForEach(itemsManager.pinnedPosts) { post in
+                StickiedPostLink(post: post)
               }
+            }
+            .scrollTargetLayout()
+            .padding(.horizontal, paddingH)
+            .padding(.bottom, paddingV)
           }
-          .listRowInsets(EdgeInsets(top: 0, leading: paddingH, bottom: 0, trailing: paddingH))
-          .listRowSeparator(.hidden)
-          .listRowBackground(Color.clear)
+          .scrollTargetBehavior(.viewAligned)
+          .listRowInsets(.zero)
+          .scrollIndicators(.hidden)
+        }
       }
+      .listRowInsets(EdgeInsets(top: 0, leading: paddingH, bottom: 0, trailing: paddingH))
+      .listRowSeparator(.hidden)
+      .listRowBackground(Color.clear)
+    }
   }
   
   var body: some View {
@@ -173,11 +176,42 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
             switch itemsManager.displayMode {
             case .loading:
               Section {
-                ProgressView()
-                  .frame(maxWidth: .infinity, minHeight: geo.size.height)
-                  .padding(.bottom, 32)
-                  .id(UUID())
-              }
+                     VStack(spacing: 16) {
+                         // Normal progress view
+                         ProgressView()
+                             .scaleEffect(1.2)
+                         
+                         // Fixed height container for dots so ProgressView doesn't move
+                         VStack {
+                             HStack(spacing: 4) {
+                                 ForEach(1...min(max(itemsManager.loadingProgress.currentCall, 1), 10), id: \.self) { index in
+                                     Circle()
+                                         .fill(index == itemsManager.loadingProgress.currentCall ? Color.primary.opacity(0.6) : Color.secondary.opacity(0.2))
+                                         .frame(width: 6, height: 6)
+                                         .scaleEffect(index == itemsManager.loadingProgress.currentCall ? 1.2 : 1.0)
+                                         .opacity(index <= itemsManager.loadingProgress.currentCall && itemsManager.loadingProgress.currentCall > 1 ? 1.0 : 0.0)
+                                         .animation(.easeInOut(duration: 0.3), value: itemsManager.loadingProgress.currentCall)
+                                 }
+                                 
+                                 if itemsManager.loadingProgress.currentCall > 10 {
+                                     HStack(spacing: 2) {
+                                         ForEach(0..<3, id: \.self) { _ in
+                                             Circle()
+                                                 .fill(Color.secondary.opacity(0.3))
+                                                 .frame(width: 3, height: 3)
+                                         }
+                                     }
+                                     .opacity(itemsManager.loadingProgress.currentCall > 10 ? 1.0 : 0.0)
+                                     .animation(.easeInOut(duration: 0.3), value: itemsManager.loadingProgress.currentCall > 10)
+                                 }
+                             }
+                         }
+                         .frame(height: 20) // Fixed height container
+                     }
+                     .frame(maxWidth: .infinity, minHeight: geo.size.height)
+                     .padding(.bottom, 32)
+                     .id(UUID())
+                 }
             case .empty:
               Text("Nothing around here :(")
                 .frame(maxWidth: .infinity)
@@ -196,8 +230,17 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                           .environment(\.contextPostWinstonData, winstonData)
                           .listRowInsets(EdgeInsets(top: paddingV, leading: paddingH, bottom: paddingV, trailing: paddingH))
                           .onAppear {
+                            if !appearedPosts.contains(post.id) {
+                              appearedPosts.append(post.id)
+                              
+                              if disappearedPosts.count > 0 {
+                                SeenSubredditManager.shared.postsSeen(subId: subreddit?.id ?? "", newPostIds: disappearedPosts)
+                                disappearedPosts = []
+                              }
+                            }
+                          }.onDisappear {
                             if !(subreddit?.data?.over18 ?? false) {
-                              SeenSubredditManager.shared.postSeen(subId: subreddit?.id ?? "", postId: post.id)
+                              disappearedPosts.append(post.id)
                             }
                           }
                         
@@ -248,11 +291,11 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                 }
               }
               
-//              if itemsManager.displayMode == .endOfFeed {
-//                Section {
-//                  EndOfFeedView()
-//                }
-//              }
+              //              if itemsManager.displayMode == .endOfFeed {
+              //                Section {
+              //                  EndOfFeedView()
+              //                }
+              //              }
               
               if itemsManager.displayMode == .error {
                 Section {
@@ -323,7 +366,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                 } label: {
                   Image(systemName: currSort.meta.icon)
                     .foregroundColor(Color.accentColor)
-//                    .fontSize(17, .bold)
+                  //                    .fontSize(17, .bold)
                 }
               }
               //          .disabled(subreddit.id == "saved")
@@ -377,10 +420,14 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
           
           itemsManager.scrollProxy = proxy
           currentPostId = nil
-//            Nav.shared.currVideoId = nil
+          //            Nav.shared.currVideoId = nil
           
           if itemsManager.displayMode != .loading { return }
           Task { await refetch() }
+        }
+        .onDisappear {
+          disappearedPosts = []
+          appearedPosts = []
         }
         .sheet(item: $customFilter) { custom in
           CustomFilterView(filter: custom, subId: subreddit?.id ?? "")

@@ -192,18 +192,13 @@ struct SharedVideo: Equatable {
   func safeCleanup() {
     guard !isCleanedUp else { return }
     
-    Task {
-      // Don't interfere with user's background audio/now playing
-      
+    Task { @MainActor in
       // Pause and reset player before cleanup
       player.pause()
-      await player.seek(to: .zero)
-      
-      // Small delay to ensure operations complete
-      try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
-      
-      // Replace with nil item to properly release resources
-      player.replaceCurrentItem(with: nil)
+      player.seek(to: .zero) { _ in
+        // Replace with nil item to properly release resources
+        self.player.replaceCurrentItem(with: nil)
+      }
     }
   }
   
@@ -241,6 +236,7 @@ struct VideoPlayerPost: View, Equatable {
   @State private var fullscreen = false
   @State private var hasAppeared = false
   @State private var observersAdded = false
+  @State private var notificationTokens: [Any] = []
   
   @State private var cancellables = Set<AnyCancellable>()
   
@@ -551,43 +547,41 @@ struct VideoPlayerPost: View, Equatable {
   // MARK: - Observer Management
   
   func addObserver() {
-    guard let sharedVideo = sharedVideo, !observersAdded else { return }
-    observersAdded = true
-    
-    DispatchQueue.main.async {
-      NotificationCenter.default.addObserver(
-        forName: .AVPlayerItemDidPlayToEndTime,
-        object: sharedVideo.player.currentItem,
-        queue: .main) { [sharedVideo] notif in
-          sharedVideo.player.seek(to: .zero)
-          sharedVideo.player.play()
-        }
+      guard let sharedVideo = sharedVideo, !observersAdded else { return }
+      observersAdded = true
       
-      NotificationCenter.default.addObserver(
-        forName: .AVPlayerItemFailedToPlayToEndTime,
-        object: sharedVideo.player.currentItem,
-        queue: .main) { [sharedVideo] notif in
-          resetVideo?(sharedVideo)
-        }
+      DispatchQueue.main.async {
+        let token1 = NotificationCenter.default.addObserver(
+          forName: .AVPlayerItemDidPlayToEndTime,
+          object: sharedVideo.player.currentItem,
+          queue: .main) { [sharedVideo] notif in
+            sharedVideo.player.seek(to: .zero)
+            sharedVideo.player.play()
+          }
+        
+        let token2 = NotificationCenter.default.addObserver(
+          forName: .AVPlayerItemFailedToPlayToEndTime,
+          object: sharedVideo.player.currentItem,
+          queue: .main) { [sharedVideo, resetVideo] notif in
+            resetVideo?(sharedVideo)
+          }
+        
+        // Store tokens for cleanup
+        notificationTokens.append(token1)
+        notificationTokens.append(token2)
+      }
     }
-  }
   
   func removeObserver() {
-    guard let sharedVideo = sharedVideo, observersAdded else { return }
-    observersAdded = false
-    
-    DispatchQueue.main.async {
-      NotificationCenter.default.removeObserver(
-        self,
-        name: .AVPlayerItemDidPlayToEndTime,
-        object: sharedVideo.player.currentItem)
+      guard observersAdded else { return }
+      observersAdded = false
       
-      NotificationCenter.default.removeObserver(
-        self,
-        name: .AVPlayerItemFailedToPlayToEndTime,
-        object: sharedVideo.player.currentItem)
+      // Remove stored notification observers
+      notificationTokens.forEach { token in
+        NotificationCenter.default.removeObserver(token)
+      }
+      notificationTokens.removeAll()
     }
-  }
 }
 
 struct FullScreenVP: View {
@@ -724,16 +718,19 @@ struct FullScreenVP: View {
   }
   
   private func resetToPortrait() {
-    AppDelegate.orientationLock = UIInterfaceOrientationMask.portrait
-    
-    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-    windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
-    
-    if let rootViewController = windowScene.windows.first?.rootViewController {
-      rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
-    }
-  }
-}
+         AppDelegate.orientationLock = UIInterfaceOrientationMask.portrait
+         
+         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+         
+         // Use async to avoid blocking UI
+         Task { @MainActor in
+             windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+             
+             if let rootViewController = windowScene.windows.first?.rootViewController {
+                 rootViewController.setNeedsUpdateOfSupportedInterfaceOrientations()
+             }
+         }
+     }}
 
 extension AVPlayer {
   var isVideoPlaying: Bool {

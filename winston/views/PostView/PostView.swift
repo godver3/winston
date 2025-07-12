@@ -909,8 +909,10 @@ private struct Toolbar: ToolbarContent {
         VStack {
           Text(title)
             .font(.headline)
+            .lineLimit(1)
           Text(subtitle)
             .font(.subheadline)
+            .lineLimit(1)
         }
       }
     }
