@@ -70,7 +70,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
     self.subreddit = subreddit
     self.disableSearch = disableSearch
     self.forceRefresh = forceRefresh // Assign the optional forceRefresh Binding
-    self._itemsManager = .init(initialValue: FeedItemsManager(sorting: initialSorting, fetchFn: fetch, subId: subreddit?.id ?? ""))
+    self._itemsManager = .init(wrappedValue: FeedItemsManager(sorting: initialSorting, fetchFn: fetch, subId: subreddit?.id ?? ""))
     self._searchEnabled = .init(initialValue: disableSearch)
     self._filters = FetchRequest<CachedFilter>(sortDescriptors: [NSSortDescriptor(key: "text", ascending: true)], predicate: NSPredicate(format: "subID == %@", (subreddit?.data?.display_name ?? feedId) as CVarArg), animation: .default)
   }
@@ -80,7 +80,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
   @State private var searchEnabled: Bool
   @SilentState private var fetchedFilters: Bool = false
   
-  @State private var itemsManager: FeedItemsManager<S>
+  @StateObject private var itemsManager: FeedItemsManager<S>
   
   @Environment(\.useTheme) private var selectedTheme
   @Environment(\.contentWidth) private var contentWidth
@@ -223,6 +223,7 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                     switch el {
                     case .post(let post):
                       if let winstonData = post.winstonData, let sub = winstonData.subreddit ?? subreddit {
+                        let _ = print("[POST] \(post.id) \(winstonData.uniqueId)")
                         PostLink(id: post.id, theme: selectedTheme.postLinks, showSub: showSubInPosts, compactPerSubreddit: feedDefSettings.compactPerSubreddit[sub.id], contentWidth: contentWidth, defSettings: postLinkDefSettings, setCurrentOpenPost: setCurrentOpenPost)
                           .id(post.id + winstonData.uniqueId)
                           .environment(\.contextPost, post)

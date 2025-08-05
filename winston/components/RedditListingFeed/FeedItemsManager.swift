@@ -14,24 +14,23 @@ struct LoadingProgress {
   var isActive: Bool = false
 }
 
-@Observable
-class FeedItemsManager<S> {
+class FeedItemsManager<S>: ObservableObject {
   typealias ItemsFetchFn = (_ lastElementId: String?, _ sorting: S?, _ searchQuery: String?, _ flair: String?) async -> (entities: [RedditEntityType]?, after: String?)?
   
   enum DisplayMode: String { case loading, empty, items, endOfFeed, error }
   
   private var currentTask: Task<(), Never>? = nil
-  var displayMode: DisplayMode = .loading
-  var loadingPinned = false
-  var pinnedPosts: [Post] = []
-  var entities: [RedditEntityType] = []
-  var loadedEntitiesIds: Set<String> = []
-  var lastElementId: String? = nil
-  var sorting: S? {
+  @Published var displayMode: DisplayMode = .loading
+  @Published var loadingPinned = false
+  @Published var pinnedPosts: [Post] = []
+  @Published var entities: [RedditEntityType] = []
+  @Published var loadedEntitiesIds: Set<String> = []
+  @Published var lastElementId: String? = nil
+  @Published var sorting: S? {
     willSet { withAnimation { displayMode = .loading } }
   }
-  var searchQuery = Debouncer("")
-  var selectedFilter: ShallowCachedFilter? {
+  @Published var searchQuery = Debouncer("")
+  @Published var selectedFilter: ShallowCachedFilter? {
     willSet { withAnimation { displayMode = .loading } }
   }
   var chunkSize: Int
@@ -105,6 +104,7 @@ class FeedItemsManager<S> {
         }
         
         if !hidden {
+
           newLoadedEntitiesIds.insert(ent.fullname)
           newEntities.append(ent)
         }

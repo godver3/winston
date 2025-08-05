@@ -9,7 +9,7 @@ import SwiftUI
 import Defaults
 import AVFoundation
 import AlertToast
-import FoundationModels
+//import FoundationModels
 
 struct PostView: View, Equatable {
   static func == (lhs: PostView, rhs: PostView) -> Bool {
@@ -413,101 +413,101 @@ struct PostView: View, Equatable {
 
   
   func generateSummary() {
-      DispatchQueue.main.async {
-          withAnimation(.easeOut(duration: 0.4)) {
-              generatedSummary = ""
-              generationErrorMessage = nil
-              summaryStreaming = true
-          }
-      }
-      
-      Task {
-          do {
-              let prompt = """
-                Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Write a few key points about the most important, interesting or controversial points commenters are discussing, with each point on a new line.
-
-                When quoting comments, use _underscores for italics_. For emphasis on key themes, use **bold sparingly**. Every time you mention a commenter's username, you must wrap it in backticks like `@username` - this applies to ALL usernames mentions without exception.
-
-                Examples of correct formatting:
-                - `@john_doe` mentioned that _"this is really helpful"_
-                - Several users like `@sarah123` and `@mike_wilson` agreed that **the main issue is cost**
-                - As `@reddit_user` put it: _"completely changed my perspective"_
-
-                Format your response as separate paragraphs or lines for each main point. Include 1-2 direct quotes as evidence. Write in a friendly, conversational tone and do not shy away from sprinkling in a little humor or sarcasm. 
-                DO NOT use formal section headers.
-
-                Comment data: 
-                """ + convertCommentsToLLMPrompt(comments)
-              
-              let session = LanguageModelSession()
-              let stream = session.streamResponse(to: prompt)
-              
-              // Optimized streaming with smooth updates
-              var buffer = ""
-              var lastUpdateTime = Date()
-              let minUpdateInterval: TimeInterval = 0.15 // Minimum 150ms between updates
-              var wordsSinceLastUpdate = 0
-              let wordsPerForceUpdate = 4 // Force update every 4 words regardless of time
-              
-              for try await response in stream {
-                  buffer = response
-                  let currentWords = buffer.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-                  let newWordsCount = currentWords.count
-                  
-                  let now = Date()
-                  let timeSinceUpdate = now.timeIntervalSince(lastUpdateTime)
-                  
-                  // Update if enough time has passed OR we have enough new words
-                  if timeSinceUpdate >= minUpdateInterval || newWordsCount - wordsSinceLastUpdate >= wordsPerForceUpdate {
-                      
-                      await MainActor.run {
-                          generatedSummary = buffer
-                      }
-                      
-                      lastUpdateTime = now
-                      wordsSinceLastUpdate = newWordsCount
-                      
-                      // Small breathing room to prevent UI overwhelm
-                      try? await Task.sleep(nanoseconds: 25_000_000) // 25ms
-                  }
-              }
-              
-              // Final update to ensure complete content
-              await MainActor.run {
-                  withAnimation(.easeOut(duration: 0.3)) {
-                      generatedSummary = buffer
-                      summaryStreaming = false
-                  }
-              }
-              
-          } catch {
-              await MainActor.run {
-                  withAnimation(.easeOut(duration: 0.4)) {
-                      if let genErr = error as? FoundationModels.LanguageModelSession.GenerationError {
-                          switch genErr {
-                          case .guardrailViolation(let context):
-                              generationErrorMessage = context.debugDescription
-                          case .exceededContextWindowSize(let context):
-                              generationErrorMessage = context.debugDescription
-                          case .assetsUnavailable(let context):
-                              generationErrorMessage = context.debugDescription
-                          case .decodingFailure(let context):
-                              generationErrorMessage = context.debugDescription
-                          case .unsupportedLanguageOrLocale(let context):
-                              generationErrorMessage = context.debugDescription
-                          default:
-                              generationErrorMessage = "\(error)"
-                          }
-                      } else {
-                          generationErrorMessage = "\(error)"
-                      }
-                      
-                      generatedSummary = nil
-                      summaryStreaming = false
-                  }
-              }
-          }
-      }
+//      DispatchQueue.main.async {
+//          withAnimation(.easeOut(duration: 0.4)) {
+//              generatedSummary = ""
+//              generationErrorMessage = nil
+//              summaryStreaming = true
+//          }
+//      }
+//      
+//      Task {
+//          do {
+//              let prompt = """
+//                Summarize the general sentiments and key takeaways in the comments of this post\(post.data?.title != nil ? " titled \"\(post.data!.title)\"" : ""). Write a few key points about the most important, interesting or controversial points commenters are discussing, with each point on a new line.
+//
+//                When quoting comments, use _underscores for italics_. For emphasis on key themes, use **bold sparingly**. Every time you mention a commenter's username, you must wrap it in backticks like `@username` - this applies to ALL usernames mentions without exception.
+//
+//                Examples of correct formatting:
+//                - `@john_doe` mentioned that _"this is really helpful"_
+//                - Several users like `@sarah123` and `@mike_wilson` agreed that **the main issue is cost**
+//                - As `@reddit_user` put it: _"completely changed my perspective"_
+//
+//                Format your response as separate paragraphs or lines for each main point. Include 1-2 direct quotes as evidence. Write in a friendly, conversational tone and do not shy away from sprinkling in a little humor or sarcasm. 
+//                DO NOT use formal section headers.
+//
+//                Comment data: 
+//                """ + convertCommentsToLLMPrompt(comments)
+//              
+//              let session = LanguageModelSession()
+//              let stream = session.streamResponse(to: prompt)
+//              
+//              // Optimized streaming with smooth updates
+//              var buffer = ""
+//              var lastUpdateTime = Date()
+//              let minUpdateInterval: TimeInterval = 0.15 // Minimum 150ms between updates
+//              var wordsSinceLastUpdate = 0
+//              let wordsPerForceUpdate = 4 // Force update every 4 words regardless of time
+//              
+//              for try await response in stream {
+//                  buffer = response
+//                  let currentWords = buffer.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+//                  let newWordsCount = currentWords.count
+//                  
+//                  let now = Date()
+//                  let timeSinceUpdate = now.timeIntervalSince(lastUpdateTime)
+//                  
+//                  // Update if enough time has passed OR we have enough new words
+//                  if timeSinceUpdate >= minUpdateInterval || newWordsCount - wordsSinceLastUpdate >= wordsPerForceUpdate {
+//                      
+//                      await MainActor.run {
+//                          generatedSummary = buffer
+//                      }
+//                      
+//                      lastUpdateTime = now
+//                      wordsSinceLastUpdate = newWordsCount
+//                      
+//                      // Small breathing room to prevent UI overwhelm
+//                      try? await Task.sleep(nanoseconds: 25_000_000) // 25ms
+//                  }
+//              }
+//              
+//              // Final update to ensure complete content
+//              await MainActor.run {
+//                  withAnimation(.easeOut(duration: 0.3)) {
+//                      generatedSummary = buffer
+//                      summaryStreaming = false
+//                  }
+//              }
+//              
+//          } catch {
+//              await MainActor.run {
+//                  withAnimation(.easeOut(duration: 0.4)) {
+//                      if let genErr = error as? FoundationModels.LanguageModelSession.GenerationError {
+//                          switch genErr {
+//                          case .guardrailViolation(let context):
+//                              generationErrorMessage = context.debugDescription
+//                          case .exceededContextWindowSize(let context):
+//                              generationErrorMessage = context.debugDescription
+//                          case .assetsUnavailable(let context):
+//                              generationErrorMessage = context.debugDescription
+//                          case .decodingFailure(let context):
+//                              generationErrorMessage = context.debugDescription
+//                          case .unsupportedLanguageOrLocale(let context):
+//                              generationErrorMessage = context.debugDescription
+//                          default:
+//                              generationErrorMessage = "\(error)"
+//                          }
+//                      } else {
+//                          generationErrorMessage = "\(error)"
+//                      }
+//                      
+//                      generatedSummary = nil
+//                      summaryStreaming = false
+//                  }
+//              }
+//          }
+//      }
   }
 
   var body: some View {
