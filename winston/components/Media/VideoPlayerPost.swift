@@ -602,7 +602,7 @@ struct FullScreenVP: View {
         .frame(width: geometry.size.width, height: geometry.size.height)
         .scaleEffect(interpolate([1, 0.9], true))
         .offset(cancelDrag ?? false ? .zero : drag)
-        .gesture(
+        .highPriorityGesture(
           DragGesture(minimumDistance: 10)
             .onChanged { val in
               guard isActive else { return } // Only allow drag when active

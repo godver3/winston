@@ -110,7 +110,9 @@ class FeedItemsManager<S>: ObservableObject {
         }
       }
       
-      self.lastElementId = after
+      await MainActor.run {
+        self.lastElementId = after
+      }
       
       if newEntities.count >= self.chunkSize || fetchedEntities.count < self.chunkSize {
         await MainActor.run { [newEntities, newLoadedEntitiesIds] in
