@@ -1,115 +1,47 @@
-name: iOS unsigned build
+name: iOS unsigned build (static)
+on: { workflow_dispatch: {} }
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [ main ]
+env:
+  USE_WORKSPACE: "false"                 # you don't appear to have a .xcworkspace
+  WORKSPACE: "winston.xcworkspace"       # ignored when USE_WORKSPACE=false
+  PROJECT:  "winston.xcodeproj"          # <— bundle dir, not project.pbxproj
+  SCHEME:   "winston"                    # <— app scheme (not tests)
 
 jobs:
   build:
     runs-on: macos-14
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # If the repo uses CocoaPods, install and generate the workspace
-      - name: Install CocoaPods (if Podfile exists)
-        if: ${{ hashFiles('Podfile') != '' }}
-        run: |
-          set -euo pipefail
-          sudo gem install cocoapods --no-document
-          pod install --repo-update
-
-      - name: Detect project/workspace and scheme
-        id: detect
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          # Prefer an .xcworkspace if present (e.g., CocoaPods)
-          WS=$(ls -1 *.xcworkspace 2>/dev/null | head -n1 || true)
-          PRJ=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
-
-          if [[ -n "$WS" ]]; then
-            echo "workspace=$WS" >> "$GITHUB_OUTPUT"
-            SCHEME=$(xcodebuild -list -workspace "$WS" -json | python3 - <<'PY'
-import json,sys,re
-d=json.load(sys.stdin)
-schemes = d.get("workspace",{}).get("schemes",[])
-candidates=[s for s in schemes if not re.search(r'test', s, re.I)]
-print((candidates or schemes)[0] if schemes else "")
-PY
-)
-          elif [[ -n "$PRJ" ]]; then
-            echo "project=$PRJ" >> "$GITHUB_OUTPUT"
-            SCHEME=$(xcodebuild -list -project "$PRJ" -json | python3 - <<'PY'
-import json,sys,re
-d=json.load(sys.stdin)
-schemes = d.get("project",{}).get("schemes",[])
-candidates=[s for s in schemes if not re.search(r'test', s, re.I)]
-print((candidates or schemes)[0] if schemes else "")
-PY
-)
-          else
-            echo "❌ No .xcworkspace or .xcodeproj found at repo root"
-            exit 1
-          fi
-
-          if [[ -z "$SCHEME" ]]; then
-            echo "❌ No shared scheme found. In Xcode: Product ▸ Scheme ▸ Manage Schemes… ▸ check 'Shared' and commit the .xcscheme file."
-            echo "Available targets:"
-            xcodebuild -list ${WS:+-workspace "$WS"} ${PRJ:+-project "$PRJ"}
-            exit 1
-          fi
-
-          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
-          echo "Detected scheme: $SCHEME"
-          echo "Workspace: ${WS:-<none>}  Project: ${PRJ:-<none>}"
+      - uses: actions/checkout@v4
 
       - name: Archive (unsigned)
         shell: bash
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/build/App.xcarchive"
-          SCHEME="${{ steps.detect.outputs.scheme }}"
-          if [[ -n "${{ steps.detect.outputs.workspace }}" ]]; then
-            xcodebuild \
-              -workspace "${{ steps.detect.outputs.workspace }}" \
-              -scheme "$SCHEME" \
-              -configuration Release \
+          if [[ "${USE_WORKSPACE}" == "true" ]]; then
+            xcodebuild -workspace "$WORKSPACE" \
+              -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
               clean archive -archivePath "$ARCHIVE_PATH"
           else
-            xcodebuild \
-              -project "${{ steps.detect.outputs.project }}" \
-              -scheme "$SCHEME" \
-              -configuration Release \
+            xcodebuild -project "$PROJECT" \
+              -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
               clean archive -archivePath "$ARCHIVE_PATH"
           fi
 
       - name: Package unsigned IPA
-        shell: bash
         run: |
-          set -euo pipefail
           APP_DIR="$PWD/build/App.xcarchive/Products/Applications"
-          if ! ls "$APP_DIR"/*.app >/dev/null 2>&1; then
-            echo "❌ .app not found in $APP_DIR"
-            ls -lah "$PWD/build" || true
-            exit 1
-          fi
           rm -rf Payload
           mkdir -p Payload
           cp -R "$APP_DIR"/*.app Payload/
           zip -qry app-unsigned.ipa Payload
-          echo "Created $(pwd)/app-unsigned.ipa"
           ls -lah app-unsigned.ipa
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ios-unsigned-ipa
           path: app-unsigned.ipa
