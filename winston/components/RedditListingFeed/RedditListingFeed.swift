@@ -223,7 +223,6 @@ struct RedditListingFeed<Header: View, Footer: View, S: Sorting>: View {
                     switch el {
                     case .post(let post):
                       if let winstonData = post.winstonData, let sub = winstonData.subreddit ?? subreddit {
-                        let _ = print("[POST] \(post.id) \(winstonData.uniqueId)")
                         PostLink(id: post.id, theme: selectedTheme.postLinks, showSub: showSubInPosts, compactPerSubreddit: feedDefSettings.compactPerSubreddit[sub.id], contentWidth: contentWidth, defSettings: postLinkDefSettings, setCurrentOpenPost: setCurrentOpenPost)
                           .id(post.id + winstonData.uniqueId)
                           .environment(\.contextPost, post)

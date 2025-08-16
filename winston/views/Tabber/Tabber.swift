@@ -54,54 +54,37 @@ struct Tabber: View, Equatable {
     
     var body: some View {
         TabView(selection: $nav.activeTab.onUpdate { newTab in if nav.activeTab == newTab { nav.resetStack() } }) {
-            
-            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-                SubredditsStack(router: nav[.posts])
-            }
-            .measureTabBar(setTabBarHeight)
-            .tag(Nav.TabIdentifier.posts)
-            .tabItem { Label("Posts", systemImage: "doc.text.image") }
-            
-            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-                SavedContainer(router: nav[.saved])
-            }
-            .measureTabBar(setTabBarHeight)
-            .tag(Nav.TabIdentifier.saved)
-            .tabItem { Label("Saved", systemImage: "bookmark") }
-            
-            
-            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-                Me(router: nav[.me])
-            }
-            .measureTabBar(setTabBarHeight)
-            .tag(Nav.TabIdentifier.me)
-            .tabItem {
-                Label(
-                    appearanceDefSettings.showUsernameInTabBar ? RedditAPI.shared.me?.data?.name ?? "Me" : "Me",
-                    systemImage: "person.fill")
+            Tab("Posts", systemImage: "doc.text.image", value: Nav.TabIdentifier.posts) {
+                WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
+                    SubredditsStack(router: nav[.posts])
+                }
             }
             
-            //
-            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-                Search(router: nav[.search])
+            Tab("Saved", systemImage: "bookmark", value: Nav.TabIdentifier.saved) {
+                WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
+                    SavedContainer(router: nav[.saved])
+                }
             }
-            .measureTabBar(setTabBarHeight)
-            .tag(Nav.TabIdentifier.search)
-            .tabItem { Label("Search", systemImage: "magnifyingglass") }
             
-//            WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
-//                Inbox(router: nav[.inbox])
-//            }
-//            .measureTabBar(setTabBarHeight)
-//            .tag(Nav.TabIdentifier.inbox)
-//            .tabItem { Label("Inbox", systemImage: "bell.fill") }
+            Tab(appearanceDefSettings.showUsernameInTabBar ? (RedditAPI.shared.me?.data?.name ?? "Me") : "Me",
+                systemImage: "person.fill", value: Nav.TabIdentifier.me) {
+                WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
+                    Me(router: nav[.me])
+                }
+            }
             
-            Settings(router: nav[.settings])
-                .measureTabBar(setTabBarHeight)
-                .tag(Nav.TabIdentifier.settings)
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+            Tab("Settings", systemImage: "gearshape.fill", value: Nav.TabIdentifier.settings) {
+                Settings(router: nav[.settings])
+            }
+            
+            Tab("Search", systemImage: "magnifyingglass", value: Nav.TabIdentifier.search, role: .search) {
+                WithCredentialOnly(credential: redditCredentialsManager.selectedCredential) {
+                  Search(router: nav[.search])
+                }
+            }
             
         }
+        .searchToolbarBehavior(.minimize)
         .overlay(TabBarOverlay(meTabTap: meTabTap), alignment: .bottom)
         .openFromWebListener()
         .themeFetchingListener() // From WinstonAPI

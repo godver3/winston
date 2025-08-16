@@ -56,6 +56,7 @@ struct Search: View {
   
   @State private var searchViewLoaded: Bool = false
   @State private var dummyAllSub: Subreddit? = nil
+  @State private var showOptions = false
   
   @Default(.PostLinkDefSettings) private var postLinkDefSettings
   @Environment(\.useTheme) private var theme
@@ -126,11 +127,20 @@ struct Search: View {
       List {
         Group {
           Section {
-            HStack {
+            HStack(spacing: 8) {
               SearchOption(activateSearchType: { searchType = .subreddit }, active: searchType == SearchType.subreddit, searchType: .subreddit)
+                .offset(x: showOptions ? 0 : -40)
+                .opacity(showOptions ? 1 : 0)
+                .animation(.spring().delay(0.00), value: showOptions)
               SearchOption(activateSearchType: { searchType = .post }, active: searchType == SearchType.post, searchType: .post)
+                .offset(x: showOptions ? 0 : -40)
+                .opacity(showOptions ? 1 : 0)
+                .animation(.spring().delay(0.07), value: showOptions)
               SearchOption(activateSearchType: { searchType = .user }, active: searchType == SearchType.user, searchType: .user)
-                
+                .offset(x: showOptions ? 0 : -40)
+                .opacity(showOptions ? 1 : 0)
+                .animation(.spring().delay(0.14), value: showOptions)
+              
               Spacer()
               
               if searchType == .post {
@@ -199,13 +209,13 @@ struct Search: View {
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
       }
+      .searchable(text: $searchQuery.value)
       .themedListBG(theme.lists.bg)
       .listStyle(.plain)
       .loader(loading, hideSpinner && !searchQuery.value.isEmpty)
       .attachViewControllerToRouter(tabID: .search)
       .injectInTabDestinations()
       .scrollDismissesKeyboard(.automatic)
-      .searchable(text: $searchQuery.value, placement: .toolbar)
       .autocorrectionDisabled(true)
       .textInputAutocapitalization(.none)
       .refreshable { fetch() }
@@ -231,8 +241,15 @@ struct Search: View {
           dummyAllSub = Subreddit(id: "all")
           searchViewLoaded = true
         }
+        showOptions = false
+        DispatchQueue.main.async {
+          withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+            showOptions = true
+          }
+        }
       }
     }
 //    .swipeAnywhere()
   }
 }
+
