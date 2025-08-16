@@ -1,4 +1,4 @@
-name: iOS Inspect (list schemes)
+name: Inspect iOS project
 
 on:
   workflow_dispatch:
@@ -7,48 +7,29 @@ jobs:
   inspect:
     runs-on: macos-14
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Show repo contents
+      - name: List Xcode workspaces/projects
         run: |
-          echo "== Top-level files =="
-          ls -la
-          echo
-          echo "== Xcode files =="
           ls -1 *.xcworkspace 2>/dev/null || true
           ls -1 *.xcodeproj    2>/dev/null || true
 
-      - name: xcodebuild -list (workspace, if any)
+      - name: List schemes in workspace
         run: |
           WS=$(ls -1 *.xcworkspace 2>/dev/null | head -n1 || true)
           if [ -n "$WS" ]; then
-            echo ">>> Using workspace: $WS"
-            xcodebuild -list -workspace "$WS" || true
-            echo
-            echo ">>> JSON (schemes):"
-            xcodebuild -list -workspace "$WS" -json | python3 - <<'PY' || true
-import json,sys
-d=json.load(sys.stdin)
-print("Schemes:", d.get("workspace",{}).get("schemes",[]))
-PY
+            echo ">>> Workspace: $WS"
+            xcodebuild -list -workspace "$WS"
           else
-            echo "No .xcworkspace found; skipping."
+            echo "No workspace found"
           fi
 
-      - name: xcodebuild -list (project, if any)
+      - name: List schemes in project
         run: |
           PRJ=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
           if [ -n "$PRJ" ]; then
-            echo ">>> Using project: $PRJ"
-            xcodebuild -list -project "$PRJ" || true
-            echo
-            echo ">>> JSON (schemes):"
-            xcodebuild -list -project "$PRJ" -json | python3 - <<'PY' || true
-import json,sys
-d=json.load(sys.stdin)
-print("Schemes:", d.get("project",{}).get("schemes",[]))
-PY
+            echo ">>> Project: $PRJ"
+            xcodebuild -list -project "$PRJ"
           else
-            echo "No .xcodeproj found; skipping."
+            echo "No project found"
           fi
