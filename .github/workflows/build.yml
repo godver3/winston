@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # If the repo uses CocoaPods, install and generate the workspace first
+      # If the repo uses CocoaPods, install and generate the workspace
       - name: Install CocoaPods (if Podfile exists)
         if: ${{ hashFiles('Podfile') != '' }}
         run: |
@@ -27,29 +27,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Prefer an .xcworkspace if present (e.g., when using CocoaPods)
+          # Prefer an .xcworkspace if present (e.g., CocoaPods)
           WS=$(ls -1 *.xcworkspace 2>/dev/null | head -n1 || true)
           PRJ=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
 
           if [[ -n "$WS" ]]; then
             echo "workspace=$WS" >> "$GITHUB_OUTPUT"
-            # Get schemes from workspace (JSON makes parsing reliable)
-            SCHEMES_JSON=$(xcodebuild -list -workspace "$WS" -json)
-            SCHEME=$(python3 - <<'PY'
+            SCHEME=$(xcodebuild -list -workspace "$WS" -json | python3 - <<'PY'
 import json,sys,re
-d=json.loads(sys.stdin.read())
+d=json.load(sys.stdin)
 schemes = d.get("workspace",{}).get("schemes",[])
-# Prefer a non-test scheme
 candidates=[s for s in schemes if not re.search(r'test', s, re.I)]
 print((candidates or schemes)[0] if schemes else "")
 PY
 )
           elif [[ -n "$PRJ" ]]; then
             echo "project=$PRJ" >> "$GITHUB_OUTPUT"
-            SCHEMES_JSON=$(xcodebuild -list -project "$PRJ" -json)
-            SCHEME=$(python3 - <<'PY'
+            SCHEME=$(xcodebuild -list -project "$PRJ" -json | python3 - <<'PY'
 import json,sys,re
-d=json.loads(sys.stdin.read())
+d=json.load(sys.stdin)
 schemes = d.get("project",{}).get("schemes",[])
 candidates=[s for s in schemes if not re.search(r'test', s, re.I)]
 print((candidates or schemes)[0] if schemes else "")
@@ -62,6 +58,8 @@ PY
 
           if [[ -z "$SCHEME" ]]; then
             echo "❌ No shared scheme found. In Xcode: Product ▸ Scheme ▸ Manage Schemes… ▸ check 'Shared' and commit the .xcscheme file."
+            echo "Available targets:"
+            xcodebuild -list ${WS:+-workspace "$WS"} ${PRJ:+-project "$PRJ"}
             exit 1
           fi
 
@@ -70,6 +68,7 @@ PY
           echo "Workspace: ${WS:-<none>}  Project: ${PRJ:-<none>}"
 
       - name: Archive (unsigned)
+        shell: bash
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/build/App.xcarchive"
@@ -93,6 +92,7 @@ PY
           fi
 
       - name: Package unsigned IPA
+        shell: bash
         run: |
           set -euo pipefail
           APP_DIR="$PWD/build/App.xcarchive/Products/Applications"
