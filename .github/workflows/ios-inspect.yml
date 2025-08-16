@@ -1,7 +1,5 @@
 name: Inspect iOS project
-
-on:
-  workflow_dispatch:
+on: { workflow_dispatch: {} }
 
 jobs:
   inspect:
@@ -9,14 +7,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: List Xcode workspaces/projects
+      - name: List top-level Xcode files
         run: |
-          ls -1 *.xcworkspace 2>/dev/null || true
-          ls -1 *.xcodeproj    2>/dev/null || true
+          echo "Workspaces:"; ls -1d *.xcworkspace 2>/dev/null || true
+          echo "Projects:";   ls -1d *.xcodeproj    2>/dev/null || true
 
-      - name: List schemes in workspace
+      - name: List schemes for workspace (if any)
         run: |
-          WS=$(ls -1 *.xcworkspace 2>/dev/null | head -n1 || true)
+          WS=$(ls -1d *.xcworkspace 2>/dev/null | head -n1 || true)
           if [ -n "$WS" ]; then
             echo ">>> Workspace: $WS"
             xcodebuild -list -workspace "$WS"
@@ -24,9 +22,9 @@ jobs:
             echo "No workspace found"
           fi
 
-      - name: List schemes in project
+      - name: List schemes for project (if any)
         run: |
-          PRJ=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
+          PRJ=$(ls -1d *.xcodeproj 2>/dev/null | head -n1 || true)
           if [ -n "$PRJ" ]; then
             echo ">>> Project: $PRJ"
             xcodebuild -list -project "$PRJ"
