@@ -9,8 +9,8 @@ env:
   PROJECT:  "winston.xcodeproj"
   SCHEME:   "winston"
   CATALOG_PATH: "winston/Assets.xcassets"
-  APPICON_NAME: "iconStandard"   # <-- set to one of your existing sets
-  SKIP_ASSETS: "false"           # set to "true" to bypass assets and confirm build otherwise works
+  APPICON_NAME: "iconStandard"   # set to one of your actual *.appiconset basenames
+  SKIP_ASSETS: "false"           # switch to "true" to bypass assets and confirm the rest compiles
 
 jobs:
   build:
@@ -27,45 +27,64 @@ jobs:
         run: |
           xcodebuild -version
           swift --version
+          xcrun --find actool || true
+          xcrun --find assetutil || true
 
       - name: Validate AppIcon set exists
         run: |
           set -euo pipefail
           echo "Using APPICON_NAME=$APPICON_NAME"
-          echo "Catalog at $CATALOG_PATH"
           if ! find "$CATALOG_PATH" -type d -name "${APPICON_NAME}.appiconset" | grep -q .; then
             echo "::error ::'${APPICON_NAME}.appiconset' not found in $CATALOG_PATH"
-            echo "Available sets:"; find "$CATALOG_PATH" -type d -name "*.appiconset" -printf " - %f\n" || find "$CATALOG_PATH" -type d -name "*.appiconset" -print
+            echo "Available sets:"; find "$CATALOG_PATH" -type d -name "*.appiconset" -print
             exit 1
           fi
 
-      - name: What does the project think the AppIcon is?
+      - name: Show build settings (icon + target)
         run: |
           xcodebuild -showBuildSettings -project "$PROJECT" -scheme "$SCHEME" | \
             grep -E "ASSETCATALOG_COMPILER_APPICON_NAME|PRODUCT_BUNDLE_IDENTIFIER|IPHONEOS_DEPLOYMENT_TARGET" || true
-          echo "We will override AppIcon to: $APPICON_NAME at build time."
+          echo "Will override AppIcon to: $APPICON_NAME"
 
-      # Run actool manually for clear error messages (independent of xcodebuild)
-      - name: Run actool on full catalog (verbose)
+      # -------- Asset probes (human-readable) ----------
+      - name: actool full-catalog probe
         run: |
           set -euo pipefail
           mkdir -p diagnostics/compiled-full
-          xcrun actool "$CATALOG_PATH" \
+          # NOTE: catalog path is LAST; no --verbose on Xcode 16
+          xcrun actool \
             --compile diagnostics/compiled-full \
             --platform iphoneos \
             --minimum-deployment-target 18.0 \
             --app-icon "$APPICON_NAME" \
             --output-partial-info-plist diagnostics/asset-info.plist \
-            --errors --warnings --notices --verbose \
-            > diagnostics/actool-full.log 2>&1 || true
+            --warnings --errors --notices \
+            "$CATALOG_PATH" \
+            > diagnostics/actool-full.out 2> diagnostics/actool-full.err || true
 
-          echo "==== actool (first 200 lines) ===="
-          sed -n '1,200p' diagnostics/actool-full.log || true
-          echo "==== end actool preview ===="
+          echo "==== actool stderr (first 200 lines) ===="
+          sed -n '1,200p' diagnostics/actool-full.err || true
+          echo "==== actool stdout (first 80 lines) ===="
+          sed -n '1,80p'  diagnostics/actool-full.out || true
 
-          if grep -Eiq '(^|\s)error:' diagnostics/actool-full.log; then
-            echo "::error ::actool reported errors. See artifact 'asset-diagnostics'."
-          fi
+      - name: assetutil per-set audit
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics/assetutil
+          # Check every set for structural problems and missing files
+          while IFS= read -r -d '' SET; do
+            REL="${SET#"$CATALOG_PATH/"}"
+            OUT="diagnostics/assetutil/${REL//\//__}.json"
+            # assetutil emits JSON describing issues; we capture stderr too
+            xcrun assetutil --info "$SET" >"$OUT" 2>>diagnostics/assetutil/_stderr.log || true
+          done < <(find "$CATALOG_PATH" -type d \( -name "*.appiconset" -o -name "*.imageset" -o -name "*.symbolset" -o -name "*.colorset" \) -print0)
+
+          echo "==== assetutil stderr (first 200 lines) ===="
+          sed -n '1,200p' diagnostics/assetutil/_stderr.log || true
+
+          # Quick grep for common problems
+          echo "==== quick scan for issues ===="
+          (grep -RHiE '"errors"|"warnings"|missing|unsupported|invalid' diagnostics/assetutil || true) | head -n 200
 
       - name: Upload asset diagnostics
         if: always()
@@ -75,19 +94,18 @@ jobs:
           path: diagnostics
           if-no-files-found: ignore
 
+      # -------- Real archive (with override, or skip assets) ----------
       - name: Archive (unsigned)
         shell: bash
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/build/App.xcarchive"
-
-          # Optionally skip assets entirely to confirm the rest of the build is OK
-          SKIP_FLAG=()
+          FLAGS=()
           if [[ "${SKIP_ASSETS}" == "true" ]]; then
-            echo "⚠️  ASSETCATALOG_COMPILER_SKIP_ASSETS=YES enabled"
-            SKIP_FLAG+=(ASSETCATALOG_COMPILER_SKIP_ASSETS=YES)
+            echo "⚠️  Skipping asset compilation"
+            FLAGS+=(ASSETCATALOG_COMPILER_SKIP_ASSETS=YES)
           else
-            SKIP_FLAG+=(ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME")
+            FLAGS+=(ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME")
           fi
 
           if [[ "${USE_WORKSPACE}" == "true" ]]; then
@@ -95,14 +113,14 @@ jobs:
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-              "${SKIP_FLAG[@]}" \
+              "${FLAGS[@]}" \
               clean archive -archivePath "$ARCHIVE_PATH"
           else
             xcodebuild -project "$PROJECT" \
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-              "${SKIP_FLAG[@]}" \
+              "${FLAGS[@]}" \
               clean archive -archivePath "$ARCHIVE_PATH"
           fi
 
