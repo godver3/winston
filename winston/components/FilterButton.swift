@@ -56,7 +56,6 @@ struct FilterButton: View, Equatable {
           .transaction { trans in
             trans.animation = .snappy
           }
-          .clipShape(Capsule(style: .continuous))
 
       }
       .frame(maxWidth: .infinity)

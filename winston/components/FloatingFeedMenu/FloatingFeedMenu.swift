@@ -81,7 +81,7 @@ struct FloatingFeedMenu: View, Equatable {
     ZStack(alignment: .bottomTrailing) {
       FloatingBGBlur(active: menuOpen, dismiss: dismiss).equatable()
       
-      GlassEffectContainer {
+//      GlassEffectContainer {
         HStack(alignment: .bottom, spacing: 0) {
           Spacer()
           ZStack(alignment: .bottomTrailing) {
@@ -265,7 +265,7 @@ struct FloatingFeedMenu: View, Equatable {
           .padding(.trailing, 28)
           .padding(.bottom, screenEdgeMargin)
         }
-      }
+//      }
     }
   }
 }
