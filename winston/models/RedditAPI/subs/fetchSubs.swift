@@ -26,8 +26,9 @@ func cleanSubs(_ subs: [ListingChild<SubredditData>]) -> [ListingChild<Subreddit
 
 extension RedditAPI {
   func fetchSubs(after: String? = nil) async -> [ListingChild<SubredditData>]? {
-    await refreshToken()
-    if let headers = self.getRequestHeaders() {
+    do {
+      await refreshToken()
+      if let headers = self.getRequestHeaders() {
       
       var params = FetchSubsPayload(limit: 100)
       
@@ -87,11 +88,32 @@ extension RedditAPI {
         }
         return nil
       case .failure(let error):
-        Oops.shared.sendError(error)
-        print(error)
+        // Enhanced error reporting for debugging
+        let detailedError = """
+        FetchSubs Error Details:
+        - Error: \(error)
+        - URL: \(RedditAPI.redditApiURLBase)/subreddits/mine/subscriber.json
+        - Parameters: \(params)
+        - Headers: \(headers)
+        - Response Data: \(response.data?.prettyPrintedJSONString ?? "No response data")
+        - Status Code: \(response.response?.statusCode ?? 0)
+        """
+        Oops.shared.sendError(detailedError)
+        print(detailedError)
         return nil
       }
     } else {
+      return nil
+    }
+    } catch {
+      let detailedError = """
+      FetchSubs Exception:
+      - Error: \(error)
+      - Type: \(type(of: error))
+      - Description: \(error.localizedDescription)
+      """
+      Oops.shared.sendError(detailedError)
+      print(detailedError)
       return nil
     }
   }

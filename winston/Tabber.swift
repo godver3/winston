@@ -17,7 +17,22 @@ class Oops: ObservableObject {
   func sendError(_ error: Any) {
     DispatchQueue.main.async {
       Oops.shared.asking = true
-      Oops.shared.error = String(reflecting: error)
+      
+      // Enhanced error reporting with additional context
+      let timestamp = Date()
+      let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
+      let deviceInfo = "\(UIDevice.current.model) - iOS \(UIDevice.current.systemVersion)"
+      
+      let enhancedError = """
+      Error Report - \(timestamp)
+      App Version: \(appVersion)
+      Device: \(deviceInfo)
+      
+      Error Details:
+      \(String(reflecting: error))
+      """
+      
+      Oops.shared.error = enhancedError
     }
   }
 }

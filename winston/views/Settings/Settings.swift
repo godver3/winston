@@ -10,7 +10,7 @@ import Defaults
 //import SceneKit
 
 enum SettingsPages {
-  case behavior, appearance, account, about, commentSwipe, postSwipe, accessibility, faq, general, postFontSettings, themes, filteredSubreddits, appIcon
+  case behavior, appearance, account, about, commentSwipe, postSwipe, accessibility, faq, general, postFontSettings, themes, filteredSubreddits, appIcon, debug
 }
 
 struct Settings: View {
@@ -53,6 +53,10 @@ struct Settings: View {
                 sendCustomEmail()
               } label: {
                 Label("Report a bug", systemImage: "ladybug.fill")
+              }
+              
+              WNavigationLink(value: SettingsPages.debug) {
+                Label("Debug Tools", systemImage: "wrench.and.screwdriver.fill")
               }
               
               WSListButton("Donate monthly", icon: "heart.fill") {
@@ -110,6 +114,8 @@ struct Settings: View {
               ThemesPanel()
             case .appIcon:
               AppIconSetting()
+            case .debug:
+              DebugPanel()
             }
           }
           .environmentObject(router)

@@ -406,7 +406,8 @@ struct SubredditData: Codable, GenericRedditEntityDataType, Defaults.Serializabl
     self.name = try container.decode(String.self, forKey: .name)
     self.quarantine = try container.decodeIfPresent(Bool.self, forKey: .quarantine)
     self.hide_ads = try container.decodeIfPresent(Bool.self, forKey: .hide_ads)
-    self.prediction_leaderboard_entry_type = try container.decodeIfPresent(String.self, forKey: .prediction_leaderboard_entry_type)
+    // Handle prediction_leaderboard_entry_type which can be either String or Int from Reddit API
+    self.prediction_leaderboard_entry_type = try decodeFlexibleString(from: container, forKey: .prediction_leaderboard_entry_type)
     self.emojis_enabled = try container.decodeIfPresent(Bool.self, forKey: .emojis_enabled)
     self.advertiser_category = try container.decodeIfPresent(String.self, forKey: .advertiser_category)
     self.public_description = try container.decode(String.self, forKey: .public_description)
@@ -451,6 +452,19 @@ struct SubredditData: Codable, GenericRedditEntityDataType, Defaults.Serializabl
     self.created_utc = try container.decodeIfPresent(Double.self, forKey: .created_utc)
     self.user_is_contributor = try container.decodeIfPresent(Bool.self, forKey: .user_is_contributor)
     self.winstonFlairs = try container.decodeIfPresent([Flair].self, forKey: .winstonFlairs)
+  }
+  
+  // Helper function to decode strings that might come as numbers from Reddit API
+  private func decodeFlexibleString(from container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> String? {
+    if let stringValue = try container.decodeIfPresent(String.self, forKey: key) {
+      return stringValue
+    } else if let intValue = try container.decodeIfPresent(Int.self, forKey: key) {
+      return String(intValue)
+    } else if let doubleValue = try container.decodeIfPresent(Double.self, forKey: key) {
+      return String(doubleValue)
+    } else {
+      return nil
+    }
   }
 }
 
