@@ -19,7 +19,9 @@ struct DebugPanel: View {
     List {
       Section("API Testing") {
         WListButton {
-          testFetchSubreddits()
+          if !isLoading {
+            testFetchSubreddits()
+          }
         } label: {
           HStack {
             Label("Test Fetch Subreddits", systemImage: "list.bullet")
@@ -30,14 +32,14 @@ struct DebugPanel: View {
             }
           }
         }
-        .disabled(isLoading)
         
         WListButton {
-          testDecodingError()
+          if !isLoading {
+            testDecodingError()
+          }
         } label: {
           Label("Test Decoding Error", systemImage: "exclamationmark.triangle.fill")
         }
-        .disabled(isLoading)
         
         if let error = lastError {
           Text("Last Error: \(error)")
@@ -107,7 +109,7 @@ struct DebugPanel: View {
           .font(.caption)
           .themedListRowBG(enablePadding: true)
         
-        Text("Cached Subreddits: \(getCachedSubredditsCount())")
+        Text("Cached Subreddits: Check Core Data")
           .font(.caption)
           .themedListRowBG(enablePadding: true)
       }
@@ -167,11 +169,7 @@ struct DebugPanel: View {
     subredditCount = 0
   }
   
-  private func getCachedSubredditsCount() -> Int {
-    let context = PersistenceController.shared.container.viewContext
-    let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CachedSub")
-    return (try? context.count(for: fetchRequest)) ?? 0
-  }
+
   
   private func testDecodingError() {
     isLoading = true
@@ -179,26 +177,25 @@ struct DebugPanel: View {
     lastSuccess = nil
     
     Task {
-      do {
-        // Create a mock JSON that would cause the original decoding error
-        let mockJSON = """
-        {
-          "data": {
-            "children": [
-              {
-                "data": {
-                  "prediction_leaderboard_entry_type": 123,
-                  "name": "test_subreddit",
-                  "public_description": "Test subreddit",
-                  "url": "/r/test_subreddit/"
-                }
+      // Create a mock JSON that would cause the original decoding error
+      let mockJSON = """
+      {
+        "data": {
+          "children": [
+            {
+              "data": {
+                "prediction_leaderboard_entry_type": 123,
+                "name": "test_subreddit",
+                "public_description": "Test subreddit",
+                "url": "/r/test_subreddit/"
               }
-            ]
-          }
+            }
+          ]
         }
-        """
-        
-        let jsonData = mockJSON.data(using: .utf8)!
+      }
+      """
+      
+      if let jsonData = mockJSON.data(using: .utf8) {
         let decoder = JSONDecoder()
         
         do {
@@ -213,10 +210,10 @@ struct DebugPanel: View {
             lastError = "Decoding test failed: \(error.localizedDescription)"
           }
         }
-      } catch {
+      } else {
         await MainActor.run {
           isLoading = false
-          lastError = "Test setup failed: \(error.localizedDescription)"
+          lastError = "Test setup failed: Could not create JSON data"
         }
       }
     }
