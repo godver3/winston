@@ -1,34 +1,72 @@
 name: iOS unsigned build (static)
-on: { workflow_dispatch: {} }
+
+on:
+  workflow_dispatch:
 
 env:
   USE_WORKSPACE: "false"                 # you don't appear to have a .xcworkspace
   WORKSPACE: "winston.xcworkspace"       # ignored when USE_WORKSPACE=false
   PROJECT:  "winston.xcodeproj"          # <— bundle dir, not project.pbxproj
   SCHEME:   "winston"                    # <— app scheme (not tests)
+  CATALOG_PATH: "winston/Assets.xcassets"
+  APPICON_NAME: "iconStandard"           # <— change to any existing *.appiconset basename
 
 jobs:
   build:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      # Use Swift tools 5.11+ (fixes your earlier Defaults package issue)
+      - name: Select Xcode 16.x
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.*'
+
+      - name: Show tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # Optional: quick sanity check that APPICON_NAME exists
+      - name: Validate AppIcon set exists
+        run: |
+          set -euo pipefail
+          if ! find "$CATALOG_PATH" -type d -name "${APPICON_NAME}.appiconset" | grep -q .; then
+            echo "::error ::ASSETCATALOG_COMPILER_APPICON_NAME is set to '$APPICON_NAME' but no '${APPICON_NAME}.appiconset' found in $CATALOG_PATH"
+            echo "Available sets:"
+            find "$CATALOG_PATH" -type d -name "*.appiconset" -print
+            exit 1
+          fi
+
+      # Optional: resolve packages early so failures surface clearly
+      - name: Resolve SPM packages
+        run: |
+          if [[ "${USE_WORKSPACE}" == "true" ]]; then
+            xcodebuild -resolvePackageDependencies -workspace "$WORKSPACE" -scheme "$SCHEME"
+          else
+            xcodebuild -resolvePackageDependencies -project "$PROJECT" -scheme "$SCHEME"
+          fi
 
       - name: Archive (unsigned)
         shell: bash
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/build/App.xcarchive"
+
           if [[ "${USE_WORKSPACE}" == "true" ]]; then
             xcodebuild -workspace "$WORKSPACE" \
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+              ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME" \
               clean archive -archivePath "$ARCHIVE_PATH"
           else
             xcodebuild -project "$PROJECT" \
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+              ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME" \
               clean archive -archivePath "$ARCHIVE_PATH"
           fi
 
