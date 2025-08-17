@@ -703,6 +703,7 @@ struct PostView: View, Equatable {
                   .padding(.horizontal, 10)
                   .padding(.vertical, 6)
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                  .increaseHitboxOf(24, by: 1.5, shape: Circle())
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                     scrollToNextMatch(false, proxy)
@@ -714,6 +715,7 @@ struct PostView: View, Equatable {
                   .padding(.horizontal, 10)
                   .padding(.vertical, 6)
                   .background(Color.hex("2C2E32").clipShape(RoundedRectangle(cornerRadius:12)))
+                  .increaseHitboxOf(24, by: 1.5, shape: Circle())
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                     scrollToNextMatch(true, proxy)
@@ -728,6 +730,7 @@ struct PostView: View, Equatable {
                   .fontSize(16, .semibold)
                   .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                   .padding([.trailing], 4)
+                  .increaseHitboxOf(24, by: 1.5, shape: Circle())
                   .onTapGesture {
                     Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                     DispatchQueue.main.async {
@@ -742,6 +745,7 @@ struct PostView: View, Equatable {
                 .fontSize(16, .semibold)
                 .foregroundStyle(Color(UIColor(hex: "7D7E80")))
                 .padding([.trailing], 4)
+                .increaseHitboxOf(24, by: 1.5, shape: Circle())
                 .onTapGesture {
                   Hap.shared.play(intensity: 0.75, sharpness: 0.9)
                   
@@ -776,7 +780,7 @@ struct PostView: View, Equatable {
           .frame(maxWidth: searchOpen || unseenSkipperOpen ? .infinity : 0)
           .animation(.bouncy(duration: 0.5), value: searchOpen || unseenSkipperOpen)
 //          .background(Color.hex("212326").clipShape(RoundedRectangle(cornerRadius:20)))
-          .background(.regularMaterial)
+          .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius:20))
           .clipShape(RoundedRectangle(cornerRadius:20))
           .shadow(color: Color.hex("212326"), radius: 10)
           .opacity(searchOpen || unseenSkipperOpen ? 1 : 0)
