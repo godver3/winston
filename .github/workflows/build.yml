@@ -8,7 +8,8 @@ env:
   WORKSPACE: "winston.xcworkspace"
   PROJECT:  "winston.xcodeproj"
   SCHEME:   "winston"
-  APPICON_NAME: "iconStandard"   # change to any existing *.appiconset
+  APPICON_NAME: "iconStandard"   # one of your existing *.appiconset
+  SKIP_ASSETS: "false"           # set to "true" to bypass ALL assets (app + packages) to sanity-check
 
 jobs:
   build:
@@ -21,27 +22,102 @@ jobs:
         with:
           xcode-version: '16.*'
 
+      - name: Tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun --find actool
+
+      # --- Resolve packages so SourcePackages/checkouts exists
+      - name: Resolve Swift packages
+        run: |
+          if [[ "${USE_WORKSPACE}" == "true" ]]; then
+            xcodebuild -resolvePackageDependencies -workspace "$WORKSPACE" -scheme "$SCHEME"
+          else
+            xcodebuild -resolvePackageDependencies -project "$PROJECT" -scheme "$SCHEME"
+          fi
+
+      # --- Probe: app catalog (optional context)
+      - name: actool probe (app catalog)
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics/app
+          CATALOG="winston/Assets.xcassets"
+          if [[ -d "$CATALOG" ]]; then
+            xcrun actool \
+              --compile diagnostics/app/out \
+              --platform iphoneos \
+              --minimum-deployment-target 18.0 \
+              --app-icon "$APPICON_NAME" \
+              --output-partial-info-plist diagnostics/app/info.plist \
+              --warnings --errors --notices \
+              "$CATALOG" \
+              > diagnostics/app/actool.out 2> diagnostics/app/actool.err || true
+            echo "---- app actool (first 120 lines, stderr) ----"
+            sed -n '1,120p' diagnostics/app/actool.err || true
+          else
+            echo "App catalog not found at $CATALOG"
+          fi
+
+      # --- Probe: package catalogs (Pow and friends)
+      - name: actool probe (package catalogs)
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics/pkgs
+          ROOT="$PWD"
+          # look for any package Assets.xcassets under SourcePackages/checkouts/**/Sources/**/
+          while IFS= read -r -d '' CATALOG; do
+            REL="${CATALOG#$ROOT/}"
+            SAFE="${REL//\//__}"
+            OUTDIR="diagnostics/pkgs/$SAFE"
+            mkdir -p "$OUTDIR"
+            echo "Probing: $REL"
+            xcrun actool \
+              --compile "$OUTDIR/out" \
+              --platform iphoneos \
+              --minimum-deployment-target 18.0 \
+              --warnings --errors --notices \
+              "$CATALOG" \
+              > "$OUTDIR/actool.out" 2> "$OUTDIR/actool.err" || true
+            echo "---- $REL (first 120 lines, stderr) ----"
+            sed -n '1,120p' "$OUTDIR/actool.err" || true
+          done < <(find "$PWD/SourcePackages/checkouts" -type d -path '*/Sources/*/Assets.xcassets' -print0 || true)
+
+      - name: Upload asset diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asset-diagnostics
+          path: diagnostics
+          if-no-files-found: ignore
+
+      # --- Archive (toggle skip or force app icon); also disable symbol generation
       - name: Archive (unsigned)
         shell: bash
         run: |
           set -euo pipefail
           ARCHIVE_PATH="$PWD/build/App.xcarchive"
+          FLAGS=(ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS=NO)
+          if [[ "${SKIP_ASSETS}" == "true" ]]; then
+            echo "⚠️  Skipping ALL asset catalogs"
+            FLAGS+=(ASSETCATALOG_COMPILER_SKIP_ASSETS=YES)
+          else
+            FLAGS+=(ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME")
+          fi
 
           if [[ "${USE_WORKSPACE}" == "true" ]]; then
             xcodebuild -workspace "$WORKSPACE" \
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-              ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME" \
-              ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS=NO \
+              "${FLAGS[@]}" \
               clean archive -archivePath "$ARCHIVE_PATH"
           else
             xcodebuild -project "$PROJECT" \
               -scheme "$SCHEME" -configuration Release \
               -destination 'generic/platform=iOS' \
               CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-              ASSETCATALOG_COMPILER_APPICON_NAME="$APPICON_NAME" \
-              ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS=NO \
+              "${FLAGS[@]}" \
               clean archive -archivePath "$ARCHIVE_PATH"
           fi
 
