@@ -13,7 +13,6 @@ struct DebugPanel: View {
   @State private var isLoading = false
   @State private var lastError: String?
   @State private var lastSuccess: String?
-  @State private var subredditCount: Int = 0
   
   var body: some View {
     List {
@@ -33,14 +32,6 @@ struct DebugPanel: View {
           }
         }
         
-        WListButton {
-          if !isLoading {
-            testDecodingError()
-          }
-        } label: {
-          Label("Test Decoding Error", systemImage: "exclamationmark.triangle.fill")
-        }
-        
         if let error = lastError {
           Text("Last Error: \(error)")
             .font(.caption)
@@ -52,13 +43,6 @@ struct DebugPanel: View {
           Text("Last Success: \(success)")
             .font(.caption)
             .foregroundColor(.green)
-            .themedListRowBG(enablePadding: true)
-        }
-        
-        if subredditCount > 0 {
-          Text("Subreddits Found: \(subredditCount)")
-            .font(.caption)
-            .foregroundColor(.blue)
             .themedListRowBG(enablePadding: true)
         }
       }
@@ -108,10 +92,6 @@ struct DebugPanel: View {
         Text("API Base URL: \(RedditAPI.redditApiURLBase)")
           .font(.caption)
           .themedListRowBG(enablePadding: true)
-        
-        Text("Cached Subreddits: Check Core Data")
-          .font(.caption)
-          .themedListRowBG(enablePadding: true)
       }
       .themedListDividers()
     }
@@ -124,28 +104,19 @@ struct DebugPanel: View {
     isLoading = true
     lastError = nil
     lastSuccess = nil
-    subredditCount = 0
     
     Task {
-      do {
-        let startTime = Date()
-        let result = await RedditAPI.shared.fetchSubs()
-        let endTime = Date()
-        let duration = endTime.timeIntervalSince(startTime)
-        
-        await MainActor.run {
-          isLoading = false
-          if let subs = result {
-            subredditCount = subs.count
-            lastSuccess = "Fetched \(subs.count) subreddits in \(String(format: "%.2f", duration))s"
-          } else {
-            lastError = "Failed to fetch subreddits after \(String(format: "%.2f", duration))s"
-          }
-        }
-      } catch {
-        await MainActor.run {
-          isLoading = false
-          lastError = "Exception: \(error.localizedDescription)"
+      let startTime = Date()
+      let result = await RedditAPI.shared.fetchSubs()
+      let endTime = Date()
+      let duration = endTime.timeIntervalSince(startTime)
+      
+      await MainActor.run {
+        isLoading = false
+        if result != nil {
+          lastSuccess = "Fetched subreddits in \(String(format: "%.2f", duration))s"
+        } else {
+          lastError = "Failed to fetch subreddits after \(String(format: "%.2f", duration))s"
         }
       }
     }
@@ -166,56 +137,5 @@ struct DebugPanel: View {
   private func clearDebugInfo() {
     lastError = nil
     lastSuccess = nil
-    subredditCount = 0
-  }
-  
-
-  
-  private func testDecodingError() {
-    isLoading = true
-    lastError = nil
-    lastSuccess = nil
-    
-    Task {
-      // Create a mock JSON that would cause the original decoding error
-      let mockJSON = """
-      {
-        "data": {
-          "children": [
-            {
-              "data": {
-                "prediction_leaderboard_entry_type": 123,
-                "name": "test_subreddit",
-                "public_description": "Test subreddit",
-                "url": "/r/test_subreddit/"
-              }
-            }
-          ]
-        }
-      }
-      """
-      
-      if let jsonData = mockJSON.data(using: .utf8) {
-        let decoder = JSONDecoder()
-        
-        do {
-          let _ = try decoder.decode(Listing<SubredditData>.self, from: jsonData)
-          await MainActor.run {
-            isLoading = false
-            lastSuccess = "Decoding test passed - flexible string decoding working correctly"
-          }
-        } catch {
-          await MainActor.run {
-            isLoading = false
-            lastError = "Decoding test failed: \(error.localizedDescription)"
-          }
-        }
-      } else {
-        await MainActor.run {
-          isLoading = false
-          lastError = "Test setup failed: Could not create JSON data"
-        }
-      }
-    }
   }
 }

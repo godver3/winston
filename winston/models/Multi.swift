@@ -28,10 +28,11 @@ extension Multi {
     return nil
   }
   
-  func fetchPosts(sort: SubListingSortOption = .best, after: String? = nil, contentWidth: CGFloat = UIScreen.screenWidth) async -> ([Post]?, String?)? {
+  func fetchPosts(sort: SubListingSortOption = .best, after: String? = nil, contentWidth: CGFloat? = nil) async -> ([Post]?, String?)? {
+    let width = contentWidth ?? UIScreen.main.bounds.size.width
     if let data = data {
       if let response = await RedditAPI.shared.fetchMultiPosts(path: data.path, sort: sort, after: after), let data = response.0 {
-        return (Post.initMultiple(datas: data.compactMap { $0.data }, api: RedditAPI.shared, fetchSubs: true, contentWidth: contentWidth), response.1)
+        return (Post.initMultiple(datas: data.compactMap { $0.data }, api: RedditAPI.shared, fetchSubs: true, contentWidth: width), response.1)
       }
     }
     return nil

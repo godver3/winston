@@ -69,7 +69,7 @@ extension Subreddit {
     let context = PersistenceController.shared.container.viewContext
     
     if let data = data {
-      func doToggle() {
+      @Sendable func doToggle() {
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "CachedSub")
         guard let results = (context.performAndWait { return try? context.fetch(fetchRequest) as? [CachedSub] }) else { return }
         let foundSub = context.performAndWait { results.first(where: { $0.name == self.data?.name }) }
@@ -140,9 +140,10 @@ extension Subreddit {
     return nil
   }
   
-  func fetchPosts(sort: SubListingSortOption = .best, after: String? = nil, searchText: String? = nil, contentWidth: CGFloat = UIScreen.screenWidth) async -> ([Post]?, String?)? {
+  func fetchPosts(sort: SubListingSortOption = .best, after: String? = nil, searchText: String? = nil, contentWidth: CGFloat? = nil) async -> ([Post]?, String?)? {
+    let width = contentWidth ?? UIScreen.main.bounds.size.width
     if let response = await RedditAPI.shared.fetchSubPosts(data?.url ?? (id == "home" ? "" : id), sort: sort, after: after, searchText: searchText), let data = response.0 {
-      return (Post.initMultiple(datas: data.compactMap { $0.data }, api: RedditAPI.shared, contentWidth: contentWidth), response.1)
+      return (Post.initMultiple(datas: data.compactMap { $0.data }, api: RedditAPI.shared, contentWidth: width), response.1)
     }
     return nil
   }
