@@ -1,0 +1,162 @@
+name: Diagnose iOS asset catalog
+
+on:
+  workflow_dispatch: {}
+
+env:
+  PROJECT: "winston.xcodeproj"
+  SCHEME:  "winston"
+  CATALOG_PATH: "winston/Assets.xcassets"
+
+jobs:
+  diagnose-assets:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode 16.x
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.*'
+
+      - name: Show tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+          xcrun actool --version || true
+
+      - name: Diagnose asset catalog (isolate failing sets)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CATALOG="${CATALOG_PATH}"
+          if [[ ! -d "$CATALOG" ]]; then
+            echo "::error ::Catalog not found at $CATALOG"
+            exit 1
+          fi
+
+          mkdir -p diagnostics/set-logs diagnostics/compiled-full
+          REPORT="diagnostics/report.md"
+          FULL_LOG="diagnostics/actool-full.log"
+
+          # Discover configured AppIcon name (default to AppIcon)
+          APPICON_NAME="$(xcodebuild -showBuildSettings -project "$PROJECT" -scheme "$SCHEME" 2>/dev/null | awk -F' = ' '/ASSETCATALOG_COMPILER_APPICON_NAME/ {print $2}' | tail -1)"
+          [[ -n "${APPICON_NAME:-}" ]] || APPICON_NAME="AppIcon"
+
+          {
+            echo "# Asset Catalog Diagnostics"
+            echo
+            echo "- Catalog: \`$CATALOG\`"
+            echo "- AppIcon name (from build settings): \`$APPICON_NAME\`"
+            echo
+            echo "## Full-catalog compile (raw \`actool\` output)"
+            echo
+          } > "$REPORT"
+
+          # Full catalog compile for raw context
+          set +e
+          xcrun actool "$CATALOG" \
+            --compile "diagnostics/compiled-full" \
+            --platform iphoneos \
+            --minimum-deployment-target 15.0 \
+            --app-icon "$APPICON_NAME" \
+            --output-partial-info-plist "diagnostics/asset-info.plist" \
+            --errors --warnings --notices --verbose >"$FULL_LOG" 2>&1
+          ACTOOL_RC=$?
+          set -e
+
+          sed -n '1,300p' "$FULL_LOG" >> "$REPORT"
+          echo >> "$REPORT"
+          echo "## Per-set isolation" >> "$REPORT"
+          echo >> "$REPORT"
+
+          FAIL_COUNT=0
+
+          # Build a list of sets with find + while (compatible with bash 3.2)
+          IFS=$'\n'
+          SETS=$(find "$CATALOG" -type d \( -name "*.appiconset" -o -name "*.imageset" -o -name "*.symbolset" -o -name "*.colorset" -o -name "*.stickerpack" \) | sort)
+          unset IFS
+
+          if [[ -z "$SETS" ]]; then
+            echo "::warning ::No asset sets found in $CATALOG"
+          fi
+
+          echo "$SETS" | while IFS= read -r SET_PATH; do
+            REL="${SET_PATH#"$CATALOG/"}"
+            BASENAME="$(basename "$SET_PATH")"
+            CLEAN_NAME="$(echo "$REL" | tr '/' '__')"
+            TMP_DIR="$(mktemp -d)"
+            TMP_CATALOG="$TMP_DIR/Assets.xcassets"
+            mkdir -p "$TMP_CATALOG/$(dirname "$REL")"
+
+            # Minimal Contents.json at catalog root
+            mkdir -p "$TMP_CATALOG"
+            printf '{ "info": { "version": 1, "author": "xcode" } }\n' > "$TMP_CATALOG/Contents.json"
+
+            # Copy only this set
+            cp -R "$SET_PATH" "$TMP_CATALOG/$REL"
+
+            LOG="diagnostics/set-logs/${CLEAN_NAME}.log"
+            mkdir -p "$(dirname "$LOG")"
+
+            # If it's an appiconset, pass --app-icon with its name
+            APPICON_FLAG=()
+            if [[ "$BASENAME" == *.appiconset ]]; then
+              APPICON_FLAG=( --app-icon "${BASENAME%.appiconset}" )
+            fi
+
+            set +e
+            xcrun actool "$TMP_CATALOG" \
+              --compile "$TMP_DIR/out" \
+              --platform iphoneos \
+              --minimum-deployment-target 15.0 \
+              "${APPICON_FLAG[@]}" \
+              --errors --warnings --notices --verbose >"$LOG" 2>&1
+            RC=$?
+            set -e
+
+            if grep -Eiq '(^|\s)error:' "$LOG"; then
+              FAIL_COUNT=$((FAIL_COUNT+1))
+              {
+                echo "### ❌ $REL"
+                echo
+                echo "\`$LOG\`"
+                echo
+                echo '```'
+                grep -Ei '(^|\s)error:' "$LOG" | sed -e 's/\x1b\[[0-9;]*m//g' || true
+                echo '```'
+                echo
+              } >> "$REPORT"
+            else
+              echo "### ✅ $REL" >> "$REPORT"
+              echo >> "$REPORT"
+            fi
+
+            rm -rf "$TMP_DIR"
+          done
+
+          {
+            echo
+            echo "## Summary"
+            echo
+            echo "- Failing sets: **$FAIL_COUNT**"
+            echo
+          } >> "$REPORT"
+
+          if [[ $FAIL_COUNT -gt 0 ]]; then
+            echo "::error ::$FAIL_COUNT asset set(s) failed actool validation. See diagnostics/report.md."
+            exit 1
+          else
+            if [[ $ACTOOL_RC -ne 0 ]] && grep -Eq '(^|\s)error:' "$FULL_LOG"; then
+              echo "::warning ::Per-set checks passed, but full-catalog compile failed. Likely AppIcon requirements for \"$APPICON_NAME\" (missing sizes/idioms)."
+            fi
+          fi
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asset-diagnostics
+          path: diagnostics
+          if-no-files-found: error
