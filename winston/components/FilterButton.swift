@@ -56,12 +56,14 @@ struct FilterButton: View, Equatable {
           .transaction { trans in
             trans.animation = .snappy
           }
+          .clipShape(Capsule(style: .continuous))
+
       }
       .frame(maxWidth: .infinity)
     }
     .drawingGroup()
-    .glassEffect(.regular.interactive(), in: .capsule(style: .continuous))
     .clipShape(Capsule(style: .continuous))
+    .glassEffect(.regular.interactive(), in: .capsule(style: .continuous))
     .scaleEffect(pressingDown ? 0.95 : 1)
     .animation(.bouncy(duration: 0.3, extraBounce: 0.225), value: pressingDown)
     .onTapGesture {
