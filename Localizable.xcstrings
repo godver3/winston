@@ -1188,6 +1188,9 @@
     "Done" : {
 
     },
+    "Download" : {
+
+    },
     "Drag Left" : {
       "localizations" : {
         "de" : {
@@ -3827,6 +3830,9 @@
         }
       }
     },
+    "Theme Store" : {
+
+    },
     "Theme Store Tint" : {
       "localizations" : {
         "de" : {
@@ -3895,6 +3901,9 @@
 
     },
     "There was an error" : {
+
+    },
+    "There was an error importing this theme" : {
 
     },
     "This is not working yet :(" : {

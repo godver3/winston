@@ -24,13 +24,13 @@ struct UserView: View {
     @State private var lastItemId: String? = nil
     @Default(.SubredditFeedDefSettings) private var subFeedSettings
     @Environment(\.useTheme) private var selectedTheme
-    
+    @Environment(\.contentWidth) private var envContentWidth
     @State private var dataTypeFilter: String = "" // Handles filtering for only posts or only comments.
     @State private var forceRefresh = false
     @State private var loadNextData: Bool = false
     
     func fetcher(_ after: String?, _ sorting: SubListingSortOption?, _ searchQuery: String?, _ flair: String?) async -> ([RedditEntityType]?, String?)? {
-        if let overviewDataResult = await user.refetchOverview(dataTypeFilter, after), let overviewData = overviewDataResult.0 {
+        if let overviewDataResult = await user.refetchOverview(dataTypeFilter, after, envContentWidth), let overviewData = overviewDataResult.0 {
             Task { await user.redditAPI.updateOverviewSubjectsWithAvatar(subjects: overviewData, avatarSize: selectedTheme.postLinks.theme.badge.avatar.size) }
             
             let newData: [RedditEntityType]? = overviewData.compactMap { if case .first(let post) = $0 { return .post(post) } else if case .second(let comment) = $0 { return .comment(comment) }; return nil }

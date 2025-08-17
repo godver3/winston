@@ -21,21 +21,43 @@ extension User {
     self.init(id: id, typePrefix: "\(User.prefix)_")
   }
   
-  func refetchOverview(_ dataTypeFilter: String? = nil, _ after: String? = nil) async -> ([Either<Post, Comment>]?, String?)? {
+    func refetchOverview(_ dataTypeFilter: String? = nil, _ after: String? = nil, _ contentWidth: CGFloat = .screenW) async -> ([Either<Post, Comment>]?, String?)? {
     let name = data?.name ?? data?.id ?? id
     if let overviewDataResult = await RedditAPI.shared.fetchUserOverview(name, dataTypeFilter, after), let overviewData = overviewDataResult.0 {
       await MainActor.run {
         self.loading = false
       }
-      
-      return (overviewData.map {
-        switch $0 {
+
+      // Separate into posts and comments, remembering original indices
+      var postIndices: [Int] = []
+      var commentIndices: [Int] = []
+      var postDatas: [PostData] = []
+      var commentDatas: [(Int, CommentData)] = []
+      for (idx, either) in overviewData.enumerated() {
+        switch either {
         case .first(let postData):
-          return .first(Post(data: postData))
+          postIndices.append(idx)
+          postDatas.append(postData)
         case .second(let commentData):
-          return .second(Comment(data: commentData))
+          commentIndices.append(idx)
+          commentDatas.append((idx, commentData))
         }
-      }, overviewDataResult.1)
+      }
+      // Bulk-init posts
+        let posts = Post.initMultiple(datas: postDatas, sub: nil, contentWidth: contentWidth)
+      // Map posts back by original order
+      var postIter = posts.makeIterator()
+      var result: [Either<Post, Comment>] = []
+      for (idx, either) in overviewData.enumerated() {
+        switch either {
+        case .first:
+          // Safe to force-unwrap, as count/order matches
+          result.append(.first(postIter.next()!))
+        case .second(let commentData):
+          result.append(.second(Comment(data: commentData)))
+        }
+      }
+      return (result, overviewDataResult.1)
     }
     return nil
   }
@@ -194,5 +216,3 @@ struct UserDataSubreddit: Codable, Hashable {
   let subreddit_type: String?
   let user_is_subscriber: Bool?
 }
-
-
