@@ -11,8 +11,7 @@ on:
 
 jobs:
   build:
-    # Xcode 16 is available on macos-15 runners
-    runs-on: macos-15
+    runs-on: macos-15 # Xcode 16 is available on macos-15 runners
 
     steps:
       - name: Checkout
@@ -21,19 +20,16 @@ jobs:
       - name: Select Xcode 16
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          # Use the latest 16.x available on the runner
           xcode-version: '16'
 
       - name: Set version number
         run: |
           PROJECT_NAME="winston"
           pbxproj="${PROJECT_NAME}.xcodeproj/project.pbxproj"
-          # Update MARKETING_VERSION to 69.69.69
           sed -i '' -E 's/(MARKETING_VERSION = )[^;]+;/\169.69.69;/' "$pbxproj"
 
-      - name: Build (unsigned) for device
+      - name: Build (unsigned)
         env:
-          # Ensure absolutely no signing is attempted
           CODE_SIGNING_ALLOWED: "NO"
           CODE_SIGNING_REQUIRED: "NO"
           CODE_SIGN_IDENTITY: ""
@@ -49,25 +45,19 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
-            ONLY_ACTIVE_ARCH=NO \
-            | xcpretty
+            ONLY_ACTIVE_ARCH=NO | xcpretty
 
-      - name: Package .ipa (manual)
+      - name: Package .ipa manually
         run: |
           set -euo pipefail
-          # Find built .app (Release-iphoneos)
           APP_PATH="$(xcodebuild -scheme 'winston' -showBuildSettings -configuration Release 2>/dev/null \
             | awk -F' = ' '/TARGET_BUILD_DIR/ {tbd=$2} /WRAPPER_NAME/ {wn=$2} END {print tbd "/" wn}')"
-          echo "APP_PATH=$APP_PATH"
 
+          echo "App built at: $APP_PATH"
           WORK="$RUNNER_TEMP/ipa"
           mkdir -p "$WORK/Payload"
           cp -R "$APP_PATH" "$WORK/Payload/"
 
-          # Optional: strip embedded mobileprovision if any sneaked in
-          rm -f "$WORK/Payload/"*.app/embedded.mobileprovision || true
-
-          # Create ipa
           (cd "$WORK" && zip -qry winston-unsigned.ipa Payload)
 
           mkdir -p "$RUNNER_TEMP/build"
