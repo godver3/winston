@@ -10,7 +10,7 @@ env:
   SCHEME:   "winston"
   CATALOG_PATH: "winston/Assets.xcassets"
   APPICON_NAME: "iconStandard"   # set to one of your actual *.appiconset basenames
-  SKIP_ASSETS: "false"           # switch to "true" to bypass assets and confirm the rest compiles
+  SKIP_ASSETS: "false"           # set to "true" to bypass assets and confirm the rest compiles
 
 jobs:
   build:
@@ -28,7 +28,6 @@ jobs:
           xcodebuild -version
           swift --version
           xcrun --find actool || true
-          xcrun --find assetutil || true
 
       - name: Validate AppIcon set exists
         run: |
@@ -46,12 +45,12 @@ jobs:
             grep -E "ASSETCATALOG_COMPILER_APPICON_NAME|PRODUCT_BUNDLE_IDENTIFIER|IPHONEOS_DEPLOYMENT_TARGET" || true
           echo "Will override AppIcon to: $APPICON_NAME"
 
-      # -------- Asset probes (human-readable) ----------
+      # ---------- Better asset probes ----------
       - name: actool full-catalog probe
         run: |
           set -euo pipefail
           mkdir -p diagnostics/compiled-full
-          # NOTE: catalog path is LAST; no --verbose on Xcode 16
+          # NOTE: catalog path goes LAST on Xcode 16; no --verbose
           xcrun actool \
             --compile diagnostics/compiled-full \
             --platform iphoneos \
@@ -67,24 +66,74 @@ jobs:
           echo "==== actool stdout (first 80 lines) ===="
           sed -n '1,80p'  diagnostics/actool-full.out || true
 
-      - name: assetutil per-set audit
+      - name: Python asset audit (find missing/invalid files)
         run: |
           set -euo pipefail
-          mkdir -p diagnostics/assetutil
-          # Check every set for structural problems and missing files
-          while IFS= read -r -d '' SET; do
-            REL="${SET#"$CATALOG_PATH/"}"
-            OUT="diagnostics/assetutil/${REL//\//__}.json"
-            # assetutil emits JSON describing issues; we capture stderr too
-            xcrun assetutil --info "$SET" >"$OUT" 2>>diagnostics/assetutil/_stderr.log || true
-          done < <(find "$CATALOG_PATH" -type d \( -name "*.appiconset" -o -name "*.imageset" -o -name "*.symbolset" -o -name "*.colorset" \) -print0)
+          python3 - << 'PY'
+          import json, os, sys
+          root = os.environ.get("CATALOG_PATH", "winston/Assets.xcassets")
+          report_lines = []
+          bad = 0
 
-          echo "==== assetutil stderr (first 200 lines) ===="
-          sed -n '1,200p' diagnostics/assetutil/_stderr.log || true
+          for dirpath, dirnames, filenames in os.walk(root):
+              if not any(dirpath.endswith(suf) for suf in (".imageset", ".appiconset", ".colorset", ".symbolset")):
+                  continue
+              cj = os.path.join(dirpath, "Contents.json")
+              rel = os.path.relpath(dirpath, root)
+              if not os.path.isfile(cj):
+                  report_lines.append(f"❌ {rel}: missing Contents.json")
+                  bad += 1
+                  continue
+              try:
+                  with open(cj, "r", encoding="utf-8") as f:
+                      data = json.load(f)
+              except Exception as e:
+                  report_lines.append(f"❌ {rel}: invalid JSON: {e}")
+                  bad += 1
+                  continue
 
-          # Quick grep for common problems
-          echo "==== quick scan for issues ===="
-          (grep -RHiE '"errors"|"warnings"|missing|unsupported|invalid' diagnostics/assetutil || true) | head -n 200
+              # gather referenced filenames
+              referenced = set()
+              def collect(d):
+                  if isinstance(d, dict):
+                      for k,v in d.items():
+                          if k == "filename" and isinstance(v, str):
+                              referenced.add(v)
+                          else:
+                              collect(v)
+                  elif isinstance(d, list):
+                      for x in d: collect(x)
+              collect(data)
+
+              # check each referenced file exists
+              for fn in sorted(referenced):
+                  if not fn: 
+                      continue
+                  p = os.path.join(dirpath, fn)
+                  if not os.path.isfile(p):
+                      report_lines.append(f"❌ {rel}: references missing file '{fn}'")
+                      bad += 1
+
+              # minimal sanity: AppIcon sets should have at least one 1024 universal or a vector
+              if dirpath.endswith(".appiconset"):
+                  imgs = [i for i in (data.get("images") or []) if isinstance(i, dict)]
+                  has_1024 = any(i.get("size") == "1024x1024" and (i.get("idiom") in (None,"universal")) for i in imgs)
+                  # allow PDF-only vector sets if present (no filename rule here)
+                  if not has_1024 and not referenced:
+                      report_lines.append(f"⚠️  {rel}: no raster filenames and no 1024x1024 entry; ensure vector App Icon is valid")
+              if not referenced and (dirpath.endswith(".imageset") or dirpath.endswith(".colorset")):
+                  # empty set (can be intentional for named colors), just warn for imageset
+                  if dirpath.endswith(".imageset"):
+                      report_lines.append(f"⚠️  {rel}: imageset lists no files")
+
+          os.makedirs("diagnostics", exist_ok=True)
+          with open("diagnostics/asset-audit.txt", "w", encoding="utf-8") as f:
+              f.write("\n".join(report_lines) if report_lines else "No problems detected.\n")
+
+          print("---- Asset audit summary ----")
+          print("\n".join(report_lines) if report_lines else "No problems detected.")
+          # don't fail the job here; actool will fail the archive if it's truly broken
+          PY
 
       - name: Upload asset diagnostics
         if: always()
@@ -94,7 +143,7 @@ jobs:
           path: diagnostics
           if-no-files-found: ignore
 
-      # -------- Real archive (with override, or skip assets) ----------
+      # ---------- Real archive (override or skip assets) ----------
       - name: Archive (unsigned)
         shell: bash
         run: |
