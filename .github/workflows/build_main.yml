@@ -38,7 +38,7 @@ jobs:
           xcodebuild \
             -scheme "winston" \
             -sdk iphoneos \
-            -destination platform=iOS \
+            -destination "generic/platform=iOS" \
             clean build
 
       - name: Upload build artifacts
