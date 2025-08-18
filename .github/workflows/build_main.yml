@@ -1,77 +1,45 @@
-name: Build winston (unsigned)
-
+name: Build winston
 permissions:
-  contents: write
-  pull-requests: write
+    contents: write
+    pull-requests: write
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: macos-15 # Xcode 16 is available on macos-15 runners
+  Build:
+    runs-on: macos-13
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Select Xcode 16
+      - name: Configure Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16'
+          xcode-version: '15.0'
 
       - name: Set version number
         run: |
-          PROJECT_NAME="winston"
-          pbxproj="${PROJECT_NAME}.xcodeproj/project.pbxproj"
-          sed -i '' -E 's/(MARKETING_VERSION = )[^;]+;/\169.69.69;/' "$pbxproj"
+            YOUR_PROJECT_NAME="winston"
+            sed -i '' -e 's/MARKETING_VERSION \\= [^\\;]*\\;/MARKETING_VERSION = 69.69.69;/' ${YOUR_PROJECT_NAME}.xcodeproj/project.pbxproj
 
-      - name: Build (unsigned)
-        env:
-          CODE_SIGNING_ALLOWED: "NO"
-          CODE_SIGNING_REQUIRED: "NO"
-          CODE_SIGN_IDENTITY: ""
-          DEVELOPMENT_TEAM: ""
+      - name: Build Xcode project
         run: |
           xcodebuild \
             -scheme "winston" \
-            -configuration Release \
             -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            clean build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
-            ONLY_ACTIVE_ARCH=NO | xcpretty
+            -destination platform=iOS \
+            clean build
 
-      - name: Package .ipa manually
-        run: |
-          set -euo pipefail
-          APP_PATH="$(xcodebuild -scheme 'winston' -showBuildSettings -configuration Release 2>/dev/null \
-            | awk -F' = ' '/TARGET_BUILD_DIR/ {tbd=$2} /WRAPPER_NAME/ {wn=$2} END {print tbd "/" wn}')"
-
-          echo "App built at: $APP_PATH"
-          WORK="$RUNNER_TEMP/ipa"
-          mkdir -p "$WORK/Payload"
-          cp -R "$APP_PATH" "$WORK/Payload/"
-
-          (cd "$WORK" && zip -qry winston-unsigned.ipa Payload)
-
-          mkdir -p "$RUNNER_TEMP/build"
-          mv "$WORK/winston-unsigned.ipa" "$RUNNER_TEMP/build/winston-unsigned.ipa"
-
-      - name: Upload unsigned IPA
-        uses: actions/upload-artifact@v4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          name: winston-unsigned
-          path: ${{ runner.temp }}/build/winston-unsigned.ipa
+          name: winston-build
+          path: |
+            winston.xcodeproj/build/
+            winston.xcodeproj/derivedData/
           retention-days: 7
-
-      - name: Create GitHub Tag
-        uses: google-github-actions/release-please-action@v4
-        with:
-          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-          release-type: simple
