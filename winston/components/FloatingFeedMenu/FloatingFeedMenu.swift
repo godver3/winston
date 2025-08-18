@@ -81,7 +81,7 @@ struct FloatingFeedMenu: View, Equatable {
     ZStack(alignment: .bottomTrailing) {
       FloatingBGBlur(active: menuOpen, dismiss: dismiss).equatable()
       
-//      GlassEffectContainer {
+      GlassEffectContainer {
         HStack(alignment: .bottom, spacing: 0) {
           Spacer()
           ZStack(alignment: .bottomTrailing) {
@@ -132,7 +132,7 @@ struct FloatingFeedMenu: View, Equatable {
               HStack(spacing: 14) {
                 Image(systemName: "chevron.left")
                   .fontSize(22, .semibold)
-                  .foregroundStyle(Color.accentColor)
+//                  .foregroundStyle(Color.accentColor)
                   .padding(.horizontal, 14)
                   .frame(width: actionsSize, height: actionsSize)
                   .drawingGroup()
@@ -148,7 +148,7 @@ struct FloatingFeedMenu: View, Equatable {
                   }
                 Image(systemName: "arrow.clockwise")
                   .fontSize(22, .semibold)
-                  .foregroundStyle(Color.accentColor)
+//                  .foregroundStyle(Color.accentColor)
                   .padding(.horizontal, 14)
                   .frame(width: actionsSize, height: actionsSize)
                   .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
@@ -213,8 +213,6 @@ struct FloatingFeedMenu: View, Equatable {
                     .foregroundStyle(Color.accentColor)
                     .drawingGroup()
                     .glassEffect(.regular.interactive(), in: .circle)
-                  //                .clipShape(Circle())
-                  //                .floating()
                     .transition(.comeFrom(.bottom, index: 1, total: 2))
                     .highPriorityGesture(TapGesture().onEnded({
                       Hap.shared.play(intensity: 0.75, sharpness: 0.9)
@@ -235,8 +233,6 @@ struct FloatingFeedMenu: View, Equatable {
                   .foregroundColor(Color.accentColor)
                   .drawingGroup()
                   .glassEffect(.regular.interactive(), in: .circle)
-                //                .clipShape(Circle())
-                //                .floating()
                   .transition(.comeFrom(.bottom, index: 0, total: 2))
                   .increaseHitboxOf(actionsSize, by: 1.125, shape: Circle(), disable: menuOpen)
                   .highPriorityGesture(TapGesture().onEnded({
@@ -265,7 +261,7 @@ struct FloatingFeedMenu: View, Equatable {
           .padding(.trailing, 28)
           .padding(.bottom, screenEdgeMargin)
         }
-//      }
+      }
     }
   }
 }

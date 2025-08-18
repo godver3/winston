@@ -46,7 +46,7 @@ struct CommentSkipper: ViewModifier {
               HStack(spacing: 14) {
                   Image(systemName: "chevron.left")
                     .fontSize(22, .semibold)
-                    .foregroundStyle(Color.accentColor)
+//                    .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
                     .drawingGroup()
@@ -60,7 +60,7 @@ struct CommentSkipper: ViewModifier {
                   Image(systemName: "arrow.clockwise")
                     .fontSize(22, .semibold)
                     .rotationEffect(Angle(degrees: refreshRotationDegrees), anchor: .center)
-                    .foregroundStyle(Color.accentColor)
+//                    .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
                     .drawingGroup()
@@ -77,7 +77,7 @@ struct CommentSkipper: ViewModifier {
                   
                   Image(systemName: "chevron.down")
                     .fontSize(22, .semibold)
-                    .foregroundStyle(Color.accentColor)
+//                    .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 14)
                     .frame(width: buttonSize, height: buttonSize)
                     .drawingGroup()
@@ -117,6 +117,7 @@ struct CommentSkipper: ViewModifier {
               }
           }
           .padding()
+          .padding(.trailing, 12)
           .opacity(searchOpen || unseenSkipperOpen ? 0 : 1)
           .animation(.linear(duration: 0.1), value: searchOpen || unseenSkipperOpen)
           

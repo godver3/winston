@@ -37,7 +37,9 @@ struct FloatingMainTrigger: View, Equatable {
       }
       .fontSize(22, .bold)
       .frame(width: size, height: size)
-      .foregroundColor(menuOpen || toggled ? .pink : Color.accentColor)
+      .if(menuOpen) { view in
+          view.foregroundColor(menuOpen || toggled ? .pink : Color.accentColor)
+      }
       .brightness((toggled || menuOpen ? 0.35 : 0) + (pressingDown ? 0.1 : 0))
 //      .background(Circle().fill(.white.opacity((toggled || menuOpen ? 0.5 : 0) + (pressingDown ? 0.225 : 0))).blendMode(.overlay))
       .drawingGroup()
