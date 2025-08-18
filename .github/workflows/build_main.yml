@@ -43,10 +43,10 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             IPHONEOS_DEPLOYMENT_TARGET=18.1 \
-            clean build 2>&1 | tee build.log || true
+            clean build 2>&1 | tee build.log
+        continue-on-error: true
 
       - name: Display build errors
-        if: failure()
         run: |
           echo "=== BUILD ERRORS ==="
           if [ -f build.log ]; then
