@@ -11,7 +11,7 @@ on:
 
 jobs:
   Build:
-    runs-on: macos-13
+    runs-on: macos-14
 
     steps:
       - name: Checkout repository
@@ -20,7 +20,7 @@ jobs:
       - name: Configure Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.0'
+          xcode-version: '16.0'
 
       - name: Clean Swift Package Manager cache
         run: |
