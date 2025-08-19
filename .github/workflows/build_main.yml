@@ -45,6 +45,14 @@ jobs:
             clean build 2>&1 | tee build.log
         continue-on-error: true
 
+      - name: Find build output location
+        run: |
+          echo "=== BUILD OUTPUT LOCATION ==="
+          find ~/Library/Developer/Xcode/DerivedData -name "winston*" -type d 2>/dev/null | head -5
+          echo ""
+          echo "=== APP BUNDLE LOCATION ==="
+          find ~/Library/Developer/Xcode/DerivedData -name "*.app" -path "*/winston*" 2>/dev/null | head -5
+
       - name: Display build errors
         run: |
           echo "=== BUILD ERRORS ==="
@@ -63,6 +71,7 @@ jobs:
         with:
           name: winston-build
           path: |
-            winston.xcodeproj/build/
-            winston.xcodeproj/derivedData/
+            ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphoneos/winston.app
+            ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphoneos/winston.app.dSYM
+            build.log
           retention-days: 7
