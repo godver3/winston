@@ -41,7 +41,9 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>debugging</string>
+              <string>ad-hoc</string>
+              <key>teamID</key>
+              <string>XXXXXXXXXX</string>
               <key>signingStyle</key>
               <string>manual</string>
               <key>stripSwiftSymbols</key>
@@ -54,29 +56,46 @@ jobs:
           </plist>
           EOF
 
-      - name: Build and Archive Xcode project
+      - name: Build Xcode project
         run: |
-          # Create archive
+          # Build the project
           xcodebuild \
             -scheme "winston" \
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
-            -archivePath "winston.xcarchive" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            clean archive 2>&1 | tee build.log
+            clean build 2>&1 | tee build.log
         continue-on-error: true
 
-      - name: Create IPA from Archive
+      - name: Create IPA manually
         run: |
-          # Create IPA from archive
-          xcodebuild \
-            -exportArchive \
-            -archivePath "winston.xcarchive" \
-            -exportPath "winston-ipa" \
-            -exportOptionsPlist exportOptions.plist 2>&1 | tee export.log
-        continue-on-error: true
+          # Find the built app
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "winston.app" -path "*/Build/Products/*" | head -1)
+          echo "Found app at: $APP_PATH"
+          
+          if [ -n "$APP_PATH" ]; then
+            # Create IPA directory
+            mkdir -p winston-ipa
+            
+            # Create Payload directory
+            mkdir -p winston-ipa/Payload
+            
+            # Copy the app to Payload
+            cp -R "$APP_PATH" winston-ipa/Payload/
+            
+            # Create IPA file
+            cd winston-ipa
+            zip -r winston.ipa Payload/
+            cd ..
+            
+            echo "IPA created successfully"
+            ls -la winston-ipa/
+          else
+            echo "App bundle not found"
+            exit 1
+          fi
 
       - name: Verify IPA creation
         run: |
@@ -117,7 +136,5 @@ jobs:
           name: winston-build
           path: |
             winston-ipa/winston.ipa
-            winston.xcarchive
             build.log
-            export.log
           retention-days: 7
