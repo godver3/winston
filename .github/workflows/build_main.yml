@@ -33,17 +33,64 @@ jobs:
             YOUR_PROJECT_NAME="winston"
             sed -i '' -e 's/MARKETING_VERSION \\= [^\\;]*\\;/MARKETING_VERSION = 69.69.69;/' ${YOUR_PROJECT_NAME}.xcodeproj/project.pbxproj
 
-      - name: Build Xcode project
+      - name: Create export options plist
         run: |
+          cat > exportOptions.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>teamID</key>
+              <string></string>
+              <key>signingStyle</key>
+              <string>manual</string>
+              <key>stripSwiftSymbols</key>
+              <true/>
+              <key>uploadBitcode</key>
+              <false/>
+              <key>uploadSymbols</key>
+              <false/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build and Archive Xcode project
+        run: |
+          # Create archive
           xcodebuild \
             -scheme "winston" \
             -sdk iphoneos \
             -destination "generic/platform=iOS" \
+            -archivePath "winston.xcarchive" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
-            clean build 2>&1 | tee build.log
+            clean archive 2>&1 | tee build.log
         continue-on-error: true
+
+      - name: Create IPA from Archive
+        run: |
+          # Create IPA from archive
+          xcodebuild \
+            -exportArchive \
+            -archivePath "winston.xcarchive" \
+            -exportPath "winston-ipa" \
+            -exportOptionsPlist exportOptions.plist 2>&1 | tee export.log
+        continue-on-error: true
+
+      - name: Verify IPA creation
+        run: |
+          echo "=== IPA CREATION STATUS ==="
+          if [ -f "winston-ipa/winston.ipa" ]; then
+            echo "✅ IPA file created successfully"
+            ls -la winston-ipa/
+          else
+            echo "❌ IPA file not found"
+            echo "Contents of winston-ipa directory:"
+            ls -la winston-ipa/ || echo "Directory does not exist"
+          fi
 
       - name: Find build output location
         run: |
@@ -71,7 +118,8 @@ jobs:
         with:
           name: winston-build
           path: |
-            ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphoneos/winston.app
-            ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphoneos/winston.app.dSYM
+            winston-ipa/winston.ipa
+            winston.xcarchive
             build.log
+            export.log
           retention-days: 7
