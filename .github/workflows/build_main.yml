@@ -1,7 +1,4 @@
 name: Build winston
-permissions:
-    contents: write
-    pull-requests: write
 
 on:
   push:
@@ -11,105 +8,58 @@ on:
 
 jobs:
   Build:
-    runs-on: macos-13
+    runs-on: macos-15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '15.0'
-
-      - name: Install the Apple certificate and provisioning profile
-        env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
-          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          # create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-
-          # import certificate and provisioning profile from secrets
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
-          echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-
-          # create temporary keychain
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          # import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-
-          # apply provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-    
-      - name: Set version number
-        run: |
-            YOUR_PROJECT_NAME="winston"
-            sed -i '' -e 's/MARKETING_VERSION \\= [^\\;]*\\;/MARKETING_VERSION = 69.69.69;/' ../${YOUR_PROJECT_NAME}.xcodeproj/project.pbxproj
-
-
-      - name: Build Xcode archive
-        env:
-          TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM_ID }}
+      - name: Build Xcode project
         run: |
           xcodebuild \
             -scheme "winston" \
-            -archivePath $RUNNER_TEMP/winston.xcarchive \
             -sdk iphoneos \
-            -destination platform=iOS \
-            -allowProvisioningUpdates \
-            DEVELOPMENT_TEAM=$TEAM_ID \
-            clean archive
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            clean build 2>&1 | tee build.log
+        continue-on-error: true
 
-      - name: Export ipa
-        env:
-          EXPORT_OPTIONS_PLIST: ${{ secrets.EXPORT_OPTIONS_PLIST }}
+      - name: Create IPA manually
         run: |
-          EXPORT_OPTS_PATH=$RUNNER_TEMP/ExportOptions.plist
-          echo -n "$EXPORT_OPTIONS_PLIST" | base64 --decode -o $EXPORT_OPTS_PATH
-          xcodebuild -exportArchive -archivePath $RUNNER_TEMP/winston.xcarchive -exportOptionsPlist $EXPORT_OPTS_PATH -exportPath $RUNNER_TEMP/build
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "winston.app" -path "*/Build/Products/*" | head -1)
+          echo "Found app at: $APP_PATH"
+          
+          if [ -n "$APP_PATH" ]; then
+            mkdir -p winston-ipa/Payload
+            cp -R "$APP_PATH" winston-ipa/Payload/
+            cd winston-ipa
+            zip -r winston.ipa Payload/
+            cd ..
+            echo "✅ IPA created successfully"
+          else
+            echo "❌ App bundle not found"
+            exit 1
+          fi
 
-      - name: Clean up keychain and provisioning profile
-        if: ${{ always() }}
+      - name: Display build errors
         run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.mobileprovision
+          echo "=== BUILD ERRORS ==="
+          if [ -f build.log ]; then
+            grep -A 5 -B 5 "error:" build.log || echo "No specific error messages found"
+            echo ""
+            echo "=== FULL BUILD LOG ==="
+            cat build.log
+          else
+            echo "Build log not found"
+          fi
 
-      - name: Create Github Tag
-        uses: google-github-actions/release-please-action@v4
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-            # this assumes that you have created a personal access token
-            # (PAT) and configured it as a GitHub action secret named
-            # `MY_RELEASE_PLEASE_TOKEN` (this secret name is not important).
-            token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-            # this is a built-in strategy in release-please, see "Action Inputs"
-            # for more options
-            release-type: simple
-      
-    
-
-
-      # - name: Upload to Github Releases
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: winston-nightly
-      #     path: ${{ runner.temp }}/build/winston.ipa
-      #     retention-days: 3
-
-      # - name: 'Upload to TestFlight'
-      #   uses: apple-actions/upload-testflight-build@v1
-      #   if: ${{ false }}
-      #   with:
-      #     app-path: '${{ runner.temp }}/build/winston.ipa'
-      #     issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-      #     api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-      #     api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          name: winston-build
+          path: |
+            winston-ipa/winston.ipa
+            build.log
+          retention-days: 7
