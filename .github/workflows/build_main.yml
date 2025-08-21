@@ -21,6 +21,11 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.0-beta'
+          
+      - name: Install Metal toolchain
+        run: |
+          sudo xcodebuild -downloadPlatform iOS
+          sudo xcodebuild -downloadComponent MetalToolchain
 
       - name: Build Xcode project
         run: |
